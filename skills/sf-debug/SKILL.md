@@ -1,5 +1,6 @@
 ---
 name: sf-debug
+tier: discipline-gate
 description: "Systematically find root causes and fix Salesforce bugs. Use when debugging Apex test failures, trigger fires, LWC runtime errors, deploy failures, governor limit exceptions, sharing/permission errors, integration callout failures, or metadata deploy validation errors. Trigger phrases: 'debug this trigger', 'why is this Apex test failing', 'trace this LWC error', 'investigate this deploy failure', 'why did this validate fail', 'fix this governor limit error'."
 argument-hint: "[issue reference, error message, test path, log file, or description of broken behavior]"
 ---

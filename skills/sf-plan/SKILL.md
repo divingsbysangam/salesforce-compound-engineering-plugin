@@ -1,5 +1,6 @@
 ---
 name: sf-plan
+tier: discipline-gate
 description: "Create structured implementation plans for Salesforce features. Use when planning Apex changes, LWC components, Flow automation, integrations, metadata deployments, or any multi-step Salesforce build. Also deepen existing plans. Use when the user says 'plan this Apex feature', 'how should I build this LWC', 'plan the integration', 'break down this Salesforce requirement', 'plan a trigger refactor', 'plan the deployment', or when a brainstorm/requirements document is ready for planning. For exploratory or ambiguous requests, prefer sf-brainstorm first."
 argument-hint: "[optional: feature description, requirements doc path, plan path to deepen, or Salesforce work to plan]"
 ---

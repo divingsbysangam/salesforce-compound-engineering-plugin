@@ -1,5 +1,6 @@
 ---
 name: sf-polish
+tier: discipline-gate
 description: "Polish a Salesforce front-end surface after it works and passes review — make it feel right. Stack-aware: detects LWC, Aura, Experience Cloud (LWR), or React/headless clients and applies the matching design, accessibility (WCAG), and copy lens. Use when the user says 'polish this LWC', 'design review', 'make this feel right', 'accessibility pass', 'UX pass', 'clean up the UI', 'SLDS uplift check', or as the back 'bread' of the compound loop before compound. Skips pure Apex/Flow/metadata backend work."
 argument-hint: "[blank to polish current branch UI changes, or name a component / app / surface]"
 ---

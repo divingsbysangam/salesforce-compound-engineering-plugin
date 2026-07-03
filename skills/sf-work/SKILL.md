@@ -1,5 +1,6 @@
 ---
 name: sf-work
+tier: discipline-gate
 description: "Execute work efficiently against a Salesforce plan or feature description while maintaining quality and finishing complete features. Use when implementing Apex classes, LWC components, Flow automation, integrations, or any planned Salesforce work. Includes a Salesforce-aware system-wide test check (trigger contexts, bulkification, governor limits, sharing scenarios, mock callouts). Trigger phrases: 'work on this plan', 'implement this Salesforce feature', 'build out this Apex', 'execute this trigger plan', 'ship this LWC'."
 argument-hint: "[plan file path under docs/plans/, or feature description for bare-prompt work]"
 ---
