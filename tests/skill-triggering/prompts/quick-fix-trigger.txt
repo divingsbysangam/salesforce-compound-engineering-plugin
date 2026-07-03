@@ -1,0 +1,1 @@
+quick fix for this trigger that's throwing a null pointer exception on insert — can you sort it out?

@@ -1,0 +1,1 @@
+I know what sf-work does, just start implementing the plan at docs/plans/2026-07-03-001-feat-superpowers-discipline-mechanisms-plan.md directly
