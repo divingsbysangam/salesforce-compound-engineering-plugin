@@ -22,6 +22,7 @@ export class OpenCodeConverter extends BaseConverter {
     this.convertCommands(plugin, ocDir);
     this.convertSkills(plugin, ocDir);
     this.convertMcp(plugin, ocDir);
+    this.emitHook(plugin, ocDir);
   }
 
   private convertAgents(plugin: ClaudePlugin, ocDir: string): void {

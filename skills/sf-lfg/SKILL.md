@@ -1,12 +1,13 @@
 ---
 name: sf-lfg
+tier: discipline-gate
 description: "Full autonomous Salesforce delivery pipeline: ideate (if needed) -> brainstorm (if needed) -> plan -> deepen -> work -> review -> resolve feedback -> polish (if UI surface) -> test -> optionally deploy. Use when the user says 'lfg', 'ship this', 'do the whole thing', 'autopilot this Salesforce feature', 'end-to-end this' and wants the full idea-to-deploy flow. Honors Salesforce constraints (governor limits, sharing, deploy targets) and respects deploy-target choice (scratch, sandbox, none)."
 argument-hint: "[feature description or plan path; optionally pass 'deploy=scratch'/'deploy=sandbox'/'deploy=none']"
 ---
 
 # /sf-lfg
 
-> **Persona dispatch (V3.1, agentless).** Where stages below say "dispatch research/review agents", they mean *personas* — prompt assets under `references/personas/<name>.md`, not registered agents. Run each as an **isolated subagent** (Task tool, general-purpose subagent, persona file contents as instructions): parallel on Claude Code, inline-in-sequence on harnesses without subagents. The PLAN stage delegates to `/sf-plan` and the REVIEW stage to `/sf-review`, which own their personas (research → `../sf-plan/references/personas/`, review → `../sf-review/references/personas/`).
+> **Persona dispatch.** This pipeline dispatches personas as isolated subagents — see the `dispatching-parallel-personas` skill for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). The PLAN stage delegates to `/sf-plan` and the REVIEW stage to `/sf-review`, which own their personas (research → `../sf-plan/references/personas/`, review → `../sf-review/references/personas/`).
 
 > **Principles enforced:** all seven, but especially 1 (preserve the quality ceiling) and 2 (verifiability). See `PRINCIPLES.md`.
 
@@ -21,27 +22,27 @@ Strategy, repeated test failures, WCAG A/AA violations on changed UI, or deploy-
 failures. Honors $ARGUMENTS.deploy = scratch | sandbox | none.
 ```
 
-<feature_description>
-#$ARGUMENTS
-</feature_description>
+\<feature\_description>
+\#$ARGUMENTS
+\</feature\_description>
 
-## <span data-proof="authored" data-by="ai:claude">Interaction Method</span>
+## Interaction Method
 
-<span data-proof="authored" data-by="ai:claude">When asking the user a question, use the platform's blocking question tool:</span> <span data-proof="authored" data-by="ai:claude">`AskUserQuestion`</span> <span data-proof="authored" data-by="ai:claude">in Claude Code (call</span> <span data-proof="authored" data-by="ai:claude">`ToolSearch`</span> <span data-proof="authored" data-by="ai:claude">with</span> <span data-proof="authored" data-by="ai:claude">`select:AskUserQuestion`</span> <span data-proof="authored" data-by="ai:claude">first if its schema isn't loaded),</span> <span data-proof="authored" data-by="ai:claude">`request_user_input`</span> <span data-proof="authored" data-by="ai:claude">in Codex,</span> <span data-proof="authored" data-by="ai:claude">`ask_user`</span> <span data-proof="authored" data-by="ai:claude">in Gemini. Fall back to numbered options in chat only when no blocking tool exists in the harness or the call errors. Never silently skip the question.</span>
+When asking the user a question, use the platform's blocking question tool: `AskUserQuestion` in Claude Code (call `ToolSearch` with `select:AskUserQuestion` first if its schema isn't loaded), `request_user_input` in Codex, `ask_user` in Gemini. Fall back to numbered options in chat only when no blocking tool exists in the harness or the call errors. Never silently skip the question.
 
-<span data-proof="authored" data-by="ai:claude">Ask one question at a time. Prefer a concise single-select choice when natural options exist.</span>
+Ask one question at a time. Prefer a concise single-select choice when natural options exist.
 
-<span data-proof="authored" data-by="ai:claude">Full autonomous pipeline. Takes a feature from idea to deployment with minimal human intervention.</span>
+Full autonomous pipeline. Takes a feature from idea to deployment with minimal human intervention.
 
-**<span data-proof="authored" data-by="ai:claude">LFG = Let's F</span>**<span data-proof="authored" data-by="ai:claude">*ing Go.**</span>
+**LFG = Let's F***ing Go.**
 
-## <span data-proof="authored" data-by="ai:claude">Goal</span>
+## Goal
 
-<span data-proof="authored" data-by="ai:claude">Execute the full compound engineering loop for:</span> <span data-proof="authored" data-by="ai:claude">`$ARGUMENTS.feature`</span>
+Execute the full compound engineering loop for: `$ARGUMENTS.feature`
 
 ***
 
-## <span data-proof="authored" data-by="ai:claude">Pipeline Overview</span>
+## Pipeline Overview
 
 ```
  ┌─ HUMAN "bread" (taste) ─┐   ────────── AI "filling" (in the loop) ──────────   ┌─ HUMAN "bread" ─┐
@@ -71,107 +72,124 @@ failures. Honors $ARGUMENTS.deploy = scratch | sandbox | none.
 
 ***
 
-## <span data-proof="authored" data-by="ai:claude">Stage 1: PLAN</span>
+## Stage 1: PLAN
 
-<span data-proof="authored" data-by="ai:claude">If</span> <span data-proof="authored" data-by="ai:claude">`$ARGUMENTS.feature`</span> <span data-proof="authored" data-by="ai:claude">is a file path, read it as the plan. Otherwise, create one:</span>
+If `$ARGUMENTS.feature` is a file path, read it as the plan. Otherwise, create one:
 
-1. <span data-proof="authored" data-by="ai:claude">Check</span> <span data-proof="authored" data-by="ai:claude">`docs/brainstorms/`</span> <span data-proof="authored" data-by="ai:claude">for matching brainstorm.</span>
-2. <span data-proof="authored" data-by="ai:claude">Dispatch parallel research personas:</span>
+1. Check `docs/brainstorms/` for matching brainstorm.
+2. Dispatch parallel research personas:
 
-   * <span data-proof="authored" data-by="ai:claude">Task sf-learnings-researcher(feature)</span>
+   * Task sf-learnings-researcher(feature)
 
-   * <span data-proof="authored" data-by="ai:claude">Task sf-repo-research-analyst(feature)</span>
+   * Task sf-repo-research-analyst(feature)
 
-   * <span data-proof="authored" data-by="ai:claude">Task sf-best-practices-researcher(feature)</span>
+   * Task sf-best-practices-researcher(feature)
 
-   * <span data-proof="authored" data-by="ai:claude">Task sf-framework-docs-researcher(feature)</span>
-3. <span data-proof="authored" data-by="ai:claude">Design architecture (no code).</span>
-4. <span data-proof="authored" data-by="ai:claude">Run spec flow analysis:</span>
+   * Task sf-framework-docs-researcher(feature)
+3. Design architecture (no code).
+4. Run spec flow analysis:
 
-   * <span data-proof="authored" data-by="ai:claude">Task sf-spec-flow-analyzer(plan)</span>
-5. <span data-proof="authored" data-by="ai:claude">Save to</span> <span data-proof="authored" data-by="ai:claude">`docs/plans/YYYY-MM-DD-feat-{slug}-plan.md`.</span>
+   * Task sf-spec-flow-analyzer(plan)
+5. Save to `docs/plans/YYYY-MM-DD-feat-{slug}-plan.md`.
 
 **Gate (Principle 2):** Plan must have acceptance criteria, task list, AND a complete five-field Verification Strategy section: acceptance assertion, bulk threshold, governor boundary, sharing scenario, integration mock or dry-run. Hand-waved fields ("we'll add tests later") fail the gate. If the gate fails, return to Stage 1.
 
 ***
 
-## <span data-proof="authored" data-by="ai:claude">Stage 2: DEEPEN</span>
+## Stage 2: DEEPEN
 
-<span data-proof="authored" data-by="ai:claude">Enhance the plan with parallel research per section:</span>
+Enhance the plan with parallel research per section:
 
-1. <span data-proof="authored" data-by="ai:claude">Parse plan sections.</span>
-2. <span data-proof="authored" data-by="ai:claude">Dispatch research personas per section (governor limits, sharing, security, performance).</span>
-3. <span data-proof="authored" data-by="ai:claude">Merge findings into plan.</span>
-4. <span data-proof="authored" data-by="ai:claude">Add Salesforce-specific depth (order of execution, API versions, known issues).</span>
+1. Parse plan sections.
+2. Dispatch research personas per section (governor limits, sharing, security, performance).
+3. Merge findings into plan.
+4. Add Salesforce-specific depth (order of execution, API versions, known issues).
 
-**<span data-proof="authored" data-by="ai:claude">Gate:</span>** <span data-proof="authored" data-by="ai:claude">Plan sections must have research notes before proceeding.</span>
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Stage 3: WORK</span>
-
-<span data-proof="authored" data-by="ai:claude">Implement the plan:</span>
-
-1. <span data-proof="authored" data-by="ai:claude">Pre-implementation research (parallel):</span>
-
-   * <span data-proof="authored" data-by="ai:claude">Task sf-learnings-researcher(plan)</span>
-
-   * <span data-proof="authored" data-by="ai:claude">Task sf-repo-research-analyst(plan)</span>
-2. <span data-proof="authored" data-by="ai:claude">Route via indexes for applicable agents/skills.</span>
-3. <span data-proof="authored" data-by="ai:claude">Implement with native-first approach.</span>
-4. <span data-proof="authored" data-by="ai:claude">Write tests alongside code.</span>
-5. <span data-proof="authored" data-by="ai:claude">Run System-Wide Test Check (5 questions):</span>
-
-   * <span data-proof="authored" data-by="ai:claude">Trigger fire check</span>
-
-   * <span data-proof="authored" data-by="ai:claude">Bulk test check (200+ records)</span>
-
-   * <span data-proof="authored" data-by="ai:claude">Governor limit test</span>
-
-   * <span data-proof="authored" data-by="ai:claude">Sharing scenario check</span>
-
-   * <span data-proof="authored" data-by="ai:claude">Integration mock check</span>
-6. <span data-proof="authored" data-by="ai:claude">Make incremental commits.</span>
-
-**<span data-proof="authored" data-by="ai:claude">Gate:</span>** <span data-proof="authored" data-by="ai:claude">All 5 test check questions must pass before proceeding.</span>
+**Gate:** Plan sections must have research notes before proceeding.
 
 ***
 
-## <span data-proof="authored" data-by="ai:claude">Stage 4: REVIEW</span>
+## Stage 3: WORK
 
-<span data-proof="authored" data-by="ai:claude">Review with parallel persona dispatch:</span>
+Implement the plan:
 
-1. <span data-proof="authored" data-by="ai:claude">Classify changed files.</span>
-2. <span data-proof="authored" data-by="ai:claude">Dispatch all applicable review personas in parallel (comprehensive depth):</span>
+1. Pre-implementation research (parallel):
 
-   * <span data-proof="authored" data-by="ai:claude">Stack-specific agents (Apex, LWC, Flow, Integration)</span>
+   * Task sf-learnings-researcher(plan)
 
-   * <span data-proof="authored" data-by="ai:claude">Architecture agents (pattern recognition, metadata consistency)</span>
+   * Task sf-repo-research-analyst(plan)
+2. Route via indexes for applicable agents/skills.
+3. Implement with native-first approach.
+4. Write tests alongside code.
+5. Run System-Wide Test Check (5 questions):
 
-   * <span data-proof="authored" data-by="ai:claude">Workflow agents (code simplicity, deployment verification)</span>
+   * Trigger fire check
 
-   * <span data-proof="authored" data-by="ai:claude">Research personas (best practices validation)</span>
-3. <span data-proof="authored" data-by="ai:claude">Consolidate findings by severity.</span>
+   * Bulk test check (200+ records)
 
-**<span data-proof="authored" data-by="ai:claude">Gate:</span>** <span data-proof="authored" data-by="ai:claude">No Critical or High findings remaining before proceeding.</span>
+   * Governor limit test
+
+   * Sharing scenario check
+
+   * Integration mock check
+6. Make incremental commits.
+
+**Gate:** All 5 test check questions must pass before proceeding.
+
+**Gate (file-todos, Principle 2):** The pipeline does NOT advance past the Stage 3→4 boundary while any `p0` file-todo is still open. Check for open critical todos:
+
+```bash
+# Any p0 todo still active or blocked blocks the boundary.
+ls todos/*-active-p0-*.md todos/*-blocked-p0-*.md 2>/dev/null
+```
+
+If that command lists any file, resolve those p0 todos (move them to `done`, or explicitly downgrade/defer with human sign-off) before Review runs. See the `file-todos` skill for the `{issue}-{status}-{priority}-{description}.md` naming convention.
 
 ***
 
-## <span data-proof="authored" data-by="ai:claude">Stage 5: RESOLVE</span>
+## Stage 3.5: VERIFY (independent)
 
-<span data-proof="authored" data-by="ai:claude">Fix any review findings:</span>
+Dispatch `sf-implementation-verifier` (persona under `../sf-review/references/personas/`) as an isolated, read-only subagent with a clean context. It independently re-runs the 5 System-Wide Test Check questions against the diff and returns PASS/FAIL per question with pasted evidence — it does not trust the implementer's self-report.
 
-1. <span data-proof="authored" data-by="ai:claude">Address Critical findings first, then High, then Medium.</span>
-2. <span data-proof="authored" data-by="ai:claude">For each fix:</span>
+**Gate:** independent verification returns PASS on all 5 questions (overall GO) before proceeding to Review.
 
-   * <span data-proof="authored" data-by="ai:claude">Make the code change</span>
+***
 
-   * <span data-proof="authored" data-by="ai:claude">Verify the fix doesn't introduce new issues</span>
+## Stage 4: REVIEW
 
-   * <span data-proof="authored" data-by="ai:claude">Commit with descriptive message</span>
-3. <span data-proof="authored" data-by="ai:claude">Re-run review on changed files only (fast depth).</span>
+Review with parallel persona dispatch:
 
-**<span data-proof="authored" data-by="ai:claude">Gate:</span>** <span data-proof="authored" data-by="ai:claude">Re-review returns no Critical or High findings.</span>
+1. Classify changed files.
+2. Dispatch all applicable review personas in parallel (comprehensive depth):
+
+   * Stack-specific agents (Apex, LWC, Flow, Integration)
+
+   * Architecture agents (pattern recognition, metadata consistency)
+
+   * Workflow agents (code simplicity, deployment verification)
+
+   * Research personas (best practices validation)
+3. Consolidate findings by severity.
+
+**Gate:** No Critical or High findings remaining before proceeding.
+
+***
+
+## Stage 5: RESOLVE
+
+Fix any review findings:
+
+1. Address Critical findings first, then High, then Medium.
+2. For each fix:
+
+   * Make the code change
+
+   * Verify the fix doesn't introduce new issues
+
+   * Commit with descriptive message
+3. Re-run review on changed files only (fast depth).
+
+**Gate:** Re-review returns no Critical or High findings.
 
 ***
 
@@ -187,86 +205,96 @@ Run `/sf-polish` — it resolves the changed UI scope, detects the front-end sta
 
 ***
 
-## <span data-proof="authored" data-by="ai:claude">Stage 7: TEST</span>
+## Stage 7: TEST
 
-<span data-proof="authored" data-by="ai:claude">Run comprehensive tests:</span>
+Run comprehensive tests:
 
 ```bash proof:W3sidHlwZSI6InByb29mQXV0aG9yZWQiLCJmcm9tIjowLCJ0byI6MTA5LCJhdHRycyI6eyJieSI6ImFpOmNsYXVkZSJ9fV0=
 # Run all local tests with coverage
 sf apex run test --test-level RunLocalTests --code-coverage --synchronous
 ```
 
-1. <span data-proof="authored" data-by="ai:claude">Verify all tests pass.</span>
-2. <span data-proof="authored" data-by="ai:claude">Verify code coverage ≥ 75% org-wide, ≥ 90% per class.</span>
-3. <span data-proof="authored" data-by="ai:claude">Check for any test failures or coverage gaps.</span>
+1. Verify all tests pass.
+2. Verify code coverage ≥ 75% org-wide, ≥ 90% per class.
+3. Check for any test failures or coverage gaps.
 
-**<span data-proof="authored" data-by="ai:claude">Gate:</span>** <span data-proof="authored" data-by="ai:claude">All tests pass with required coverage. If tests fail, return to Stage 5.</span>
+**Gate:** All tests pass with required coverage. If tests fail, return to Stage 5.
 
 ***
 
-## <span data-proof="authored" data-by="ai:claude">Stage 8: DEPLOY (conditional)</span>
+## Stage 8: DEPLOY (conditional)
 
-<span data-proof="authored" data-by="ai:claude">Based on</span> <span data-proof="authored" data-by="ai:claude">`$ARGUMENTS.deploy`:</span>
+Based on `$ARGUMENTS.deploy`:
 
-### <span data-proof="authored" data-by="ai:claude">deploy=none (default)</span>
+### deploy=none (default)
 
-<span data-proof="authored" data-by="ai:claude">Skip deployment. Report readiness.</span>
+Skip deployment. Report readiness.
 
-### <span data-proof="authored" data-by="ai:claude">deploy=scratch</span>
+### deploy=scratch
 
 ```bash proof:W3sidHlwZSI6InByb29mQXV0aG9yZWQiLCJmcm9tIjowLCJ0byI6MTYxLCJhdHRycyI6eyJieSI6ImFpOmNsYXVkZSJ9fV0=
 sf org create scratch --definition-file config/project-scratch-def.json --alias lfg-test
 sf project deploy start --target-org lfg-test --test-level RunLocalTests
 ```
 
-### <span data-proof="authored" data-by="ai:claude">deploy=sandbox</span>
+### deploy=sandbox
 
-1. <span data-proof="authored" data-by="ai:claude">Dispatch deployment verification:</span>
+1. Dispatch deployment verification:
 
-   * <span data-proof="authored" data-by="ai:claude">Task sf-deployment-verification-agent(changed_files)</span>
-2. <span data-proof="authored" data-by="ai:claude">Validate deployment:</span>
+   * Task sf-deployment-verification-agent(changed_files)
+2. Validate deployment:
 
    ```bash proof:W3sidHlwZSI6InByb29mQXV0aG9yZWQiLCJmcm9tIjowLCJ0byI6NjAsImF0dHJzIjp7ImJ5IjoiYWk6Y2xhdWRlIn19XQ==
    sf project deploy start --dry-run --test-level RunLocalTests
    ```
-3. <span data-proof="authored" data-by="ai:claude">If validation passes and Go decision:</span>
+3. If validation passes and Go decision:
 
    ```bash proof:W3sidHlwZSI6InByb29mQXV0aG9yZWQiLCJmcm9tIjowLCJ0byI6NTAsImF0dHJzIjp7ImJ5IjoiYWk6Y2xhdWRlIn19XQ==
    sf project deploy start --test-level RunLocalTests
    ```
 
-**<span data-proof="authored" data-by="ai:claude">Gate:</span>** <span data-proof="authored" data-by="ai:claude">Deployment succeeds with all tests passing.</span>
+**Gate:** Deployment succeeds with all tests passing.
 
 ***
 
-## <span data-proof="authored" data-by="ai:claude">Stage 9: COMPOUND</span>
+## Stage 9: COMPOUND
 
-<span data-proof="authored" data-by="ai:claude">After pipeline completes (regardless of deploy stage):</span>
+After pipeline completes (regardless of deploy stage):
 
-1. <span data-proof="authored" data-by="ai:claude">Analyze what was built.</span>
-2. <span data-proof="authored" data-by="ai:claude">Search for existing knowledge to avoid duplicates.</span>
-3. <span data-proof="authored" data-by="ai:claude">Write solution documents to</span> <span data-proof="authored" data-by="ai:claude">`docs/solutions/`.</span>
-4. <span data-proof="authored" data-by="ai:claude">Update relevant agents/skills with new patterns.</span>
-5. <span data-proof="authored" data-by="ai:claude">Update CLAUDE.md with project context.</span>
+1. Analyze what was built.
+2. Search for existing knowledge to avoid duplicates.
+3. Write solution documents to `docs/solutions/`.
+4. Update relevant agents/skills with new patterns.
+5. Update CLAUDE.md with project context.
 
 ***
 
-## <span data-proof="authored" data-by="ai:claude">Abort Conditions</span>
+## Abort Conditions
 
 The pipeline aborts and asks for human input if any of the following fire. These map to the principles in `PRINCIPLES.md` — they are not advisory.
 
 * Plan has no clear acceptance criteria (Stage 1).
+
 * Plan is missing a complete five-field Verification Strategy section, or any field is hand-waved (Stage 1, Principle 2).
+
 * Spec flow analysis finds Critical gaps with no obvious fix (Stage 1).
+  Independent verification (Stage 3.5) returns NO-GO on any System-Wide Test Check question and no human has overridden (Principle 3).
+
+* A p0 file-todo remains active or blocked at the Stage 3→4 boundary (Principle 2).
+
 * Review fires any non-negotiable gate from `sf-review`: security regression, governor regression, test coverage regression, trigger context regression, or sharing regression (Stage 4, Principle 1).
+
 * Tests fail after 2 resolve cycles (Stage 5-7 loop).
+
 * Polish gate fails: an unresolved WCAG A/AA violation on a changed UI surface (Stage 6, Principle 1).
+
 * Deployment validation fails (Stage 8).
+
 * Agent confidence is low on a jagged-edge call — order of execution, mixed-DML, sharing recalculation, async-context governor — and no human has reviewed (Principle 3). When in doubt, abort and ask.
 
 ***
 
-## <span data-proof="authored" data-by="ai:claude">Output</span>
+## Output
 
 ```
 🚀 LFG Pipeline Complete

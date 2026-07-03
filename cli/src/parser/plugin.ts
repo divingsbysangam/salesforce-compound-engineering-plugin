@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, existsSync } from "fs";
 import { join, basename, dirname, relative } from "path";
 import { parseMarkdown } from "./markdown.js";
-import type { ClaudePlugin, Command, Agent, Skill, SkillFile, McpServer } from "./types.js";
+import type { ClaudePlugin, Command, Agent, Skill, SkillFile, McpServer, PluginHooks } from "./types.js";
 
 function readJsonFile(path: string): Record<string, unknown> {
   try {
@@ -125,6 +125,35 @@ function parseMcpServers(pluginDir: string): Record<string, McpServer> {
   return (data.mcpServers as Record<string, McpServer>) || {};
 }
 
+/**
+ * Extract the plain-text primer the session-start script prints. The script
+ * emits it via a quoted heredoc (`cat <<'EOF' ... EOF`); we read that block so
+ * the script stays the single source of truth for the primer text.
+ */
+function extractSessionStartPrimer(scriptContent: string): string {
+  const match = scriptContent.match(/<<-?['"]?(\w+)['"]?\s*\n([\s\S]*?)\n\1\b/);
+  return match ? match[2].trim() : "";
+}
+
+function parseHooks(pluginDir: string): PluginHooks | undefined {
+  const hooksPath = join(pluginDir, "hooks", "hooks.json");
+  if (!existsSync(hooksPath)) return undefined;
+
+  const config = readJsonFile(hooksPath);
+
+  // The Claude Code hook references ${CLAUDE_PLUGIN_ROOT}/scripts/session-start.
+  const scriptRelPath = join("scripts", "session-start");
+  const scriptFull = join(pluginDir, scriptRelPath);
+  let scriptContent = "";
+  let primerText = "";
+  if (existsSync(scriptFull)) {
+    scriptContent = readFileSync(scriptFull, "utf-8");
+    primerText = extractSessionStartPrimer(scriptContent);
+  }
+
+  return { config, scriptRelPath, scriptContent, primerText };
+}
+
 export function readPlugin(pluginDir: string): ClaudePlugin {
   const manifestPath = join(pluginDir, ".claude-plugin", "plugin.json");
   if (!existsSync(manifestPath)) {
@@ -140,5 +169,6 @@ export function readPlugin(pluginDir: string): ClaudePlugin {
     agents: parseAgents(pluginDir),
     skills: parseSkills(pluginDir),
     mcpServers: parseMcpServers(pluginDir),
+    hooks: parseHooks(pluginDir),
   };
 }

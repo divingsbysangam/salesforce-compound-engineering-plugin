@@ -6,12 +6,15 @@ import type { ClaudePlugin, TargetPlatform } from "../parser/types.js";
 export class CursorConverter extends BaseConverter {
   readonly target: TargetPlatform = "cursor";
   readonly label = "Cursor (sync only)";
+  // Cursor always loads files under .cursor/rules/ as project rules.
+  readonly instructionsFileName = join("rules", "sf-discipline-primer.md");
 
   convert(plugin: ClaudePlugin, outputDir: string): void {
     const cursorDir = join(outputDir, ".cursor");
 
     this.syncSkills(plugin, cursorDir, outputDir);
     this.convertMcp(plugin, cursorDir);
+    this.emitHook(plugin, cursorDir);
   }
 
   private syncSkills(plugin: ClaudePlugin, cursorDir: string, pluginDir: string): void {

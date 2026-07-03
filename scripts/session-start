@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# SessionStart hook for the SF compound-engineering plugin.
+#
+# Injects a compact discipline primer into every Claude Code cold start so the
+# plugin's three hard gates are present regardless of whether a skill
+# description happens to match the user's phrasing. Skill auto-routing is
+# probabilistic; this primer is deterministic.
+#
+# Matcher is "startup" only (see hooks/hooks.json) — the primer is injected once
+# per real session, not re-injected after every compaction, to bound token cost.
+# The payload is kept well under ~1KB on purpose: it points at skills/index.md
+# and names the three gate clusters rather than restating their full contents.
+#
+# Output contract: Claude Code adds a SessionStart hook's stdout to the session
+# context verbatim, so plain text is emitted here — no jq dependency, works on
+# any machine.
+set -euo pipefail
+
+cat <<'EOF'
+SF compound-engineering plugin active. Route Salesforce work through a workflow skill before raw edits — skills/index.md is the map. For a quick fix, enter sf-work or sf-debug rather than editing Apex/LWC/Flow directly.
+
+Three non-negotiable discipline gates apply:
+- sf-plan — Verification Strategy (acceptance assertion, bulk threshold, governor boundary, sharing scenario, integration mock)
+- sf-work — System-Wide Test Check (trigger contexts, bulkification, governor limits, sharing, integration mocks)
+- sf-review — Non-Negotiable Gates (security, governor, test-coverage, trigger-context, sharing regressions)
+EOF
+
+exit 0

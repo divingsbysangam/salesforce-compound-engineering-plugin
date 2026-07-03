@@ -16,6 +16,7 @@ export class DroidConverter extends BaseConverter {
     this.convertCommands(plugin, droidDir);
     this.convertSkills(plugin, droidDir);
     this.convertMcp(plugin, droidDir);
+    this.emitHook(plugin, droidDir);
   }
 
   private convertAgents(plugin: ClaudePlugin, droidDir: string): void {

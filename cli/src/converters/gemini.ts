@@ -6,6 +6,8 @@ import { formatFrontmatter, normalizeName } from "../transforms/frontmatter.js";
 export class GeminiConverter extends BaseConverter {
   readonly target: TargetPlatform = "gemini";
   readonly label = "Gemini CLI";
+  // Gemini CLI always loads GEMINI.md as hierarchical context.
+  readonly instructionsFileName = "GEMINI.md";
 
   convert(plugin: ClaudePlugin, outputDir: string): void {
     const geminiDir = join(outputDir, ".gemini");
@@ -14,6 +16,7 @@ export class GeminiConverter extends BaseConverter {
     this.convertCommands(plugin, geminiDir);
     this.convertSkills(plugin, geminiDir);
     this.convertMcp(plugin, geminiDir);
+    this.emitHook(plugin, geminiDir);
   }
 
   private convertAgents(plugin: ClaudePlugin, geminiDir: string): void {

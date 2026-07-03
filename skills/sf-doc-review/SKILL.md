@@ -6,20 +6,23 @@ argument-hint: "[path to a plan or requirements document under docs/plans/ or do
 
 # sf-doc-review
 
-**Persona dispatch (V3.1, agentless).** This skill dispatches *personas* — prompt assets under `references/personas/<name>.md`, not registered agents. For each persona named below, run it as an **isolated subagent**: use the Task tool with a general-purpose subagent and pass the persona file's contents as its instructions. On Claude Code these run in parallel with isolated context; on harnesses without a subagent primitive, apply each persona's prompt **inline, in sequence**. Personas owned by another skill are referenced by relative path (review personas → `../sf-review/references/personas/`, research personas → `../sf-plan/references/personas/`).
+**Persona dispatch.** This skill dispatches personas as isolated subagents — see the `dispatching-parallel-personas` skill for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). This skill's own doc-review personas live under `references/personas/`; personas owned by another skill are referenced by relative path (review → `../sf-review/references/personas/`, research → `../sf-plan/references/personas/`).
 
 Dispatch sf-feasibility-reviewer, sf-coherence-reviewer, sf-product-lens-reviewer, sf-scope-guardian-reviewer, sf-security-lens-reviewer, sf-design-lens-reviewer, and sf-adversarial-document-reviewer in parallel against a Salesforce planning document. Merge findings, dedupe, and present them with confidence scores.
 
-<feature_description>
-#$ARGUMENTS
-</feature_description>
+\<feature\_description>
+\#$ARGUMENTS
+\</feature\_description>
 
 ## Salesforce Angle
 
-- **Feasibility persona** flags governor-limit risks at plan time (e.g., 'this batch design is unbounded by record count').
-- **Security lens** flags missing CRUD/FLS handling, sharing-rule changes that affect the data model, or external API auth gaps.
-- **Scope guardian** challenges premature trigger-handler abstractions or fflib introduction when a simpler pattern fits.
-- **Adversarial document reviewer** constructs Salesforce-specific failure scenarios (Bulk API + UI concurrent saves, Process Builder fanning into trigger, packaging-time consequences).
+* **Feasibility persona** flags governor-limit risks at plan time (e.g., 'this batch design is unbounded by record count').
+
+* **Security lens** flags missing CRUD/FLS handling, sharing-rule changes that affect the data model, or external API auth gaps.
+
+* **Scope guardian** challenges premature trigger-handler abstractions or fflib introduction when a simpler pattern fits.
+
+* **Adversarial document reviewer** constructs Salesforce-specific failure scenarios (Bulk API + UI concurrent saves, Process Builder fanning into trigger, packaging-time consequences).
 
 ## Interaction Method
 
@@ -37,5 +40,6 @@ This skill follows the standard sf-compound-engineering execution discipline:
 
 ## Related
 
-- Salesforce knowledge: `docs/solutions/` (search via the `sf-learnings-researcher` agent).
-- Plugin conventions: see `CLAUDE.md` for frontmatter, naming, and protected-artifact rules.
+* Salesforce knowledge: `docs/solutions/` (search via the `sf-learnings-researcher` agent).
+
+* Plugin conventions: see `CLAUDE.md` for frontmatter, naming, and protected-artifact rules.

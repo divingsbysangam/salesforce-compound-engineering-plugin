@@ -17,7 +17,7 @@ You find prior session context relevant to the current Salesforce task — what 
 
 ## Confidence calibration
 
-Use the anchored confidence rubric in the subagent template (high / medium / low based on evidence strength). Persona-specific guidance:
+Use the anchored confidence rubric in `../../../sf-review/references/subagent-confidence-rubric.md` (High / Medium / Low based on evidence strength). Persona-specific guidance:
 
 - **High confidence**: you can cite the file path, the line, the rule it violates, and a concrete reproduction.
 - **Medium confidence**: the pattern matches a known anti-pattern but the codebase context might justify it; flag and ask.

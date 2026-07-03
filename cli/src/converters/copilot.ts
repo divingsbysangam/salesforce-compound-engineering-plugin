@@ -6,6 +6,8 @@ import { formatFrontmatter, normalizeName } from "../transforms/frontmatter.js";
 export class CopilotConverter extends BaseConverter {
   readonly target: TargetPlatform = "copilot";
   readonly label = "GitHub Copilot";
+  // Copilot always loads .github/copilot-instructions.md as repo context.
+  readonly instructionsFileName = "copilot-instructions.md";
 
   convert(plugin: ClaudePlugin, outputDir: string): void {
     const ghDir = join(outputDir, ".github");
@@ -14,6 +16,7 @@ export class CopilotConverter extends BaseConverter {
     this.convertCommands(plugin, ghDir);
     this.convertSkills(plugin, ghDir);
     this.convertMcp(plugin, ghDir);
+    this.emitHook(plugin, ghDir);
   }
 
   private convertAgents(plugin: ClaudePlugin, ghDir: string): void {

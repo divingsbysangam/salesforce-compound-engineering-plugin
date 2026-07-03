@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# sf-review-package — build a review package for the current working changes.
+#
+# Usage: sf-review-package [base-ref]
+#   base-ref  optional. Defaults to the merge-base with the default branch.
+#
+# Emits a short header (the changed-file list) followed by a wide unified diff
+# (`git diff -U10`), all to stdout so it can be piped straight into a review
+# persona's context — a fresh, bounded package instead of a stale paste.
+set -euo pipefail
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "error: not inside a git repository" >&2
+  exit 1
+fi
+
+base_ref="${1:-}"
+
+# Resolve a default base: merge-base with the default branch (origin/HEAD, else
+# a local main/master). Fall back to an empty tree if none resolves, so a fresh
+# repo with no upstream still produces a full diff rather than crashing.
+if [ -z "$base_ref" ]; then
+  default_branch=""
+  if git symbolic-ref --quiet refs/remotes/origin/HEAD >/dev/null 2>&1; then
+    default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+  fi
+  if [ -z "$default_branch" ]; then
+    for cand in main master origin/main origin/master; do
+      if git rev-parse --verify --quiet "$cand" >/dev/null 2>&1; then
+        default_branch="$cand"
+        break
+      fi
+    done
+  fi
+
+  if [ -n "$default_branch" ]; then
+    base_ref="$(git merge-base HEAD "$default_branch" 2>/dev/null || true)"
+  fi
+  if [ -z "$base_ref" ]; then
+    # Empty-tree hash: diffs everything as added.
+    base_ref="$(git hash-object -t tree /dev/null)"
+  fi
+fi
+
+echo "=== Review package ==="
+echo "Base ref: $base_ref"
+echo
+echo "Changed files:"
+if git diff --name-only "$base_ref" 2>/dev/null | grep -q .; then
+  git diff --name-only "$base_ref"
+else
+  echo "  (no changes vs base)"
+fi
+echo
+echo "=== Diff (git diff -U10) ==="
+git diff -U10 "$base_ref"

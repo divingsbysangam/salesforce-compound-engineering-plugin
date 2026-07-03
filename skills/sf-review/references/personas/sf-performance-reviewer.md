@@ -15,7 +15,7 @@ Code-review-time performance flags: complements sf-performance-oracle's deeper a
 
 ## Confidence calibration
 
-Use the anchored confidence rubric in the subagent template (high / medium / low based on evidence strength). Persona-specific guidance:
+Use the anchored confidence rubric in `../subagent-confidence-rubric.md` (High / Medium / Low based on evidence strength). Persona-specific guidance:
 
 - **High confidence**: you can cite the file path, the line, the rule it violates, and a concrete reproduction.
 - **Medium confidence**: the pattern matches a known anti-pattern but the codebase context might justify it; flag and ask.

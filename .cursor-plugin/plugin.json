@@ -1,7 +1,7 @@
 {
   "name": "sf-compound-engineering",
   "displayName": "Salesforce Compound Engineering",
-  "version": "3.1.0-beta.3",
+  "version": "3.1.0-beta.4",
   "description": "Salesforce-focused compound engineering plugin for Cursor. Skills-first V3 architecture with parallel agent dispatch, institutional knowledge compounding, and Apex/LWC/Flow/Integration coverage.",
   "author": {
     "name": "Gella Sangamesh Gupta",

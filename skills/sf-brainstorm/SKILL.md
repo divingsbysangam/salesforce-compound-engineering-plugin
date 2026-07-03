@@ -6,7 +6,7 @@ argument-hint: "[optional: idea, problem statement, or Salesforce feature descri
 
 # /sf-brainstorm
 
-> **Persona dispatch (V3.1, agentless).** Where this skill says "dispatch research agents", they are *personas* — prompt assets under `references/personas/<name>.md` (research personas referenced from `../sf-plan/references/personas/`), not registered agents. Run each as an **isolated subagent** (Task tool, general-purpose subagent, persona file contents as instructions): parallel on Claude Code, inline-in-sequence on harnesses without subagents.
+> **Persona dispatch.** This skill dispatches its research personas as isolated subagents — see the `dispatching-parallel-personas` skill for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). Research personas are referenced from `../sf-plan/references/personas/`.
 
 > **Principles enforced:** 4 (spec is the artifact, in embryo). See `PRINCIPLES.md`.
 
@@ -22,39 +22,39 @@ testability, sharing impact). Save the result to docs/brainstorms/YYYY-MM-DD-{sl
 input to /sf-plan — this is pre-spec exploration, not a spec.
 ```
 
-<feature_description>
-#$ARGUMENTS
-</feature_description>
+\<feature\_description>
+\#$ARGUMENTS
+\</feature\_description>
 
 ## Interaction Method
 
-<span data-proof="authored" data-by="ai:claude">When asking the user a question, use the platform's blocking question tool:</span> <span data-proof="authored" data-by="ai:claude">`AskUserQuestion`</span> <span data-proof="authored" data-by="ai:claude">in Claude Code (call</span> <span data-proof="authored" data-by="ai:claude">`ToolSearch`</span> <span data-proof="authored" data-by="ai:claude">with</span> <span data-proof="authored" data-by="ai:claude">`select:AskUserQuestion`</span> <span data-proof="authored" data-by="ai:claude">first if its schema isn't loaded),</span> <span data-proof="authored" data-by="ai:claude">`request_user_input`</span> <span data-proof="authored" data-by="ai:claude">in Codex,</span> <span data-proof="authored" data-by="ai:claude">`ask_user`</span> <span data-proof="authored" data-by="ai:claude">in Gemini. Fall back to numbered options in chat only when no blocking tool exists in the harness or the call errors. Never silently skip the question.</span>
+When asking the user a question, use the platform's blocking question tool: `AskUserQuestion` in Claude Code (call `ToolSearch` with `select:AskUserQuestion` first if its schema isn't loaded), `request_user_input` in Codex, `ask_user` in Gemini. Fall back to numbered options in chat only when no blocking tool exists in the harness or the call errors. Never silently skip the question.
 
-<span data-proof="authored" data-by="ai:claude">Ask one question at a time. Prefer a concise single-select choice when natural options exist.</span>
+Ask one question at a time. Prefer a concise single-select choice when natural options exist.
 
-<span data-proof="authored" data-by="ai:claude">You are facilitating a brainstorm session to explore an idea before planning. Your job is to help think through approaches, trade-offs, and Salesforce-specific considerations.</span>
+You are facilitating a brainstorm session to explore an idea before planning. Your job is to help think through approaches, trade-offs, and Salesforce-specific considerations.
 
-## <span data-proof="authored" data-by="ai:claude">Goal</span>
+## Goal
 
-<span data-proof="authored" data-by="ai:claude">Explore and refine:</span> <span data-proof="authored" data-by="ai:claude">`$ARGUMENTS.idea`</span>
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Phase 0: Assess Clarity</span>
-
-<span data-proof="authored" data-by="ai:claude">Rate the idea's clarity:</span>
-
-* **<span data-proof="authored" data-by="ai:claude">Clear</span>**<span data-proof="authored" data-by="ai:claude">: User knows what they want, specific requirements → Move fast through Phase 1</span>
-
-* **<span data-proof="authored" data-by="ai:claude">Exploratory</span>**<span data-proof="authored" data-by="ai:claude">: User has a general direction but needs options → Spend time in Phase 2</span>
-
-* **<span data-proof="authored" data-by="ai:claude">Vague</span>**<span data-proof="authored" data-by="ai:claude">: User has a problem but no direction → Start deep in Phase 1</span>
+Explore and refine: `$ARGUMENTS.idea`
 
 ***
 
-## <span data-proof="authored" data-by="ai:claude">Phase 1: Understand (One Question at a Time)</span>
+## Phase 0: Assess Clarity
 
-<span data-proof="authored" data-by="ai:claude">Ask focused questions using the AskUserQuestion tool. One question per round:</span>
+Rate the idea's clarity:
+
+* **Clear**: User knows what they want, specific requirements → Move fast through Phase 1
+
+* **Exploratory**: User has a general direction but needs options → Spend time in Phase 2
+
+* **Vague**: User has a problem but no direction → Start deep in Phase 1
+
+***
+
+## Phase 1: Understand (One Question at a Time)
+
+Ask focused questions using the AskUserQuestion tool. One question per round:
 
 1. **What problem does this solve?** — Understand the pain point
 2. **Who uses this?** — Admin, developer, end user, integration

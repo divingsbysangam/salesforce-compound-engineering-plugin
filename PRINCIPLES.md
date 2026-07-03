@@ -1,6 +1,6 @@
 # Principles
 
-The seven principles that make this plugin opinionated, in priority order. Every skill in `skills/` and every agent in `agents/` should be coherent with these. When the implementation drifts from a principle, fix the implementation — don't soften the principle.
+The seven principles that make this plugin opinionated, in priority order. Every skill in `skills/` and every persona under `skills/<owner>/references/personas/` should be coherent with these. When the implementation drifts from a principle, fix the implementation — don't soften the principle.
 
 This document is the source of truth. `CLAUDE.md`, `README.md`, and the seven core workflow skills (`sf-brainstorm`, `sf-plan`, `sf-deepen`, `sf-work`, `sf-review`, `sf-compound`, `sf-lfg`) all reference these principles by number.
 
@@ -78,7 +78,7 @@ You can hand off the typing, the API recall, the boilerplate. You cannot hand of
 
 ## How to use these principles
 
-- **When writing a new skill or agent**, name which principles it serves in its frontmatter `description`. If you cannot name one, the skill probably does not belong in this plugin.
+- **When writing a new skill or persona**, name which principles it serves in its frontmatter `description`. If you cannot name one, the skill probably does not belong in this plugin.
 - **When reviewing a PR against this plugin**, a finding that violates a principle outranks a finding that doesn't. "This violates Principle 2" is sufficient justification to block.
 - **When the principles conflict** (rare, but happens — e.g., Principle 2 demands verification, Principle 4 demands a spec, and a one-line typo fix has neither), the principles are priority-ordered. Lower-numbered wins.
 
