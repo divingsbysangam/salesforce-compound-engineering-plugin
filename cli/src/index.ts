@@ -2,6 +2,7 @@
 import { defineCommand, runMain } from "citty";
 import { resolve } from "path";
 import { readPlugin } from "./parser/plugin.js";
+import { lint as lintPlugin } from "./lint/index.js";
 import { detectInstalledTools, isValidTarget } from "./utils/detect.js";
 import { CopilotConverter } from "./converters/copilot.js";
 import { WindsurfConverter } from "./converters/windsurf.js";
@@ -117,13 +118,33 @@ const sync = defineCommand({
   },
 });
 
+const lint = defineCommand({
+  meta: { name: "lint", description: "Lint plugin skills/personas for dangling-reference anti-patterns" },
+  args: {
+    plugin: { type: "positional", description: "Plugin path (defaults to current directory)", required: false },
+  },
+  run({ args }) {
+    const pluginDir = resolve(args.plugin ?? ".");
+    const report = lintPlugin(pluginDir);
+    if (report.ok) {
+      console.log(`Lint passed: no violations in ${pluginDir}`);
+      return;
+    }
+    console.error(`Lint found ${report.violations.length} violation(s):`);
+    for (const v of report.violations) {
+      console.error(`  - ${v}`);
+    }
+    process.exit(1);
+  },
+});
+
 const main = defineCommand({
   meta: {
     name: "sf-compound-plugin",
     version: "1.0.0",
     description: "Multi-tool installer for SF Compound Engineering Plugin",
   },
-  subCommands: { install, sync },
+  subCommands: { install, sync, lint },
 });
 
 runMain(main);

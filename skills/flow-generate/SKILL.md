@@ -1,6 +1,6 @@
 ---
 name: flow-generate
-description: "Generate Salesforce Flow metadata (Screen / Autolaunched / Record-Triggered before-save and after-save / Scheduled) using the MCP `execute_metadata_action` 3-step pipeline (fetchGroundedObjectMetadata → flowElementSelection → flowElementGeneration). Use this skill for any Flow generation. Trigger phrases: 'create a flow', 'build a flow that', 'when a record is created send', 'trigger daily at', 'send an email when', 'update the field when', 'automate this with a flow', 'generate flow XML', 'autolaunched flow for'. Pairs with `flow-patterns` (reference). Do NOT trigger for Apex automation — use `apex-generate`."
+description: "Generate Salesforce Flow metadata (Screen / Autolaunched / Record-Triggered before-save and after-save / Scheduled) using the MCP `execute_metadata_action` pipeline (fetchGroundedObjectMetadata → flowElementSelection → flowElementGeneration). Use this skill for any Flow generation. Trigger phrases: 'create a flow', 'build a flow that', 'when a record is created send', 'trigger daily at', 'send an email when', 'update the field when', 'automate this with a flow', 'generate flow XML', 'autolaunched flow for'. Pairs with `flow-patterns` (reference). Do NOT trigger for Apex automation — use `apex-generate`."
 argument-hint: "[flow type and intent, e.g. 'before-save flow on Lead to populate territory' or 'screen flow for case escalation']"
 ---
 
