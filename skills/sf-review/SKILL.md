@@ -42,6 +42,20 @@ Review the code at: `$ARGUMENTS.target`
 
 <span data-proof="authored" data-by="ai:claude">If any gate fires, the review output must include the gate name in the Critical section, and</span> <span data-proof="authored" data-by="ai:claude">`/sf-lfg`</span> <span data-proof="authored" data-by="ai:claude">must abort the pipeline. Do not route gate findings to "warnings."</span>
 
+**Clearing a gate requires evidence, not a self-report.** A gate is only cleared when the review output cites the proof — the pasted `sf apex run test --result-format human` coverage output, the specific `file:line` and the check that passed, or the `Limits.get*()` calculation — not "looks fine" or "no issues found." A gate marked clear without its underlying evidence is treated as unverified, and the finding stays open.
+
+### Rationalizations (Excuse → Reality)
+
+_Pressure-test-pending hypotheses (see `docs/pressure-tests/`): guidance to pre-empt the excuses used to wave a gate through under deadline, not yet independently validated._
+
+| Excuse | Reality |
+| --- | --- |
+| "This trigger only ever gets one record from the UI." | Data Loader, the REST/Bulk API, and Flow-triggered DML all pass collections on day one — and the org cannot stop them. Bulk safety is not optional. |
+| "Governor limits don't matter in a scratch org, it's just for testing." | Scratch-org and sandbox limits mirror production Enterprise Edition. There is no test-only exemption. |
+| "We'll fix sharing after it ships — it's admin-only for now." | Profile/permission-set assignment is a config change an admin makes without redeploying code. `without sharing` does not auto-correct when the audience widens. |
+| "Coverage is at 75%, we're good." | 75% is a deploy gate, not a behavior check. Coverage counts lines executed, not assertions made — a test with no asserts hits coverage and proves nothing. |
+| "It's just a config/Flow change, there's no code to review." | Flow, validation-rule, and formula changes still change behavior and can bypass CRUD/FLS or sharing. They get the same gate scrutiny as Apex. |
+
 ***
 
 ## <span data-proof="authored" data-by="ai:claude">Review Depth Levels</span>
