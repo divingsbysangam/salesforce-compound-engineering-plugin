@@ -135,6 +135,15 @@ Implement the plan:
 
 **Gate:** All 5 test check questions must pass before proceeding.
 
+**Gate (file-todos, Principle 2):** The pipeline does NOT advance past the Stage 3→4 boundary while any `p0` file-todo is still open. Check for open critical todos:
+
+```bash
+# Any p0 todo still active or blocked blocks the boundary.
+ls todos/*-active-p0-*.md todos/*-blocked-p0-*.md 2>/dev/null
+```
+
+If that command lists any file, resolve those p0 todos (move them to `done`, or explicitly downgrade/defer with human sign-off) before Review runs. See the `file-todos` skill for the `{issue}-{status}-{priority}-{description}.md` naming convention.
+
 ***
 
 ## Stage 3.5: VERIFY (independent)
@@ -269,6 +278,8 @@ The pipeline aborts and asks for human input if any of the following fire. These
 
 * Spec flow analysis finds Critical gaps with no obvious fix (Stage 1).
   Independent verification (Stage 3.5) returns NO-GO on any System-Wide Test Check question and no human has overridden (Principle 3).
+
+* A p0 file-todo remains active or blocked at the Stage 3→4 boundary (Principle 2).
 
 * Review fires any non-negotiable gate from `sf-review`: security regression, governor regression, test coverage regression, trigger context regression, or sharing regression (Stage 4, Principle 1).
 
