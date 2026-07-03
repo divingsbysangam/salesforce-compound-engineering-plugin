@@ -18,6 +18,8 @@ const TOOL_REMAP: Record<string, string> = {
 export class KiroConverter extends BaseConverter {
   readonly target: TargetPlatform = "kiro";
   readonly label = "Kiro";
+  // Kiro has a real hook primitive (Agent Hooks, JSON .kiro.hook files).
+  readonly hookClass = "native-hook" as const;
 
   convert(plugin: ClaudePlugin, outputDir: string): void {
     const kiroDir = join(outputDir, ".kiro");
@@ -27,6 +29,33 @@ export class KiroConverter extends BaseConverter {
     this.convertSkills(plugin, kiroDir);
     this.convertMcp(plugin, kiroDir);
     this.convertSteering(plugin, kiroDir);
+    this.emitHook(plugin, kiroDir);
+  }
+
+  /**
+   * Kiro Agent Hook: emit a native session-start hook declaration and copy the
+   * primer script it runs. This is the native-hook class — no instructions-file
+   * fallback needed.
+   */
+  protected emitHook(plugin: ClaudePlugin, kiroDir: string): void {
+    const hooks = plugin.hooks;
+    if (!hooks?.scriptContent) return;
+
+    const scriptDest = join(kiroDir, "hooks", "session-start");
+    this.writeFile(scriptDest, hooks.scriptContent, 0o755);
+
+    const hookDecl = {
+      enabled: true,
+      name: "SF Discipline Primer",
+      description:
+        "Injects the SF compound-engineering discipline primer at session start.",
+      version: "1",
+      when: { type: "sessionStart" },
+      then: { type: "runCommand", command: "./hooks/session-start" },
+    };
+    const hookPath = join(kiroDir, "hooks", "session-start-primer.kiro.hook");
+    this.writeFile(hookPath, JSON.stringify(hookDecl, null, 2) + "\n");
+    this.log("Hook (native SessionStart)", hookPath);
   }
 
   private convertAgents(plugin: ClaudePlugin, kiroDir: string): void {

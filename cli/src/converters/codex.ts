@@ -6,6 +6,8 @@ import { formatFrontmatter, normalizeName } from "../transforms/frontmatter.js";
 export class CodexConverter extends BaseConverter {
   readonly target: TargetPlatform = "codex";
   readonly label = "Codex";
+  // Codex natively reads AGENTS.md as always-loaded project context.
+  readonly instructionsFileName = "AGENTS.md";
 
   convert(plugin: ClaudePlugin, outputDir: string): void {
     const codexDir = join(outputDir, ".codex");
@@ -14,6 +16,7 @@ export class CodexConverter extends BaseConverter {
     this.convertCommands(plugin, codexDir);
     this.convertSkills(plugin, codexDir);
     this.convertMcp(plugin, codexDir);
+    this.emitHook(plugin, codexDir);
   }
 
   private convertAgents(plugin: ClaudePlugin, codexDir: string): void {

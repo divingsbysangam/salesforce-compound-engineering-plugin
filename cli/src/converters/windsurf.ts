@@ -8,6 +8,8 @@ import { formatFrontmatter, normalizeName } from "../transforms/frontmatter.js";
 export class WindsurfConverter extends BaseConverter {
   readonly target: TargetPlatform = "windsurf";
   readonly label = "Windsurf";
+  // Windsurf always loads rules files under its base dir.
+  readonly instructionsFileName = join("rules", "sf-discipline-primer.md");
   private scope: "global" | "workspace" = "global";
 
   setScope(scope: "global" | "workspace"): void {
@@ -23,6 +25,7 @@ export class WindsurfConverter extends BaseConverter {
     this.convertCommands(plugin, baseDir);
     this.convertSkills(plugin, baseDir);
     this.convertMcp(plugin, baseDir);
+    this.emitHook(plugin, baseDir);
   }
 
   private convertAgents(plugin: ClaudePlugin, baseDir: string): void {

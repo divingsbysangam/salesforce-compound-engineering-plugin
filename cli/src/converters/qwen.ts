@@ -7,6 +7,8 @@ import { normalizeName } from "../transforms/frontmatter.js";
 export class QwenConverter extends BaseConverter {
   readonly target: TargetPlatform = "qwen";
   readonly label = "Qwen Code";
+  // Qwen Code always loads QWEN.md as hierarchical context.
+  readonly instructionsFileName = "QWEN.md";
 
   convert(plugin: ClaudePlugin, outputDir: string): void {
     const qwenDir = join(homedir(), ".qwen", "extensions", normalizeName(plugin.name));
@@ -14,6 +16,7 @@ export class QwenConverter extends BaseConverter {
     this.convertAgents(plugin, qwenDir);
     this.convertCommands(plugin, qwenDir);
     this.convertSkills(plugin, qwenDir);
+    this.emitHook(plugin, qwenDir);
   }
 
   private convertAgents(plugin: ClaudePlugin, qwenDir: string): void {

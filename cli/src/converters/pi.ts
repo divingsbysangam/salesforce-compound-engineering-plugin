@@ -16,6 +16,7 @@ export class PiConverter extends BaseConverter {
     this.convertCommands(plugin, piDir);
     this.convertSkills(plugin, piDir);
     this.convertMcp(plugin, piDir);
+    this.emitHook(plugin, piDir);
   }
 
   private convertAgents(plugin: ClaudePlugin, piDir: string): void {

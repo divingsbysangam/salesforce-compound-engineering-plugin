@@ -7,6 +7,9 @@ import { normalizeName } from "../transforms/frontmatter.js";
 export class OpenClawConverter extends BaseConverter {
   readonly target: TargetPlatform = "openclaw";
   readonly label = "OpenClaw";
+  // OpenClaw is a JS extension host — the primer is served via an in-process
+  // session-start lifecycle callback rather than an external hook.
+  readonly hookClass = "lifecycle-callback" as const;
 
   convert(plugin: ClaudePlugin, outputDir: string): void {
     const clawDir = join(homedir(), ".openclaw", "extensions", normalizeName(plugin.name));
@@ -15,6 +18,30 @@ export class OpenClawConverter extends BaseConverter {
     this.convertCommands(plugin, clawDir);
     this.convertSkills(plugin, clawDir);
     this.generateEntryPoint(plugin, clawDir);
+    this.emitHook(plugin, clawDir);
+  }
+
+  /**
+   * In-process lifecycle callback: emit a `session-start.ts` module the
+   * extension host invokes on session start, returning the discipline primer.
+   */
+  protected emitHook(plugin: ClaudePlugin, clawDir: string): void {
+    const primer = plugin.hooks?.primerText?.trim();
+    if (!primer) return;
+
+    const ts = [
+      "// Auto-generated in-process session-start lifecycle callback.",
+      "// OpenClaw invokes onSessionStart() when a session begins.",
+      `export const sessionStartPrimer = ${JSON.stringify(primer)};`,
+      "",
+      "export function onSessionStart(): string {",
+      "  return sessionStartPrimer;",
+      "}",
+    ].join("\n");
+
+    const path = join(clawDir, "session-start.ts");
+    this.writeFile(path, ts + "\n");
+    this.log("Hook (lifecycle callback)", path);
   }
 
   private convertAgents(plugin: ClaudePlugin, clawDir: string): void {
