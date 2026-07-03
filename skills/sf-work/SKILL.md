@@ -21,9 +21,9 @@ integration mocks. If the plan has a Verification Strategy section, the implemen
 satisfy every field; do not relax it.
 ```
 
-<feature_description>
-#$ARGUMENTS
-</feature_description>
+\<feature\_description>
+\#$ARGUMENTS
+\</feature\_description>
 
 ## <span data-proof="authored" data-by="ai:claude">Interaction Method</span>
 
@@ -80,6 +80,24 @@ satisfy every field; do not relax it.
 * <span data-proof="authored" data-by="ai:claude">Standard security model (CRUD/FLS, sharing)</span>
 
 <span data-proof="authored" data-by="ai:claude">If external services are needed, justify explicitly.</span>
+
+***
+
+## Step 2.5: Test-First (Red → Green → Refactor)
+
+**Iron Law: NO APEX / LWC / FLOW PRODUCTION LOGIC WITHOUT A FAILING TEST FIRST.**
+
+* **RED** — write the `@isTest` method (or Jest spec) that asserts the not-yet-built behavior, then run it and confirm it fails for the expected reason: `sf apex run test --result-format human` (Apex) or `npm run test:unit` (LWC Jest). Paste the red failure.
+
+* **GREEN** — write the minimal production code that makes the test pass. Nothing more.
+
+* **REFACTOR** — simplify with the tests green.
+
+**Forcing function:** production code written before its test is deleted and rewritten test-first — not "kept as reference." A draft written first bakes in whatever bulk-safety or sharing bug it has before any test can catch it.
+
+**Scope:** production logic — Apex classes/triggers, LWC JS, Flow decision logic. Pure config/metadata with no behavioral change is exempt (record the reason), but Flow, validation-rule, and formula *behavior* changes still need before/after assertions, not just a deploy-succeeded check.
+
+This precedes — it does not replace — the Step 4 System-Wide Test Check, which is a completeness gate, not a red/green loop.
 
 ***
 
@@ -143,7 +161,37 @@ satisfy every field; do not relax it.
 
 5. **<span data-proof="authored" data-by="ai:claude">Integration Mock Check</span>**<span data-proof="authored" data-by="ai:claude">: Are all integration points (callouts, platform events) properly mocked in tests?</span>
 
-<span data-proof="authored" data-by="ai:claude">If any answer is "no", add the missing test before proceeding.</span>
+<span data-proof="authored" data-by="ai:claude">If any answer is "no", add the missing test before proceeding.</span><span data-proof="suggestion" data-id="m1783069520483_1" data-by="ai:claude" data-kind="insert"><span data-proof="authored" data-by="ai:claude">
+Answer each with pasted evidence, not a yes/no. Before marking the check complete, paste the fresh output of the command that proves it in this same message. A previous run, or "tests pass" without output, is not evidence.
+Claim
+Counts as evidence
+Does NOT count
+"Tests pass"
+Fresh sf apex run test --result-format human output in this message
+"Previous run passed", "should pass"
+"Coverage met"
+The actual coverage % from that run
+"It was ~80% last time"
+"Deploy is safe"
+sf project deploy start --dry-run or sf project deploy report output
+"It deployed before"
+"Within governor limits"
+A Limits.getQueries() / Limits.getDmlStatements() value at the 200+ bulk threshold
+"It won't hit limits"
+Rationalizations (Excuse → Reality)
+Pressure-test-pending hypotheses (see docs/pressure-tests/): guidance to pre-empt the excuses used to skip this gate under deadline, not yet independently validated.
+Excuse
+Reality
+"This trigger only ever gets one record from the UI."
+Data Loader, the REST/Bulk API, and Flow-triggered DML all pass collections on day one — and the org cannot stop them. Bulk safety is not optional.
+"I'll write the tests after, to hit coverage."
+Coverage-after tests assert what the code does, not what it should. They won't catch a bulk-safety regression baked into the untested draft.
+"Governor limits don't matter in a scratch org."
+Scratch-org and sandbox limits mirror production Enterprise Edition. There is no test-only exemption.
+"We'll fix sharing after it ships — it's admin-only for now."
+Profile/permission-set assignment is a config change an admin makes without redeploying code. without sharing does not auto-correct when the audience widens.
+"It's just a config/Flow change, there's no code to test."
+Flow, validation-rule, and formula changes still change behavior. They need before/after assertions, not a deploy-succeeded check.</span></span>
 
 ***
 
@@ -184,3 +232,24 @@ System-Wide Test Check:
 
 Next: /sf-review
 ```
+
+<!-- PROOF
+{
+  "version": 2,
+  "marks": {
+    "m1783069520483_1": {
+      "kind": "insert",
+      "by": "ai:claude",
+      "createdAt": "2026-07-03T09:05:20.483Z",
+      "range": {
+        "from": 6814,
+        "to": 8675
+      },
+      "content": "\nAnswer each with pasted evidence, not a yes/no. Before marking the check complete, paste the fresh output of the command that proves it in this same message. A previous run, or \"tests pass\" without output, is not evidence.\nClaim\nCounts as evidence\nDoes NOT count\n\"Tests pass\"\nFresh sf apex run test --result-format human output in this message\n\"Previous run passed\", \"should pass\"\n\"Coverage met\"\nThe actual coverage % from that run\n\"It was ~80% last time\"\n\"Deploy is safe\"\nsf project deploy start --dry-run or sf project deploy report output\n\"It deployed before\"\n\"Within governor limits\"\nA Limits.getQueries() / Limits.getDmlStatements() value at the 200+ bulk threshold\n\"It won't hit limits\"\nRationalizations (Excuse → Reality)\nPressure-test-pending hypotheses (see docs/pressure-tests/): guidance to pre-empt the excuses used to skip this gate under deadline, not yet independently validated.\nExcuse\nReality\n\"This trigger only ever gets one record from the UI.\"\nData Loader, the REST/Bulk API, and Flow-triggered DML all pass collections on day one — and the org cannot stop them. Bulk safety is not optional.\n\"I'll write the tests after, to hit coverage.\"\nCoverage-after tests assert what the code does, not what it should. They won't catch a bulk-safety regression baked into the untested draft.\n\"Governor limits don't matter in a scratch org.\"\nScratch-org and sandbox limits mirror production Enterprise Edition. There is no test-only exemption.\n\"We'll fix sharing after it ships — it's admin-only for now.\"\nProfile/permission-set assignment is a config change an admin makes without redeploying code. without sharing does not auto-correct when the audience widens.\n\"It's just a config/Flow change, there's no code to test.\"\nFlow, validation-rule, and formula changes still change behavior. They need before/after assertions, not a deploy-succeeded check.",
+      "status": "pending"
+    }
+  }
+}
+-->
+
+<!-- PROOF:END -->
