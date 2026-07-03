@@ -21,9 +21,9 @@ Strategy, repeated test failures, WCAG A/AA violations on changed UI, or deploy-
 failures. Honors $ARGUMENTS.deploy = scratch | sandbox | none.
 ```
 
-<feature_description>
-#$ARGUMENTS
-</feature_description>
+\<feature\_description>
+\#$ARGUMENTS
+\</feature\_description>
 
 ## <span data-proof="authored" data-by="ai:claude">Interaction Method</span>
 
@@ -134,6 +134,14 @@ failures. Honors $ARGUMENTS.deploy = scratch | sandbox | none.
 6. <span data-proof="authored" data-by="ai:claude">Make incremental commits.</span>
 
 **<span data-proof="authored" data-by="ai:claude">Gate:</span>** <span data-proof="authored" data-by="ai:claude">All 5 test check questions must pass before proceeding.</span>
+
+***
+
+## Stage 3.5: VERIFY (independent)
+
+Dispatch `sf-implementation-verifier` (persona under `../sf-review/references/personas/`) as an isolated, read-only subagent with a clean context. It independently re-runs the 5 System-Wide Test Check questions against the diff and returns PASS/FAIL per question with pasted evidence — it does not trust the implementer's self-report.
+
+**Gate:** independent verification returns PASS on all 5 questions (overall GO) before proceeding to Review.
 
 ***
 
@@ -256,12 +264,21 @@ sf project deploy start --target-org lfg-test --test-level RunLocalTests
 The pipeline aborts and asks for human input if any of the following fire. These map to the principles in `PRINCIPLES.md` — they are not advisory.
 
 * Plan has no clear acceptance criteria (Stage 1).
+
 * Plan is missing a complete five-field Verification Strategy section, or any field is hand-waved (Stage 1, Principle 2).
+
 * Spec flow analysis finds Critical gaps with no obvious fix (Stage 1).
+
+* Independent verification (Stage 3.5) returns NO-GO on any System-Wide Test Check question and no human has overridden (Principle 3).
+
 * Review fires any non-negotiable gate from `sf-review`: security regression, governor regression, test coverage regression, trigger context regression, or sharing regression (Stage 4, Principle 1).
+
 * Tests fail after 2 resolve cycles (Stage 5-7 loop).
+
 * Polish gate fails: an unresolved WCAG A/AA violation on a changed UI surface (Stage 6, Principle 1).
+
 * Deployment validation fails (Stage 8).
+
 * Agent confidence is low on a jagged-edge call — order of execution, mixed-DML, sharing recalculation, async-context governor — and no human has reviewed (Principle 3). When in doubt, abort and ask.
 
 ***
