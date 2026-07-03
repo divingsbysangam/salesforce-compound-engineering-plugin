@@ -159,7 +159,7 @@ For any **new or edited** `discipline-gate`-tier skill, before merge:
 3. **REFACTOR — patch the loophole, not the prose.** Edit the skill to close *exactly* that rationalization (see "Match the Form to the Failure" for choosing the form). Resist a generic rewrite; a broad "be more careful" edit closes nothing and dilutes the gate.
 4. **GREEN — re-test with the patched skill.** Run the same scenarios with the skill loaded until the loophole is closed. If the agent finds a new excuse, that is a new RED — repeat.
 
-Record the scenarios and outcomes. This log feeds Protocol E and lands in `docs/pressure-tests/` (added by unit U17), so the next editor can see which rationalizations the gate already defends against and avoid reopening them.
+Record the scenarios and outcomes. This log feeds Protocol E and lands in `docs/pressure-tests/` — see that directory's README for the record format, and `CONTRIBUTING.md` for **Protocol E** (at least two documented pressure scenarios before a discipline-gate change merges) and **Protocol G** (an eval-harness run for any gate-wording edit). The log lets the next editor see which rationalizations the gate already defends against and avoid reopening them.
 
 ### Match the Form to the Failure
 

@@ -62,6 +62,32 @@ mkdir /tmp/sfce-test && cd /tmp/sfce-test
 python /path/to/sfce.py init . --ai claude
 ```
 
+## Discipline-gate change process
+
+Some skills are **discipline-gate** tier: they tell an agent to stop and do something
+before proceeding (sf-plan's Verification Strategy, sf-work's System-Wide Test Check
+and Step 2.5 TDD gate, sf-review's Non-Negotiable Gates, sf-debug's root-cause gate,
+sf-lfg's gates). These gates are prose that must hold under pressure, so changing them
+carries two hard requirements.
+
+### Protocol G — eval evidence for gate-wording edits
+
+Any edit to a discipline-gate skill's gate language must be accompanied by a
+before/after run of the skill-triggering eval harness at `tests/skill-triggering/`
+(see its README). Run the affected case (or the whole seed battery) with the current
+wording and again with the edit, and include the result in the PR. A gate-wording
+change without eval evidence is **not merged**.
+
+### Protocol E — pressure-test records for gate changes
+
+No discipline-gate-tier skill or persona ships or is edited without **at least two**
+documented pressure scenarios recorded under `docs/pressure-tests/` (see that
+directory's README for the record format). A pressure-test record captures a scenario
+that tempts the exact failure the gate prevents, the excuse the baseline agent used,
+the patch that closed it, and the intended after-behavior. Adding or editing a gate
+means adding or updating these records first — they are the memory of which
+rationalizations the gate already defends against.
+
 ## Notes on Scope
 
 - Current focus is Claude Code plugin behavior.
