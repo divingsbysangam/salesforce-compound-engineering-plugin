@@ -6,20 +6,23 @@ argument-hint: "[PR URL or number]"
 
 # sf-resolve-pr-feedback
 
-> **Persona dispatch (V3.1, agentless).** The thread-resolver this skill spawns is the `sf-pr-comment-resolver` *persona* — a prompt asset at `references/personas/sf-pr-comment-resolver.md`, not a registered agent. Run it as an **isolated subagent** (Task tool, general-purpose subagent, persona file contents as instructions), one per thread or thread-group: parallel on Claude Code, inline-in-sequence on harnesses without subagents.
+> **Persona dispatch.** This skill dispatches personas as isolated subagents — see the `dispatching-parallel-personas` skill for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). The thread-resolver it spawns is the `sf-pr-comment-resolver` persona (a writer) at `references/personas/sf-pr-comment-resolver.md`, dispatched one per thread or thread-group — mind the same-file-conflict check when two threads touch one file.
 
 Dispatch sub-agents to evaluate each review thread, classify validity, implement the fix, and respond. Each thread is processed in parallel with metadata-diff awareness.
 
-<feature_description>
-#$ARGUMENTS
-</feature_description>
+\<feature\_description>
+\#$ARGUMENTS
+\</feature\_description>
 
 ## Salesforce Angle
 
-- Distinguish style-preference comments from governor-limit / FLS / sharing correctness comments.
-- When fix touches metadata (object, field, profile, permset), include the metadata XML diff in the resolution and re-run the affected Apex tests via `sf apex run test`.
-- When fix touches a trigger or handler, verify the bulk test still passes against 200+ records.
-- When fix involves a callout, confirm Named Credential and `Test.setMock` coverage remain aligned.
+* Distinguish style-preference comments from governor-limit / FLS / sharing correctness comments.
+
+* When fix touches metadata (object, field, profile, permset), include the metadata XML diff in the resolution and re-run the affected Apex tests via `sf apex run test`.
+
+* When fix touches a trigger or handler, verify the bulk test still passes against 200+ records.
+
+* When fix involves a callout, confirm Named Credential and `Test.setMock` coverage remain aligned.
 
 ## Interaction Method
 
@@ -37,5 +40,6 @@ This skill follows the standard sf-compound-engineering execution discipline:
 
 ## Related
 
-- Salesforce knowledge: `docs/solutions/` (search via the `sf-learnings-researcher` agent).
-- Plugin conventions: see `CLAUDE.md` for frontmatter, naming, and protected-artifact rules.
+* Salesforce knowledge: `docs/solutions/` (search via the `sf-learnings-researcher` agent).
+
+* Plugin conventions: see `CLAUDE.md` for frontmatter, naming, and protected-artifact rules.

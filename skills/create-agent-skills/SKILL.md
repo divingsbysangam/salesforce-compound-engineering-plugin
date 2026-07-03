@@ -11,6 +11,7 @@ Guide for extending the SF Compound Engineering Plugin. **V3.1 is agentless** �
 ## Personas vs. skills
 
 * **Persona** — a specialist *prompt asset* (a reviewer, researcher, or validator) at `skills/<owner>/references/personas/<name>.md`. It is dispatched at runtime as an isolated subagent; it is **not** registered in any manifest.
+
 * **Skill** — a user-facing entry point at `skills/<name>/SKILL.md` that auto-routes from its `description` frontmatter. Workflow skills *dispatch* personas; domain skills *provide knowledge*.
 
 ***
@@ -44,7 +45,9 @@ description: {One-line description — also the auto-routing trigger}
 ## Output Format
 
 ```
+
 {Expected output structure — findings, severities, fix suggestions}
+
 ```
 
 ## When to Use
@@ -58,15 +61,15 @@ Read-only is the default for review/research personas. Only personas that genuin
 
 Place the persona in the `references/personas/` directory of its **primary owning skill**. Other skills reference it by relative path (e.g. `../sf-review/references/personas/<name>.md`) — stable because the whole `skills/` tree ships together.
 
-| Concern                         | Owner skill            | Directory                                          |
-| ------------------------------- | ---------------------- | -------------------------------------------------- |
-| Code review (Apex/LWC/Flow/Integration/Architecture) | `sf-review`            | `skills/sf-review/references/personas/`            |
-| Planning-document review        | `sf-doc-review`        | `skills/sf-doc-review/references/personas/`        |
-| Research (learnings, docs, web, history, spec-flow)  | `sf-plan`              | `skills/sf-plan/references/personas/`              |
-| Bug reproduction                | `sf-debug`             | `skills/sf-debug/references/personas/`             |
-| PR-thread resolution            | `sf-resolve-pr-feedback` | `skills/sf-resolve-pr-feedback/references/personas/` |
-| Org pulse (business lens)       | `sf-product-pulse`     | `skills/sf-product-pulse/references/personas/`     |
-| Custom MCP tooling              | `mcp-tool-builder`     | `skills/mcp-tool-builder/references/personas/`     |
+| Concern                                              | Owner skill              | Directory                                            |
+| ---------------------------------------------------- | ------------------------ | ---------------------------------------------------- |
+| Code review (Apex/LWC/Flow/Integration/Architecture) | `sf-review`              | `skills/sf-review/references/personas/`              |
+| Planning-document review                             | `sf-doc-review`          | `skills/sf-doc-review/references/personas/`          |
+| Research (learnings, docs, web, history, spec-flow)  | `sf-plan`                | `skills/sf-plan/references/personas/`                |
+| Bug reproduction                                     | `sf-debug`               | `skills/sf-debug/references/personas/`               |
+| PR-thread resolution                                 | `sf-resolve-pr-feedback` | `skills/sf-resolve-pr-feedback/references/personas/` |
+| Org pulse (business lens)                            | `sf-product-pulse`       | `skills/sf-product-pulse/references/personas/`       |
+| Custom MCP tooling                                   | `mcp-tool-builder`       | `skills/mcp-tool-builder/references/personas/`       |
 
 ### How personas get dispatched
 
@@ -96,12 +99,12 @@ argument-hint: "[optional argument hint]"
 {More content}
 ```
 
-A skill that dispatches personas should carry a **"Persona dispatch (V3.1, agentless)"** note after its H1 (see any workflow skill for the exact wording) and a dispatch list naming the personas it runs.
+A skill that dispatches personas should carry a **"Persona dispatch"** note after its H1 — a one-line pointer to the `dispatching-parallel-personas` skill for the shared mechanics (isolated subagents, same-response parallelism, same-file-conflict check) plus this skill's own pointer to where its personas live (see any workflow skill for the wording) — and a dispatch list naming the personas it runs.
 
 ### Skill Design Principles
 
 1. **Reference, not instructions**: domain skills provide knowledge; workflow skills + personas use it.
-2. **Scoped**: each skill has a clear scope (APEX_ONLY, UNIVERSAL, etc.) stated in prose.
+2. **Scoped**: each skill has a clear scope (APEX\_ONLY, UNIVERSAL, etc.) stated in prose.
 3. **Searchable**: clear headings and code examples.
 4. **Concise**: include only what's needed for decision-making.
 
@@ -110,12 +113,14 @@ A skill that dispatches personas should carry a **"Persona dispatch (V3.1, agent
 ## After Creating
 
 **A new persona:**
+
 1. Save it to the owning skill's `references/personas/<name>.md` (see the ownership table).
 2. Wire its name into that skill's dispatch list and "Persona dispatch" note.
 3. If it should run during the full pipeline, it's reached automatically — `sf-lfg` delegates to `/sf-review`, `/sf-plan`, etc.
 4. Verify it ships: `cli/` copies a skill's whole `references/` subtree, so no manifest edit is needed.
 
 **A new skill:**
+
 1. Add `skills/{skill-name}/SKILL.md` with proper frontmatter.
 2. Update `skills/index.md` (routing table).
 3. Bump the version across the four manifests (`.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `.cursor-plugin/plugin.json`, `.codex-plugin/plugin.json`).
@@ -126,6 +131,9 @@ A skill that dispatches personas should carry a **"Persona dispatch (V3.1, agent
 ## Naming Conventions
 
 * **Personas**: `sf-{domain}-{role}.md` (e.g. `sf-apex-governor-guardian.md`), under the owner's `references/personas/`.
+
 * **Skills**: `{topic}/SKILL.md` (e.g. `governor-limits/SKILL.md`); workflow skills use the `sf-` prefix (e.g. `sf-review/SKILL.md`).
+
 * Use kebab-case for all file and directory names.
+
 * Prefix Salesforce-specific personas and workflow skills with `sf-`.

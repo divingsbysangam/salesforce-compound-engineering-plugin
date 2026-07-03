@@ -1,48 +1,48 @@
-# <span data-proof="authored" data-by="ai:claude">Salesforce Skills Index</span>
+# Salesforce Skills Index
 
-<span data-proof="authored" data-by="ai:claude">After the V3 migration, all skills live under</span> <span data-proof="authored" data-by="ai:claude">`skills/<name>/SKILL.md`. The nine core workflow loop skills, plus `/sf-strategy` for product grounding above the loop, were formerly</span> <span data-proof="authored" data-by="ai:claude">`commands/`) are now first-class skills with auto-routing trigger phrases.</span>
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Core Workflow Skills</span>
-
-<span data-proof="authored" data-by="ai:claude">These were</span> <span data-proof="authored" data-by="ai:claude">`commands/`</span> <span data-proof="authored" data-by="ai:claude">files in v2.x. In V3 they auto-route from natural-language phrases via their</span> <span data-proof="authored" data-by="ai:claude">`description`</span> <span data-proof="authored" data-by="ai:claude">frontmatter. Direct invocation via</span> <span data-proof="authored" data-by="ai:claude">`/sf-<name>`</span> <span data-proof="authored" data-by="ai:claude">still works.</span>
-
-| <span data-proof="authored" data-by="ai:claude">Skill</span>            | <span data-proof="authored" data-by="ai:claude">File</span>                     | <span data-proof="authored" data-by="ai:claude">Use When</span>                                                                                                                                                                     |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <span data-proof="authored" data-by="ai:claude">`/sf-strategy`</span>   | <span data-proof="authored" data-by="ai:claude">`sf-strategy/SKILL.md`</span>   | <span data-proof="authored" data-by="ai:claude">Maintain `STRATEGY.md` grounding — above the loop; read by ideate/brainstorm/plan</span>                                                                                            |
-| <span data-proof="authored" data-by="ai:claude">`/sf-ideate`</span>     | <span data-proof="authored" data-by="ai:claude">`sf-ideate/SKILL.md`</span>     | <span data-proof="authored" data-by="ai:claude">Decide what's worth building — the front "bread" of the loop</span>                                                                                                                 |
-| <span data-proof="authored" data-by="ai:claude">`/sf-brainstorm`</span> | <span data-proof="authored" data-by="ai:claude">`sf-brainstorm/SKILL.md`</span> | <span data-proof="authored" data-by="ai:claude">Pre-planning exploration of a Salesforce feature idea</span>                                                                                                                        |
-| <span data-proof="authored" data-by="ai:claude">`/sf-plan`</span>       | <span data-proof="authored" data-by="ai:claude">`sf-plan/SKILL.md`</span>       | <span data-proof="authored" data-by="ai:claude">Structured implementation plan for Apex/LWC/Flow/Integration/metadata work</span>                                                                                                   |
-| <span data-proof="authored" data-by="ai:claude">`/sf-deepen`</span>     | <span data-proof="authored" data-by="ai:claude">`sf-deepen/SKILL.md`</span>     | <span data-proof="authored" data-by="ai:claude">Strengthen an existing plan with parallel research personas per section</span>                                                                                                        |
-| <span data-proof="authored" data-by="ai:claude">`/sf-work`</span>       | <span data-proof="authored" data-by="ai:claude">`sf-work/SKILL.md`</span>       | <span data-proof="authored" data-by="ai:claude">Execute a plan or feature description with system-wide test checks</span>                                                                                                           |
-| <span data-proof="authored" data-by="ai:claude">`/sf-review`</span>     | <span data-proof="authored" data-by="ai:claude">`sf-review/SKILL.md`</span>     | <span data-proof="authored" data-by="ai:claude">Multi-persona parallel review of code, PR, or local diff</span>                                                                                                                     |
-| <span data-proof="authored" data-by="ai:claude">`/sf-polish`</span>     | <span data-proof="authored" data-by="ai:claude">`sf-polish/SKILL.md`</span>     | <span data-proof="authored" data-by="ai:claude">Stack-aware UI polish — design, WCAG accessibility, copy (the back "bread")</span>                                                                                            |
-| <span data-proof="authored" data-by="ai:claude">`/sf-compound`</span>   | <span data-proof="authored" data-by="ai:claude">`sf-compound/SKILL.md`</span>   | <span data-proof="authored" data-by="ai:claude">Capture a learning into</span> <span data-proof="authored" data-by="ai:claude">`docs/solutions/`</span> <span data-proof="authored" data-by="ai:claude">for future retrieval</span> |
-| <span data-proof="authored" data-by="ai:claude">`/sf-lfg`</span>        | <span data-proof="authored" data-by="ai:claude">`sf-lfg/SKILL.md`</span>        | <span data-proof="authored" data-by="ai:claude">Full autonomous ideate → brainstorm → plan → deepen → work → review → polish → test → deploy pipeline</span>                                                                                |
+After the V3 migration, all skills live under `skills/<name>/SKILL.md`. The nine core workflow loop skills, plus `/sf-strategy` for product grounding above the loop, were formerly `commands/`) are now first-class skills with auto-routing trigger phrases.
 
 ***
 
-## <span data-proof="authored" data-by="ai:claude">Domain Knowledge Skills (Salesforce-Specific)</span>
+## Core Workflow Skills
 
-<span data-proof="authored" data-by="ai:claude">These are content/reference skills loaded by other skills as needed.</span>
+These were `commands/` files in v2.x. In V3 they auto-route from natural-language phrases via their `description` frontmatter. Direct invocation via `/sf-<name>` still works.
 
-| <span data-proof="authored" data-by="ai:claude">Skill</span>                | <span data-proof="authored" data-by="ai:claude">File</span>                            | <span data-proof="authored" data-by="ai:claude">Scope</span>                     | <span data-proof="authored" data-by="ai:claude">Use When</span>                                                                       |
-| --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| <span data-proof="authored" data-by="ai:claude">Governor Limits</span>      | <span data-proof="authored" data-by="ai:claude">`governor-limits/SKILL.md`</span>      | <span data-proof="authored" data-by="ai:claude">UNIVERSAL</span>                 | <span data-proof="authored" data-by="ai:claude">Always when Apex, Flow, or trigger work touches limit-bearing code</span>             |
-| <span data-proof="authored" data-by="ai:claude">Apex Patterns</span>        | <span data-proof="authored" data-by="ai:claude">`apex-patterns/SKILL.md`</span>        | <span data-proof="authored" data-by="ai:claude">APEX_ONLY</span>                 | <span data-proof="authored" data-by="ai:claude">Apex classes, triggers, services. Not for Flows.</span>                               |
-| <span data-proof="authored" data-by="ai:claude">Flow Patterns</span>        | <span data-proof="authored" data-by="ai:claude">`flow-patterns/SKILL.md`</span>        | <span data-proof="authored" data-by="ai:claude">AUTOMATION_ONLY</span>           | <span data-proof="authored" data-by="ai:claude">Building any Flow. Not for Apex.</span>                                               |
-| <span data-proof="authored" data-by="ai:claude">LWC Patterns</span>         | <span data-proof="authored" data-by="ai:claude">`lwc-patterns/SKILL.md`</span>         | <span data-proof="authored" data-by="ai:claude">LWC_ONLY</span>                  | <span data-proof="authored" data-by="ai:claude">Building Lightning Web Components</span>                                              |
-| <span data-proof="authored" data-by="ai:claude">GraphQL Patterns</span>     | <span data-proof="authored" data-by="ai:claude">`graphql-patterns/SKILL.md`</span>     | <span data-proof="authored" data-by="ai:claude">LWC_ONLY</span>                  | <span data-proof="authored" data-by="ai:claude">GraphQL queries + mutations via `lightning/graphql` and `lightning/uiGraphQLApi`; Apex-vs-GraphQL decision; metadata permission gotcha</span> |
-| <span data-proof="authored" data-by="ai:claude">Security Guide</span>       | <span data-proof="authored" data-by="ai:claude">`security-guide/SKILL.md`</span>       | <span data-proof="authored" data-by="ai:claude">UNIVERSAL</span>                 | <span data-proof="authored" data-by="ai:claude">CRUD/FLS, sharing, permissions, AppExchange security</span>                           |
-| <span data-proof="authored" data-by="ai:claude">Integration Patterns</span> | <span data-proof="authored" data-by="ai:claude">`integration-patterns/SKILL.md`</span> | <span data-proof="authored" data-by="ai:claude">INTEGRATION_ONLY</span>          | <span data-proof="authored" data-by="ai:claude">Callouts, APIs, Platform Events</span>                                                |
-| <span data-proof="authored" data-by="ai:claude">Test Factory</span>         | <span data-proof="authored" data-by="ai:claude">`test-factory/SKILL.md`</span>         | <span data-proof="authored" data-by="ai:claude">APEX_ONLY</span>                 | <span data-proof="authored" data-by="ai:claude">Apex test classes and test data factories</span>                                      |
-| Agentforce Develop                                                          | `agentforce-develop/SKILL.md`                                                          | AGENTFORCE                                                                       | Build, modify, debug, deploy Agentforce agents — Agent Spec gate, `.agent` authoring, publish/activate                                |
-| Agentforce Test                                                             | `agentforce-test/SKILL.md`                                                             | AGENTFORCE                                                                       | Smoke + batch testing — `sf agent preview` traces, Testing Center YAML, safety verdict, fix loop                                      |
-| Agentforce Observe                                                          | `agentforce-observe/SKILL.md`                                                          | AGENTFORCE                                                                       | Production observation — STDM session traces in Data Cloud (with fallback), reproduce-classify-improve loop                           |
-| <span data-proof="authored" data-by="ai:claude">Prompt Builder</span>       | <span data-proof="authored" data-by="ai:claude">`prompt-builder/SKILL.md`</span>       | <span data-proof="authored" data-by="ai:claude">AGENTFORCE_PROMPT_BUILDER</span> | <span data-proof="authored" data-by="ai:claude">Prompt templates, Apex/LWC/API integration, metadata XML generation</span>            |
-| <span data-proof="authored" data-by="ai:claude">Hosted MCP Servers</span>   | <span data-proof="authored" data-by="ai:claude">`hosted-mcp-servers/SKILL.md`</span>   | <span data-proof="authored" data-by="ai:claude">HOSTED_MCP</span>                | <span data-proof="authored" data-by="ai:claude">Setting up and configuring Salesforce Hosted MCP Servers, ECA, troubleshooting</span> |
-| <span data-proof="authored" data-by="ai:claude">MCP Tool Builder</span>     | <span data-proof="authored" data-by="ai:claude">`mcp-tool-builder/SKILL.md`</span>     | <span data-proof="authored" data-by="ai:claude">HOSTED_MCP</span>                | <span data-proof="authored" data-by="ai:claude">Building custom MCP tools — InvocableMethod, Flow, Named Queries</span>               |
+| Skill            | File                     | Use When                                                                                                                                                                                        |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/sf-strategy`   | `sf-strategy/SKILL.md`   | Maintain `STRATEGY.md` grounding — above the loop; read by ideate/brainstorm/plan |
+| `/sf-ideate`     | `sf-ideate/SKILL.md`     | Decide what's worth building — the front "bread" of the loop                                                                                                                                    |
+| `/sf-brainstorm` | `sf-brainstorm/SKILL.md` | Pre-planning exploration of a Salesforce feature idea                                                                                                                                           |
+| `/sf-plan`       | `sf-plan/SKILL.md`       | Structured implementation plan for Apex/LWC/Flow/Integration/metadata work                                                                                                                      |
+| `/sf-deepen`     | `sf-deepen/SKILL.md`     | Strengthen an existing plan with parallel research personas per section                                                                                                                         |
+| `/sf-work`       | `sf-work/SKILL.md`       | Execute a plan or feature description with system-wide test checks                                                                                                                              |
+| `/sf-review`     | `sf-review/SKILL.md`     | Multi-persona parallel review of code, PR, or local diff                                                                                                                                        |
+| `/sf-polish`     | `sf-polish/SKILL.md`     | Stack-aware UI polish — design, WCAG accessibility, copy (the back "bread")                                                                                                                     |
+| `/sf-compound`   | `sf-compound/SKILL.md`   | Capture a learning into `docs/solutions/` for future retrieval                    |
+| `/sf-lfg`        | `sf-lfg/SKILL.md`        | Full autonomous ideate → brainstorm → plan → deepen → work → review → polish → test → deploy pipeline                                                                                           |
+
+***
+
+## Domain Knowledge Skills (Salesforce-Specific)
+
+These are content/reference skills loaded by other skills as needed.
+
+| Skill                | File                            | Scope                     | Use When                                                                                                                                                                                                                                                                                                    |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Governor Limits      | `governor-limits/SKILL.md`      | UNIVERSAL                 | Always when Apex, Flow, or trigger work touches limit-bearing code                                                                                                                                                                                                                                          |
+| Apex Patterns        | `apex-patterns/SKILL.md`        | APEX_ONLY                 | Apex classes, triggers, services. Not for Flows.                                                                                                                                                                                                                                                            |
+| Flow Patterns        | `flow-patterns/SKILL.md`        | AUTOMATION_ONLY           | Building any Flow. Not for Apex.                                                                                                                                                                                                                                                                            |
+| LWC Patterns         | `lwc-patterns/SKILL.md`         | LWC_ONLY                  | Building Lightning Web Components                                                                                                                                                                                                                                                                           |
+| GraphQL Patterns     | `graphql-patterns/SKILL.md`     | LWC_ONLY                  | GraphQL queries + mutations via `lightning/graphql` and `lightning/uiGraphQLApi`; Apex-vs-GraphQL decision; metadata permission gotcha |
+| Security Guide       | `security-guide/SKILL.md`       | UNIVERSAL                 | CRUD/FLS, sharing, permissions, AppExchange security                                                                                                                                                                                                                                                        |
+| Integration Patterns | `integration-patterns/SKILL.md` | INTEGRATION_ONLY          | Callouts, APIs, Platform Events                                                                                                                                                                                                                                                                             |
+| Test Factory         | `test-factory/SKILL.md`         | APEX_ONLY                 | Apex test classes and test data factories                                                                                                                                                                                                                                                                   |
+| Agentforce Develop                                                          | `agentforce-develop/SKILL.md`                                                          | AGENTFORCE                                                                       | Build, modify, debug, deploy Agentforce agents — Agent Spec gate, `.agent` authoring, publish/activate                                                                                                                                                                                                                                                             |
+| Agentforce Test                                                             | `agentforce-test/SKILL.md`                                                             | AGENTFORCE                                                                       | Smoke + batch testing — `sf agent preview` traces, Testing Center YAML, safety verdict, fix loop                                                                                                                                                                                                                                                                   |
+| Agentforce Observe                                                          | `agentforce-observe/SKILL.md`                                                          | AGENTFORCE                                                                       | Production observation — STDM session traces in Data Cloud (with fallback), reproduce-classify-improve loop                                                                                                                                                                                                                                                        |
+| Prompt Builder       | `prompt-builder/SKILL.md`       | AGENTFORCE_PROMPT_BUILDER | Prompt templates, Apex/LWC/API integration, metadata XML generation                                                                                                                                                                                                                                         |
+| Hosted MCP Servers   | `hosted-mcp-servers/SKILL.md`   | HOSTED_MCP                | Setting up and configuring Salesforce Hosted MCP Servers, ECA, troubleshooting                                                                                                                                                                                                                              |
+| MCP Tool Builder     | `mcp-tool-builder/SKILL.md`     | HOSTED_MCP                | Building custom MCP tools — InvocableMethod, Flow, Named Queries                                                                                                                                                                                                                                            |
 
 ***
 
@@ -50,28 +50,29 @@
 
 Action-shaped skills that produce metadata, code, and refactors. Pair with the reference skills above (`apex-patterns`, `flow-patterns`, etc.) — generation skills are the action; reference skills describe the shape.
 
-| Skill | File | Scope | Use When |
-|---|---|---|---|
-| Apex Generate                | `apex-generate/SKILL.md`                | APEX_ONLY        | Generate an Apex class + matching test class as one unit. Bulkified, CRUD/FLS-enforced, sharing keyword declared, `Assert.*` tests with 251+ records |
-| Flow Generate                | `flow-generate/SKILL.md`                | AUTOMATION_ONLY  | Generate Flow XML via the strict 3-step MCP `execute_metadata_action` pipeline (fetchGroundedObjectMetadata → flowElementSelection → flowElementGeneration loop) |
-| Validation Rule Generate     | `validation-rule-generate/SKILL.md`     | AUTOMATION_ONLY  | Generate `.validationRule-meta.xml` with CDATA-wrapped formula when needed; correct picklist / Date / Datetime function usage |
-| Apex Trigger Refactor        | `apex-trigger-refactor/SKILL.md`        | APEX_ONLY        | Modernize a legacy trigger — hoist SOQL/DML out of loops, extract handler class, add recursion guard, generate matching tests |
-| SLDS 2 Uplift                | `slds2-uplift/SKILL.md`                 | LWC_ONLY         | Migrate LWC / Aura components from SLDS 1 to SLDS 2 by running `@salesforce-ux/slds-linter` and fixing every violation type with `var(--slds-g-hook, original)` fallback |
-| Metadata Generate            | `metadata-generate/SKILL.md`            | METADATA         | Single-skill generator for CustomObject, CustomField, CustomApplication, CustomTab, ListView, CustomLightningType (`--type` dispatched) |
-| Lightning Page Generate      | `lightning-page-generate/SKILL.md`      | METADATA         | Generate a FlexiPage (`--type page`) or orchestrate a complete LEX app across multiple metadata types in dependency order (`--type app`) |
-| Permission Set Generate      | `permission-set-generate/SKILL.md`      | METADATA         | Generate a PermissionSet with least-privilege defaults — object CRUD, FLS, tab visibility, app visibility, system perms, class / page access |
+| Skill                    | File                                | Scope            | Use When                                                                                                                                                                 |
+| ------------------------ | ----------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Apex Generate            | `apex-generate/SKILL.md`            | APEX\_ONLY       | Generate an Apex class + matching test class as one unit. Bulkified, CRUD/FLS-enforced, sharing keyword declared, `Assert.*` tests with 251+ records                     |
+| Flow Generate            | `flow-generate/SKILL.md`            | AUTOMATION\_ONLY | Generate Flow XML via the strict 3-step MCP `execute_metadata_action` pipeline (fetchGroundedObjectMetadata → flowElementSelection → flowElementGeneration loop)         |
+| Validation Rule Generate | `validation-rule-generate/SKILL.md` | AUTOMATION\_ONLY | Generate `.validationRule-meta.xml` with CDATA-wrapped formula when needed; correct picklist / Date / Datetime function usage                                            |
+| Apex Trigger Refactor    | `apex-trigger-refactor/SKILL.md`    | APEX\_ONLY       | Modernize a legacy trigger — hoist SOQL/DML out of loops, extract handler class, add recursion guard, generate matching tests                                            |
+| SLDS 2 Uplift            | `slds2-uplift/SKILL.md`             | LWC\_ONLY        | Migrate LWC / Aura components from SLDS 1 to SLDS 2 by running `@salesforce-ux/slds-linter` and fixing every violation type with `var(--slds-g-hook, original)` fallback |
+| Metadata Generate        | `metadata-generate/SKILL.md`        | METADATA         | Single-skill generator for CustomObject, CustomField, CustomApplication, CustomTab, ListView, CustomLightningType (`--type` dispatched)                                  |
+| Lightning Page Generate  | `lightning-page-generate/SKILL.md`  | METADATA         | Generate a FlexiPage (`--type page`) or orchestrate a complete LEX app across multiple metadata types in dependency order (`--type app`)                                 |
+| Permission Set Generate  | `permission-set-generate/SKILL.md`  | METADATA         | Generate a PermissionSet with least-privilege defaults — object CRUD, FLS, tab visibility, app visibility, system perms, class / page access                             |
 
 ***
 
-## <span data-proof="authored" data-by="ai:claude">Workflow Support Skills</span>
+## Workflow Support Skills
 
-| <span data-proof="authored" data-by="ai:claude">Skill</span>               | <span data-proof="authored" data-by="ai:claude">File</span>                           | <span data-proof="authored" data-by="ai:claude">Use When</span>                                                                                                                                                              |
+| Skill               | File                           | Use When                                                                                                                                                              |
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <span data-proof="authored" data-by="ai:claude">SF CLI</span>              | <span data-proof="authored" data-by="ai:claude">`sf-cli/SKILL.md`</span>              | <span data-proof="authored" data-by="ai:claude">Deploy, retrieve, test, org management via the</span> <span data-proof="authored" data-by="ai:claude">`sf`</span> <span data-proof="authored" data-by="ai:claude">CLI</span> |
-| <span data-proof="authored" data-by="ai:claude">Compound Docs</span>       | <span data-proof="authored" data-by="ai:claude">`compound-docs/SKILL.md`</span>       | <span data-proof="authored" data-by="ai:claude">Writing solution documents with YAML schema</span>                                                                                                                           |
-| <span data-proof="authored" data-by="ai:claude">File Todos</span>          | <span data-proof="authored" data-by="ai:claude">`file-todos/SKILL.md`</span>          | <span data-proof="authored" data-by="ai:claude">File-based task tracking with status/priority naming</span>                                                                                                                  |
-| <span data-proof="authored" data-by="ai:claude">Git Worktree</span>        | <span data-proof="authored" data-by="ai:claude">`git-worktree/SKILL.md`</span>        | <span data-proof="authored" data-by="ai:claude">Isolated parallel development branches</span>                                                                                                                                |
-| <span data-proof="authored" data-by="ai:claude">Create Agent Skills</span> | <span data-proof="authored" data-by="ai:claude">`create-agent-skills/SKILL.md`</span> | <span data-proof="authored" data-by="ai:claude">Creating new agents and skills for the plugin</span>                                                                                                                         |
+| SF CLI              | `sf-cli/SKILL.md`              | Deploy, retrieve, test, org management via the `sf` CLI |
+| Compound Docs       | `compound-docs/SKILL.md`       | Writing solution documents with YAML schema                                                                                                                           |
+| File Todos          | `file-todos/SKILL.md`          | File-based task tracking with status/priority naming                                                                                                                  |
+| Git Worktree        | `git-worktree/SKILL.md`        | Isolated parallel development branches                                                                                                                                |
+| Create Agent Skills | `create-agent-skills/SKILL.md` | Creating new agents and skills for the plugin                                                                                                                         |
+| Dispatching Parallel Personas                                              | `dispatching-parallel-personas/SKILL.md`                                              | Shared persona-dispatch mechanics (isolated subagents, same-response parallelism, same-file-conflict check) referenced by the workflow skills                                                                                |
 
 ***
 
@@ -79,42 +80,42 @@ Action-shaped skills that produce metadata, code, and refactors. Pair with the r
 
 Salesforce-aware skills covering the full V3 capability surface — debugging, doc review, PR description, PR feedback resolution, ideation, optimization, plugin maintenance, session research, git hygiene, commits, agent-native architecture, knowledge refresh, release notes, bug reports, Slack research, Proof HITL, and demo capture.
 
-| Skill                          | Salesforce angle                                                         |
-| ------------------------------ | ------------------------------------------------------------------------ |
-| `sf-debug`                     | Trigger / Apex test / LWC error / deploy failure root cause analysis     |
-| `sf-doc-review`                | Parallel persona review of Salesforce plans and specs                    |
-| `sf-pr-description`            | Salesforce-aware PR descriptions (Apex / metadata / LWC scope)           |
-| `sf-resolve-pr-feedback`       | Parallel resolution with metadata-diff awareness                         |
-| `sf-simplify-code`             | Behavior-preserving simplification of Apex/LWC (YAGNI, native-first)      |
+| Skill                          | Salesforce angle                                                                   |
+| ------------------------------ | ---------------------------------------------------------------------------------- |
+| `sf-debug`                     | Trigger / Apex test / LWC error / deploy failure root cause analysis               |
+| `sf-doc-review`                | Parallel persona review of Salesforce plans and specs                              |
+| `sf-pr-description`            | Salesforce-aware PR descriptions (Apex / metadata / LWC scope)                     |
+| `sf-resolve-pr-feedback`       | Parallel resolution with metadata-diff awareness                                   |
+| `sf-simplify-code`             | Behavior-preserving simplification of Apex/LWC (YAGNI, native-first)               |
 | `sf-product-pulse`             | Role-aware org pulse: requirements traceability + adoption (BA) / org health (dev) |
-| `sf-optimize`                  | Metric-driven optimization loops (governor-limit thresholds, query plan) |
-| `sf-update`                    | Plugin self-update from the upstream GitHub releases endpoint            |
-| `sf-setup`                     | Salesforce CLI presence check, `sfdx-project.json`, MCP servers          |
-| `sf-sessions`                  | Search past Claude/Codex/Cursor sessions filtered for SF file types      |
-| `sf-session-inventory`         | Discover session files for a Salesforce repo                             |
-| `sf-session-extract`           | Extract conversation skeleton from one session file                      |
-| `sf-clean-gone-branches`       | Prune local branches whose remote is gone                                |
-| `sf-commit`                    | Conventional commits with Salesforce scope taxonomy                      |
-| `sf-commit-push-pr`            | Commit + push + open PR with Salesforce-aware description                |
-| `sf-agent-native-architecture` | Build Salesforce systems where any user action is also agent-accessible  |
-| `sf-agent-native-audit`        | Audit human/agent affordance parity on Salesforce surfaces               |
-| `sf-compound-refresh`          | Refresh stale `docs/solutions/` Salesforce knowledge                     |
-| `sf-release-notes`             | Generate release notes from PRs / commits                                |
-| `sf-report-bug`                | Structured bug report (incl. Salesforce-specific environment fields)     |
-| `sf-slack-research`            | Slack search for Salesforce org-context decisions                        |
-| `sf-proof`                     | Markdown HITL via Proof editor                                           |
-| `sf-demo-reel`                 | Capture demos for PRs (UI / CLI / Setup screen)                          |
+| `sf-optimize`                  | Metric-driven optimization loops (governor-limit thresholds, query plan)           |
+| `sf-update`                    | Plugin self-update from the upstream GitHub releases endpoint                      |
+| `sf-setup`                     | Salesforce CLI presence check, `sfdx-project.json`, MCP servers                    |
+| `sf-sessions`                  | Search past Claude/Codex/Cursor sessions filtered for SF file types                |
+| `sf-session-inventory`         | Discover session files for a Salesforce repo                                       |
+| `sf-session-extract`           | Extract conversation skeleton from one session file                                |
+| `sf-clean-gone-branches`       | Prune local branches whose remote is gone                                          |
+| `sf-commit`                    | Conventional commits with Salesforce scope taxonomy                                |
+| `sf-commit-push-pr`            | Commit + push + open PR with Salesforce-aware description                          |
+| `sf-agent-native-architecture` | Build Salesforce systems where any user action is also agent-accessible            |
+| `sf-agent-native-audit`        | Audit human/agent affordance parity on Salesforce surfaces                         |
+| `sf-compound-refresh`          | Refresh stale `docs/solutions/` Salesforce knowledge                               |
+| `sf-release-notes`             | Generate release notes from PRs / commits                                          |
+| `sf-report-bug`                | Structured bug report (incl. Salesforce-specific environment fields)               |
+| `sf-slack-research`            | Slack search for Salesforce org-context decisions                                  |
+| `sf-proof`                     | Markdown HITL via Proof editor                                                     |
+| `sf-demo-reel`                 | Capture demos for PRs (UI / CLI / Setup screen)                                    |
 
 Out of scope for this Salesforce plugin (intentionally not shipped): generic frontend design tooling, Figma sync, image generation, non-Salesforce test runners (xcode, browser), and personality-tied reviewers tied to non-Salesforce stacks.
 
 ***
 
-## <span data-proof="authored" data-by="ai:claude">Notes</span>
+## Notes
 
-* <span data-proof="authored" data-by="ai:claude">Skills auto-route via their</span> <span data-proof="authored" data-by="ai:claude">`description`</span> <span data-proof="authored" data-by="ai:claude">frontmatter. The V3 harness picks a skill when the user types a phrase that matches the description's trigger language.</span>
+* Skills auto-route via their `description` frontmatter. The V3 harness picks a skill when the user types a phrase that matches the description's trigger language.
 
-* <span data-proof="authored" data-by="ai:claude">Direct slash invocation (`/sf-plan`,</span> <span data-proof="authored" data-by="ai:claude">`/sf-debug`) always works regardless of phrasing.</span>
+* Direct slash invocation (`/sf-plan`, `/sf-debug`) always works regardless of phrasing.
 
-* <span data-proof="authored" data-by="ai:claude">For routing collisions (e.g., "review this" vs. "review this PR"), the more specific phrase wins.</span>
+* For routing collisions (e.g., "review this" vs. "review this PR"), the more specific phrase wins.
 
-* <span data-proof="authored" data-by="ai:claude">The nine core workflow skills are the primary entry points; domain skills are loaded by them as needed.</span>
+* The nine core workflow skills are the primary entry points; domain skills are loaded by them as needed.

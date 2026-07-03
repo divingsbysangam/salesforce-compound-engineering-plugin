@@ -6,7 +6,7 @@ argument-hint: "[blank to polish current branch UI changes, or name a component 
 
 # /sf-polish
 
-> **Persona dispatch (V3.1, agentless).** Where this skill dispatches reviewers (e.g. `sf-lwc-accessibility-guardian`, `sf-aura-migration-advisor`), they are *personas* — prompt assets under `../sf-review/references/personas/<name>.md`, not registered agents. Run each as an **isolated subagent** (Task tool, general-purpose subagent, persona file contents as instructions): parallel on Claude Code, inline-in-sequence on harnesses without subagents.
+> **Persona dispatch.** This skill dispatches personas as isolated subagents — see the `dispatching-parallel-personas` skill for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). The reviewers it dispatches (e.g. `sf-lwc-accessibility-guardian`, `sf-aura-migration-advisor`) are review personas referenced from `../sf-review/references/personas/`.
 
 > **Principles enforced:** especially 1 (preserve the quality ceiling — the finished thing must feel right, not merely compile) and 5 (taste over typing — UX and copy are human-judgment calls). See `PRINCIPLES.md`.
 
@@ -20,10 +20,13 @@ Resolve scope: a user-named component/app, else the branch diff (`git diff origi
 
 Classify the changed files into front-end surfaces:
 
-- `*.js` / `*.html` / `*.css` inside an `lwc/` bundle → **LWC**
-- `*.cmp` / `*.app` / `*Controller.js` / `*Helper.js` inside `aura/` → **Aura**
-- LWR / Experience Cloud bundles (`experiences/`, `digitalExperiences/`, themes/branding sets) → **Experience Cloud (LWR)**
-- A React/TS/JSX client that talks to Salesforce via UI API / GraphQL / Lightning Out / a Heroku app → **React / headless**
+* `*.js` / `*.html` / `*.css` inside an `lwc/` bundle → **LWC**
+
+* `*.cmp` / `*.app` / `*Controller.js` / `*Helper.js` inside `aura/` → **Aura**
+
+* LWR / Experience Cloud bundles (`experiences/`, `digitalExperiences/`, themes/branding sets) → **Experience Cloud (LWR)**
+
+* A React/TS/JSX client that talks to Salesforce via UI API / GraphQL / Lightning Out / a Heroku app → **React / headless**
 
 **If no front-end surface is in scope, stop.** Report that polish does not apply to pure Apex/Flow/metadata work and point to `/sf-review`.
 
@@ -32,7 +35,7 @@ Classify the changed files into front-end surfaces:
 Each profile names the lens, the design system, and which existing personas/skills to dispatch. The registry is intentionally a table so new stacks (e.g. a future Salesforce front-end framework) drop in as one more row.
 
 | Profile | Design system & lens | Dispatch |
-| --- | --- | --- |
+| -------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **LWC** | SLDS2 design tokens & styling hooks, Lightning Design Guidelines, Locker/LWS constraints | `/slds2-uplift` (token/styling-hook uplift) · `Task sf-lwc-accessibility-guardian` · `Task sf-lwc-architecture-strategist` (composition) · `Task sf-lwc-performance-oracle` (perceived performance) |
 | **Aura** | Same SLDS lens, plus migration debt | `Task sf-lwc-accessibility-guardian` · `Task sf-aura-migration-advisor` (flag what should move to LWC) |
 | **Experience Cloud (LWR)** | SLDS2 + branding sets / theme tokens, responsive + guest-user states | `/slds2-uplift` · `Task sf-lwc-accessibility-guardian` · `Task sf-lwc-performance-oracle` |

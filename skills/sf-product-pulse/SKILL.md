@@ -3,17 +3,17 @@ name: sf-product-pulse
 description: "Generate a time-windowed pulse report for a Salesforce org — role-aware. Business lens (BA/consultant): requirements traceability against BRD/BFRD/FRD/SOW, adoption vs target personas, business-process friction, scope/change, stakeholder narrative. Technical lens (dev/admin): Apex exceptions, governor near-misses, test-coverage trend, deploy health, limits. Use when the user says 'run a pulse', 'how's adoption', 'requirements traceability', 'delivery status report', 'weekly recap', 'are users actually using this', or 'org health check'. Requires a connected org. Saves to docs/pulse-reports/."
 argument-hint: "[window like '7d' / '30d' / 'sprint', optionally a mode: business | technical | full]"
 allowed-tools:
-  - Read
-  - Write
-  - Glob
-  - Grep
-  - Bash
-  - AskUserQuestion
+ - Read
+ - Write
+ - Glob
+ - Grep
+ - Bash
+ - AskUserQuestion
 ---
 
 # /sf-product-pulse
 
-> **Persona dispatch (V3.1, agentless).** `sf-business-analyst-pulse` is a *persona* — a prompt asset at `references/personas/sf-business-analyst-pulse.md`, not a registered agent (`sf-issue-intelligence-analyst`, when used, lives at `../sf-plan/references/personas/`). Run each as an **isolated subagent** (Task tool, general-purpose subagent, persona file contents as instructions): parallel on Claude Code, inline on harnesses without subagents.
+> **Persona dispatch.** This skill dispatches personas as isolated subagents — see the `dispatching-parallel-personas` skill for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). `sf-business-analyst-pulse` is this skill's own persona at `references/personas/sf-business-analyst-pulse.md`; `sf-issue-intelligence-analyst`, when used, lives at `../sf-plan/references/personas/`.
 
 > **Principles enforced:** especially 3 (stay in the loop — the pulse feeds human judgment, it doesn't act) and 7 (outsource thinking, not understanding — surface the numbers, the human decides). See `PRINCIPLES.md`.
 
@@ -35,38 +35,49 @@ Parse the argument for a **window** (`7d`, `30d`, `sprint`/current sprint, defau
 
 This skill requires live org data. Verify an authenticated default org first (`sf org display --json`, or `get_username` / `list_all_orgs` via the salesforce-dx MCP).
 
-- **No org / not authenticated** → stop and instruct: `sf org login web`, then `sf config set target-org <alias>`. Do not attempt a docs-only run; org telemetry is the point.
-- **Org found** → announce which org (instance + alias) so the user can confirm it's the right one, then proceed.
+* **No org / not authenticated** → stop and instruct: `sf org login web`, then `sf config set target-org <alias>`. Do not attempt a docs-only run; org telemetry is the point.
+
+* **Org found** → announce which org (instance + alias) so the user can confirm it's the right one, then proceed.
 
 ## Phase 1: Resolve mode
 
 If the mode wasn't given in the argument, choose:
 
-- If requirements docs exist (under `docs/requirements/`, or files named like `*BRD*`, `*FRD*`, `*SOW*`) → default to **business** and say so.
-- Else default to **technical**.
-- If ambiguous, ask once (business / technical / full).
+* If requirements docs exist (under `docs/requirements/`, or files named like `*BRD*`, `*FRD*`, `*SOW*`) → default to **business** and say so.
+
+* Else default to **technical**.
+
+* If ambiguous, ask once (business / technical / full).
 
 ## Phase 2: Determine data tier
 
 Probe what's available and degrade gracefully — report which tier ran:
 
-- **Tier 1 (always):** SOQL + Tooling API + metadata + `/limits`. `LoginHistory`, Lightning Usage objects, `AsyncApexJob`, `ApexCodeCoverageAggregate`, validation/flow error signals where queryable.
-- **Tier 2 (if Event Monitoring / Shield):** `EventLogFile` for deep usage, report exports, page performance, API usage.
+* **Tier 1 (always):** SOQL + Tooling API + metadata + `/limits`. `LoginHistory`, Lightning Usage objects, `AsyncApexJob`, `ApexCodeCoverageAggregate`, validation/flow error signals where queryable.
+
+* **Tier 2 (if Event Monitoring / Shield):** `EventLogFile` for deep usage, report exports, page performance, API usage.
 
 Probe for `EventLogFile` access once; if absent, note "Event Monitoring not available — usage depth limited to Tier 1" in the report rather than failing.
 
 ## Phase 3: Gather
 
 ### Business lens (mode = business | full)
+
 Dispatch `Task sf-business-analyst-pulse` with the requirements docs, target personas/profiles, and window. It returns the requirements-traceability matrix, adoption-vs-persona, friction, and scope/change. (Optionally also `Task sf-issue-intelligence-analyst` if an issue tracker is wired, for change-request context.)
 
 ### Technical lens (mode = technical | full)
+
 Query directly (read-only, parallel where safe):
-- **Errors:** Apex exceptions / unhandled errors over the window (via `EventLogFile` ApexUnexpectedException if Tier 2, else recent `AsyncApexJob` failures + debug-log signals).
-- **Governor near-misses:** flag jobs/transactions approaching limits where observable.
-- **Coverage trend:** org-wide and per-class from `ApexCodeCoverageAggregate`.
-- **Deploy health:** recent deployments and pass/fail (Tooling API `DeployRequest` where available).
-- **Limits:** `/limits` — daily API, async, storage headroom.
+
+* **Errors:** Apex exceptions / unhandled errors over the window (via `EventLogFile` ApexUnexpectedException if Tier 2, else recent `AsyncApexJob` failures + debug-log signals).
+
+* **Governor near-misses:** flag jobs/transactions approaching limits where observable.
+
+* **Coverage trend:** org-wide and per-class from `ApexCodeCoverageAggregate`.
+
+* **Deploy health:** recent deployments and pass/fail (Tooling API `DeployRequest` where available).
+
+* **Limits:** `/limits` — daily API, async, storage headroom.
 
 ## Phase 4: Write the report
 
@@ -78,13 +89,13 @@ Target 30–40 lines on screen. Save the full report to `docs/pulse-reports/YYYY
 ## Headline
 {2-3 lines: the one thing the reader should know}
 
-## Business   (business | full)
+## Business (business | full)
 - Requirements: {x delivered+adopted / y delivered+unused / z partial / w not started}
 - Adoption: {persona → active vs target}
 - Friction: {top 1-3 process pain points}
 - Scope/change: {additions since baseline}
 
-## Technical   (technical | full)
+## Technical (technical | full)
 - Errors: {count / top classes}
 - Coverage: {org-wide %, classes below bar}
 - Deploys: {n succeeded / m failed}
