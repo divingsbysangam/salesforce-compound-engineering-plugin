@@ -126,6 +126,20 @@ Sharing scenario — Under which sharing context is the feature verified? List t
 Integration mock or dry-run — For features with callouts, platform events, or deploy steps: name the mock class (HttpCalloutMock), the event publish assertion, or the sf project deploy start --dry-run command that proves the integration boundary works without side effects.
 Verification Strategy is the gate between /sf-plan and /sf-work. /sf-lfg will refuse to advance from plan to work if any of the five fields are blank or hand-waved ("we'll add tests later" is not a verification strategy).</span>
 
+**Each field must name its proof, not gesture at one.** A verification field that cannot name the command or assertion that will produce its evidence is not done — return to spec. Because this is a plan, the command is *named* (to be run in `/sf-work`), not yet executed. Name them concretely: `sf apex run test --result-format human` for the acceptance assertion and coverage %, `sf project deploy start --dry-run` for the deploy/integration boundary, an explicit `Limits.getQueries()`/`Limits.getDmlStatements()` calculation at the bulk threshold for the governor boundary, and the `HttpCalloutMock` class or `System.runAs` user for the integration/sharing checks. "We'll add tests later" is not a verification strategy — it names no proof.
+
+### Rationalizations (Excuse → Reality)
+
+_Pressure-test-pending hypotheses (see `docs/pressure-tests/`): guidance to pre-empt the excuses used to skip this gate under deadline, not yet independently validated._
+
+| Excuse | Reality |
+| --- | --- |
+| "This trigger only ever gets one record from the UI." | Data Loader, the REST/Bulk API, and Flow-triggered DML all pass collections on day one — and the org cannot stop them. Bulk safety is not optional. |
+| "Governor limits don't matter in a scratch org, it's just for testing." | Scratch-org and sandbox limits mirror production Enterprise Edition. There is no test-only exemption. |
+| "We'll fix sharing after it ships — it's admin-only for now." | Profile/permission-set assignment is a config change an admin makes without redeploying code. `without sharing` does not auto-correct when the audience widens. |
+| "Coverage is at 75%, we're good." | 75% is a deploy gate, not a behavior check. Coverage counts lines executed, not assertions made — a test with no asserts hits coverage and proves nothing. |
+| "It's just a config/Flow change, there's no code to test." | Flow, validation-rule, and formula changes still change behavior. They need before/after assertions, not a deploy-succeeded check. |
+
 ***
 
 ## <span data-proof="authored" data-by="ai:claude">Critical Constraint</span>
