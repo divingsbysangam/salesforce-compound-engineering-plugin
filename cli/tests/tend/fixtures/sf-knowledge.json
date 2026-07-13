@@ -1,0 +1,8 @@
+{
+  "feedId": "sf-knowledge",
+  "source": "docs/solutions",
+  "locator": "docs/solutions/deployment-issues/mock-learning.md",
+  "summary": "A reviewed deployment learning is ready to become a reversible proposal.",
+  "capturedAt": "2026-07-14T00:00:00.000Z",
+  "target": { "learningKey": "mock-deployment-learning", "reviewed": true }
+}

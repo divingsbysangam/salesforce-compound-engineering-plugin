@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A multi-platform AI plugin (Claude Code, Cursor, Codex, and 9 other AI coding tools via a CLI installer) that adds Salesforce-aware compound engineering workflows. The product is the markdown under `skills/` — those files are what get distributed and what other AI clients load. The TypeScript CLI under `cli/` exists only to translate that markdown into each target tool's expected directory layout.
+A multi-platform AI plugin (Claude Code, Cursor, Codex, and 9 other AI coding tools via a CLI installer) that adds Salesforce-aware compound engineering workflows. The product is the markdown under `skills/` — those files are what get distributed and what other AI clients load. The TypeScript CLI under `cli/` translates that markdown into each target tool's expected directory layout and hosts the optional local Tend feed runtime.
 
-A Salesforce developer using this plugin gets nine workflow entry points (ideate → brainstorm → plan → deepen → work → review → polish → compound, plus `sf-lfg` for the full pipeline). The conditional **polish** phase (SLDS2/UX, accessibility, copy — UI work only) runs via the stack-aware `sf-polish` skill. The whole thing is backed by ~60 specialist **personas** — prompt assets the workflow skills dispatch as isolated subagents (parallel on Claude Code, inline on harnesses without a subagent primitive) — plus domain-knowledge skills (governor limits, Apex/LWC/Flow patterns, security, integrations, Agentforce, hosted MCP). Ideate and polish are the human "bread"; the middle stages are the AI loop. An optional repo-root `STRATEGY.md` (created and maintained by `/sf-strategy`) grounds ideate/brainstorm/plan when present.
+A Salesforce developer using this plugin gets nine workflow entry points (ideate → brainstorm → plan → deepen → work → review → polish → compound, plus `sf-lfg` for the full pipeline) and the Tend-style `/sf-tend` responsibility-feed layer. The conditional **polish** phase (SLDS2/UX, accessibility, copy — UI work only) runs via the stack-aware `sf-polish` skill. The whole thing is backed by 61 specialist **personas** — prompt assets the workflow skills dispatch as isolated subagents (parallel on Claude Code, inline on harnesses without a subagent primitive) — plus domain-knowledge skills (governor limits, Apex/LWC/Flow patterns, security, integrations, Agentforce, hosted MCP). Ideate and polish are the human "bread"; the middle stages are the AI loop. An optional repo-root `STRATEGY.md` (created and maintained by `/sf-strategy`) grounds ideate/brainstorm/plan when present.
 
 **Agentless (V3.1).** The plugin ships **no standalone registered agents** — formal agent definitions are not a reliable common denominator across Claude, Codex, Cursor, Gemini, Pi, OpenCode, etc. Specialist behavior lives as skill-local **persona prompt assets** under `skills/<owner>/references/personas/<name>.md`, owned by the workflow skill that dispatches them and referenced cross-skill by relative path. They ship to every platform as ordinary skill files (the CLI copies a skill's whole subtree).
 
@@ -58,7 +58,9 @@ bun test path/to/file.test.ts   # run a single test file
 bun run typecheck   # tsc --noEmit
 ```
 
-There's also a Python entry point (`sfce.py`, declared in `pyproject.toml` as `sfce` script). It predates the Bun CLI and is separate; the Bun CLI under `cli/` is the actively maintained installer.
+There's also a Python entry point (`sfce.py`, declared in `pyproject.toml` as `sfce` script). It predates the Bun CLI and is separate; the Bun CLI under `cli/` is the actively maintained installer and Tend runtime.
+
+The Bun CLI also exposes the local Tend runtime through `feed`, `card`, `work`, `action`, and `learning` commands. Feed state defaults to `$XDG_STATE_HOME/sfce/tend` or `~/.sfce/tend`; use `--state-dir` to isolate tests and worktrees.
 
 ## MCP servers
 

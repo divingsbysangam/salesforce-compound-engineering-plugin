@@ -6,6 +6,15 @@
 
 ## [Unreleased]
 
+### Added
+
+* **`/sf-tend` responsibility feeds** — local-first Salesforce feeds with one durable thread per feed, source-backed cards, approval-gated actions, receipts, and reviewed learning.
+* **Tend CLI runtime** — `feed`, `card`, `work`, `action`, and `learning` commands with digest-bound stale-action rejection and isolated local state.
+
+### Changed
+
+* Plugin manifests now identify `3.1.0-beta.5`; documentation and contributor guidance reflect the agentless 62-skill architecture with 61 specialist personas.
+
 ## \[3.1.0-beta.3] - 2026-06-22
 
 **Agentless, skill-native reshape.** Following upstream `EveryInc/compound-engineering-plugin#967`, the plugin no longer ships standalone registered agents — formal agent definitions are not a reliable common denominator across Claude, Codex, Cursor, Gemini, Pi, OpenCode, etc. The 60 specialist behaviors are preserved as **persona prompt assets** dispatched as isolated subagents (parallel on Claude Code, inline where unsupported). No quality loss: review still runs many isolated specialist lenses; only the manifest-level agent registration goes away.

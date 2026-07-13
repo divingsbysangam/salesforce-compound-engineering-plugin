@@ -1,0 +1,1 @@
+Tend the Salesforce platform delivery feed. Review the latest Apex, LWC, metadata, test, and deployment evidence and show me approval-gated work.

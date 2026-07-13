@@ -49,6 +49,7 @@ so both `prompts/review-this-pr.txt` and a full path work.
 | `build-lead-autoassign.txt` | `sf-brainstorm` | A greenfield "let's build X" should hit brainstorm/plan before code. |
 | `review-this-pr.txt` | `sf-review` | Direct review request must enter `sf-review`. |
 | `i-know-what-sf-work-means.txt` | `sf-work` | Explicit-request bypass: the user names the skill and points at a plan; it should still enter `sf-work` (not start editing blind). |
+| `tend-salesforce-feed.txt` | `sf-tend` | An ongoing Salesforce responsibility should create/bind a feed before collecting work. |
 
 Note: for the quick-fix case, both `sf-work` and `sf-debug` are defensible routes.
 The battery pins one expected skill for a deterministic assertion; if you decide the

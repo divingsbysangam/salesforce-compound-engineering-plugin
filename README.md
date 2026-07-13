@@ -1,4 +1,4 @@
-# SF Compound Engineering Plugin v3.1.0-beta.3
+# SF Compound Engineering Plugin v3.1.0-beta.5
 
 **Instruction-Based Compound Engineering for Salesforce** — a multi-platform plugin (Claude Code, Cursor, Codex, and 9 other AI coding tools) where each iteration becomes smarter than the last through institutional knowledge capture and parallel persona dispatch.
 
@@ -14,10 +14,10 @@
 
   • Ideate     — decide what's worth building (/sf-ideate)
   • Brainstorm — explore requirements through collaborative dialogue (/sf-brainstorm)
-  • Plan       — research & design using 60 skills + parallel research personas (/sf-plan)
+  • Plan       — research & design using 62 skills + parallel research personas (/sf-plan)
   • Deepen     — enhance the plan with section-level parallel research (/sf-deepen)
   • Work       — implement with pre-research + system-wide test checks (/sf-work)
-  • Review     — parallel persona dispatch across 60 specialist personas (/sf-review)
+  • Review     — parallel persona dispatch across 61 specialist personas (/sf-review)
   • Polish     — taste pass via /sf-polish: SLDS2/UX, accessibility (WCAG), copy (UI surfaces only)
   • Compound   — capture learnings to docs/solutions/, personas, skills, CLAUDE.md (/sf-compound)
 ```
@@ -26,7 +26,7 @@
 
 > All nine core entry points (`/sf-ideate`, `/sf-brainstorm`, `/sf-plan`, `/sf-deepen`, `/sf-work`, `/sf-review`, `/sf-polish`, `/sf-compound`, `/sf-lfg`) are **skills** in V3 — they auto-route from natural-language phrases via their `description` frontmatter, and direct slash invocation continues to work.
 
-Above the loop, **`/sf-strategy`** maintains an optional repo-root `STRATEGY.md` (target problem, approach, users, key metrics, tracks) that `sf-ideate`, `sf-brainstorm`, and `sf-plan` read as grounding when it exists.
+Above the loop, **`/sf-strategy`** maintains an optional repo-root `STRATEGY.md` (target problem, approach, users, key metrics, tracks) that `sf-ideate`, `sf-brainstorm`, and `sf-plan` read as grounding when it exists. **`/sf-tend`** maintains ongoing Salesforce responsibility feeds with one durable thread per feed, source-backed cards, approval receipts, and reviewed learning.
 
 **Each iteration starts smarter** because learnings compound into `docs/solutions/`, personas, skills, and CLAUDE.md.
 
@@ -109,6 +109,21 @@ bunx @gellasangameshgupta/sf-compound-plugin sync
 
 ***
 
+## Tend Runtime
+
+The optional Bun runtime gives `/sf-tend` a durable, local-first protocol for Salesforce responsibility feeds:
+
+```bash
+cd cli
+bun run src/index.ts feed list
+bun run src/index.ts feed bind sf-platform-delivery --thread delivery-thread
+bun run src/index.ts feed health sf-platform-delivery
+```
+
+State is stored under `$XDG_STATE_HOME/sfce/tend` (or `~/.sfce/tend`) and scoped to the current worktree by default. Override `--state-dir` and `--scope` in tests or isolated worktrees. The runtime stores feed metadata, cards, evidence, approvals, receipts, and learning proposals only; org credentials and MCP tokens remain owned by the host tool.
+
+***
+
 ## Workflow Entry Points
 
 The nine-step compound loop, plus the full-pipeline runner and the strategy grounding skill:
@@ -116,6 +131,7 @@ The nine-step compound loop, plus the full-pipeline runner and the strategy grou
 | Skill            | Stage      | Purpose                                                              |
 | ---------------- | ---------- | ------------------------------------------------------------------- |
 | `/sf-strategy`   | grounding  | Create/maintain repo-root `STRATEGY.md` read by ideate/brainstorm/plan |
+| `/sf-tend`       | workflow   | Operate Salesforce responsibility feeds with cards, approvals, receipts, and reviewed learning |
 | `/sf-ideate`     | bread      | Decide what's worth building — grounded idea generation             |
 | `/sf-brainstorm` | loop       | Explore requirements through collaborative dialogue                 |
 | `/sf-plan`       | loop       | Research & design specs with parallel persona research (NO CODE)      |
@@ -142,9 +158,9 @@ Each stage has gates that must pass before proceeding. The pipeline aborts and a
 
 ***
 
-## Specialist Personas (60)
+## Specialist Personas (61)
 
-V3.1 is **agentless** — there are no standalone registered agents. The 60 specialist personas are prompt assets under `skills/<owner>/references/personas/<name>.md`, dispatched by the workflow skills as **isolated subagents**: parallel with isolated context on Claude Code, applied inline on harnesses without a subagent primitive. They ship to every platform as ordinary skill files. Primary owners: `sf-review` (code review), `sf-doc-review` (doc review), `sf-plan` (research). Topical groupings:
+V3.1 is **agentless** — there are no standalone registered agents. The 61 specialist personas are prompt assets under `skills/<owner>/references/personas/<name>.md`, dispatched by the workflow skills as **isolated subagents**: parallel with isolated context on Claude Code, applied inline on harnesses without a subagent primitive. They ship to every platform as ordinary skill files. Primary owners: `sf-review` (code review), `sf-doc-review` (doc review), `sf-plan` (research). Topical groupings:
 
 | Group                      | Covers                                                                       |
 | -------------------------- | ---------------------------------------------------------------------------- |
@@ -159,7 +175,7 @@ V3.1 is **agentless** — there are no standalone registered agents. The 60 spec
 
 ***
 
-## Skills (60)
+## Skills (62)
 
 ### Domain Knowledge
 
@@ -252,7 +268,7 @@ The `sf-learnings-researcher` persona searches these documents by frontmatter me
 ```
 salesforce-compound-engineering-plugin/
 ├── .claude-plugin/
-│   ├── plugin.json           # Plugin manifest (v3.1.0-beta.3)
+│   ├── plugin.json           # Plugin manifest (v3.1.0-beta.5)
 │   └── marketplace.json      # Marketplace loader schema
 ├── .cursor-plugin/           # Cursor plugin manifest
 ├── .codex-plugin/            # Codex plugin manifest
@@ -267,14 +283,15 @@ salesforce-compound-engineering-plugin/
 │   │   ├── parser/           # Plugin reader + markdown parser
 │   │   ├── converters/       # 11 platform converters
 │   │   ├── transforms/       # Path, reference, frontmatter rewriting
+│   │   ├── tend/             # Local feed state, cards, work, receipts, learning
 │   │   └── utils/            # Auto-detect, merge helpers
 │   └── tests/
-├── skills/                   # 60 skills — each owns the personas it dispatches
+├── skills/                   # 62 skills — each owns the personas it dispatches
 │   ├── index.md              # Skill routing map
 │   ├── sf-review/references/personas/      # ~40 code-review personas
 │   ├── sf-doc-review/references/personas/  #  8 doc-review personas
 │   ├── sf-plan/references/personas/        #  9 research personas
-│   └── …                     # 60 personas total — agentless, no standalone agents/ dir
+│   └── …                     # 61 personas total — agentless, no standalone agents/ dir
 └── docs/
     ├── brainstorms/          # Pre-planning exploration records (protected)
     ├── plans/                # Feature plans (protected)
@@ -304,7 +321,9 @@ Configured in `.mcp.json`:
 
 **Context7** — framework documentation, used by research personas as the second tier after local skills, before falling back to web search.
 
-**Salesforce DX MCP** — live org operations (SOQL, deploy, retrieve, code analysis, LWC experts, testing). Toolsets: `core`, `orgs`, `metadata`, `data`, `users`, `code-analysis`, `lwc-experts`, `aura-experts`, `experts-validation`, `devops`, `enrichment`, `mobile`, `testing`, `scale-products`.
+**Salesforce DX MCP** — the local `@salesforce/mcp` server for developer workflows such as SOQL, deploy, retrieve, code analysis, and testing. The current Salesforce CLI/MCP setup supports selecting orgs, toolsets, and tools; keep the package selector aligned with the [Salesforce DX MCP documentation](https://github.com/salesforcecli/mcp) rather than copying an old tool list.
+
+**Salesforce Hosted MCP** — a separate Salesforce-managed, OAuth/PKCE-connected surface for org data and automation. Hosted MCP servers are now generally available; configure them through [Salesforce Hosted MCP documentation](https://developer.salesforce.com/docs/platform/hosted-mcp-servers/guide/hosted-mcp-servers-overview.html), starting with a read-only server and an External Client App. `/sf-tend` treats either surface as a feed adapter and never persists its credentials in local feed state.
 
 > **Prerequisites for Salesforce DX MCP:** Authorize an org first with `sf org login web`. The server uses `DEFAULT_TARGET_ORG` — whatever you set with `sf config set target-org`.
 

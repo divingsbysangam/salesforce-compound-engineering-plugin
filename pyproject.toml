@@ -52,7 +52,5 @@ packages = ["."]
 include = [
     "sfce.py",
     "__init__.py",
-    "commands/*.md",
-    "agents/**/*.md",
     "skills/**/*.md",
 ]

@@ -10,7 +10,8 @@
     "build": "bun build src/index.ts --outdir dist --target node",
     "dev": "bun run src/index.ts",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "bun run src/index.ts lint"
   },
   "dependencies": {
     "citty": "^0.1.6",

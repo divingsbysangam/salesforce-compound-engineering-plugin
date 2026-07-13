@@ -1,0 +1,8 @@
+{
+  "feedId": "sf-org-health",
+  "source": "salesforce-dx-mcp",
+  "locator": "org health read-only snapshot",
+  "summary": "Mock org pulse is within limits and has no new deployment errors.",
+  "capturedAt": "2026-07-14T00:00:00.000Z",
+  "target": { "apexLimitHeadroom": 0.42, "coverage": 0.86, "deploymentErrors": 0 }
+}
