@@ -122,6 +122,18 @@ bun run src/index.ts feed health sf-platform-delivery
 
 State is stored under `$XDG_STATE_HOME/sfce/tend` (or `~/.sfce/tend`) and scoped to the current worktree by default. Override `--state-dir` and `--scope` in tests or isolated worktrees. The runtime stores feed metadata, cards, evidence, approvals, receipts, and learning proposals only; org credentials and MCP tokens remain owned by the host tool.
 
+### Tend command reference
+
+| Command | Purpose |
+| --- | --- |
+| `feed list\|create\|bind\|health\|state` | Initialize feeds, enforce one durable thread per feed, and inspect state |
+| `card list\|upsert` | Review or store source-backed cards from JSON |
+| `work list\|claim\|complete` | Queue work from the bound feed thread and record receipts |
+| `action verify` | Approve and freshly verify a card action’s source/target digest |
+| `learning request\|propose\|apply\|revert` | Review, approve, apply, and roll back learning proposals |
+
+Heartbeat/observation runs are read-or-propose-only. Deployments, code writes, data changes, publishing, activation, MCP configuration changes, and learning application require visible approval; stale action digests are rejected.
+
 ***
 
 ## Workflow Entry Points
