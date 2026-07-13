@@ -1,0 +1,1 @@
+Review the Salesforce MCP integrations feed for DX MCP, hosted MCP, External Client Apps, and tool security changes.

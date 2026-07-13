@@ -1,0 +1,40 @@
+name: Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install locked CLI dependencies
+        working-directory: cli
+        run: bun install --frozen-lockfile
+      - name: Verify Python bootstrap CLI
+        run: |
+          python -m py_compile sfce.py
+          python sfce.py --help
+      - name: Verify skill trigger fixtures
+        run: |
+          set +e
+          bash tests/skill-triggering/run-test.sh
+          status=$?
+          if [ "$status" -ne 0 ] && [ "$status" -ne 77 ]; then exit "$status"; fi
+      - name: Type-check, test, and lint
+        working-directory: cli
+        run: |
+          bun run typecheck
+          bun test
+          bun run lint -- ..

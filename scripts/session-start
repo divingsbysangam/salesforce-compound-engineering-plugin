@@ -17,7 +17,7 @@
 set -euo pipefail
 
 cat <<'EOF'
-SF compound-engineering plugin active. Route Salesforce work through a workflow skill before raw edits — skills/index.md is the map. For a quick fix, enter sf-work or sf-debug rather than editing Apex/LWC/Flow directly.
+SF compound-engineering plugin active. Route Salesforce work through a workflow skill before raw edits — skills/index.md is the map. For ongoing work, bind one responsibility to one sf-tend feed and durable thread. For a quick fix, enter sf-work or sf-debug rather than editing Apex/LWC/Flow directly.
 
 Three non-negotiable discipline gates apply:
 - sf-plan — Verification Strategy (acceptance assertion, bulk threshold, governor boundary, sharing scenario, integration mock)

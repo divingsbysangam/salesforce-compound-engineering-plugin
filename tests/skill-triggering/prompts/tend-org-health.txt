@@ -1,0 +1,1 @@
+Show me the read-only Salesforce org health feed for limits, coverage, errors, deployment health, and adoption signals.

@@ -17,6 +17,7 @@ import { OpenClawConverter } from "./converters/openclaw.js";
 import { QwenConverter } from "./converters/qwen.js";
 import type { TargetPlatform } from "./parser/types.js";
 import type { BaseConverter } from "./converters/base.js";
+import { actionCommand, cardCommand, feedCommand, learningCommand, workCommand } from "./tend/cli.js";
 
 const CONVERTERS: Record<TargetPlatform, BaseConverter> = {
   copilot: new CopilotConverter(),
@@ -144,7 +145,16 @@ const main = defineCommand({
     version: "1.0.0",
     description: "Multi-tool installer for SF Compound Engineering Plugin",
   },
-  subCommands: { install, sync, lint },
+  subCommands: {
+    install,
+    sync,
+    lint,
+    feed: feedCommand,
+    card: cardCommand,
+    work: workCommand,
+    action: actionCommand,
+    learning: learningCommand,
+  },
 });
 
 runMain(main);

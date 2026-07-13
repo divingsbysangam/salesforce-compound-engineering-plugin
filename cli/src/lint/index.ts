@@ -14,13 +14,15 @@ import { join } from "path";
 import { parseMarkdown } from "../parser/markdown.js";
 import { lintDescription, type DescriptionLintResult } from "./description-sdo.js";
 import { lintRubricReferences, type RubricLintResult } from "./rubric-resolvable.js";
+import { lintConsistency, type ConsistencyLintResult } from "./consistency.js";
 
-export { lintDescription, lintRubricReferences };
-export type { DescriptionLintResult, RubricLintResult };
+export { lintDescription, lintRubricReferences, lintConsistency };
+export type { DescriptionLintResult, RubricLintResult, ConsistencyLintResult };
 
 export interface LintReport {
   descriptions: DescriptionLintResult[];
   rubrics: RubricLintResult[];
+  consistency: ConsistencyLintResult;
   /** Flattened, human-readable violation strings across both checks. */
   violations: string[];
   ok: boolean;
@@ -68,10 +70,12 @@ export function lint(pluginDir: string): LintReport {
     }
   }
 
+  const consistency = lintConsistency(pluginDir);
   const violations = [
     ...descriptions.flatMap((d) => d.violations),
     ...rubrics.flatMap((r) => r.violations),
+    ...consistency.violations,
   ];
 
-  return { descriptions, rubrics, violations, ok: violations.length === 0 };
+  return { descriptions, rubrics, consistency, violations, ok: violations.length === 0 };
 }

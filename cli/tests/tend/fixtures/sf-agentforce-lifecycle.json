@@ -1,0 +1,8 @@
+{
+  "feedId": "sf-agentforce-lifecycle",
+  "source": "agentforce-dx",
+  "locator": "sf agent preview --json",
+  "summary": "The latest Agent Script preview completed with one reviewable trace.",
+  "capturedAt": "2026-07-14T00:00:00.000Z",
+  "target": { "agent": "SupportAgent", "previewStatus": "Completed", "liveActions": false }
+}

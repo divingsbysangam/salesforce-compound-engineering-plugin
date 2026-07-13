@@ -50,6 +50,12 @@ SEED_BATTERY=(
   "sf-brainstorm  prompts/build-lead-autoassign.txt"
   "sf-review      prompts/review-this-pr.txt"
   "sf-work        prompts/i-know-what-sf-work-means.txt"
+  "sf-tend        prompts/tend-salesforce-feed.txt"
+  "sf-tend        prompts/tend-platform-delivery.txt"
+  "sf-tend        prompts/tend-agentforce-lifecycle.txt"
+  "sf-tend        prompts/tend-org-health.txt"
+  "sf-tend        prompts/tend-mcp-integrations.txt"
+  "sf-tend        prompts/tend-knowledge.txt"
 )
 
 # --- helpers ---------------------------------------------------------------

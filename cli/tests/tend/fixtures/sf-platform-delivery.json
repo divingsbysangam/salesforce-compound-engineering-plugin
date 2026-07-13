@@ -1,0 +1,8 @@
+{
+  "feedId": "sf-platform-delivery",
+  "source": "salesforce-cli",
+  "locator": "sf project deploy report --json",
+  "summary": "Apex and LWC deployment validation is available for review.",
+  "capturedAt": "2026-07-14T00:00:00.000Z",
+  "target": { "deploymentId": "mock-deploy-001", "status": "Succeeded" }
+}

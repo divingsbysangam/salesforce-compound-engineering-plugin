@@ -1,0 +1,8 @@
+{
+  "feedId": "sf-mcp-integrations",
+  "source": "salesforce-hosted-mcp",
+  "locator": "hosted MCP server configuration snapshot",
+  "summary": "The read-only MCP server and its External Client App scopes are reviewable.",
+  "capturedAt": "2026-07-14T00:00:00.000Z",
+  "target": { "server": "platform/sobject-reads", "oauthScopes": ["mcp_api", "refresh_token"] }
+}

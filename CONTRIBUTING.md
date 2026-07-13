@@ -14,10 +14,9 @@ Thanks for contributing.
 ```text
 sf-compound-engineering-plugin/
 ├── .claude-plugin/              # Plugin metadata (Claude plugin-first)
-├── commands/                    # 4 commands: sf-plan/sf-work/sf-review/sf-compound
-├── agents/                      # 23 specialized agents + index.md
-├── skills/                      # 7 skills + index.md
-├── tests/                       # Prompt validation checks
+├── skills/                      # 62 skills + index.md (agentless personas live under skills)
+├── cli/                         # Bun installer and Tend feed runtime
+├── tests/                       # Prompt-triggering and validation checks
 ├── sfce.py                      # Optional CLI bootstrap/update utility
 ├── pyproject.toml               # Packaging metadata
 ├── README.md
@@ -27,13 +26,13 @@ sf-compound-engineering-plugin/
 ## Command Authoring Guidelines
 
 - Keep prompts concise and selective in context use.
-- Route through `agents/index.md` and `skills/index.md`.
+- Route through `skills/index.md`; V3.1 is agentless and specialist personas live under their owning skill.
 - Prefer guidance language (`prefer`, `consider`) over rigid mandates.
 - Keep Salesforce-native options first; use external research when needed.
 
 ## Frontmatter Requirements
 
-### Commands and Agents
+### Skill Frontmatter
 
 ```yaml
 ---
@@ -44,15 +43,16 @@ description: Short description
 
 ### Skills
 
-Each `skills/*/SKILL.md` must include frontmatter with `name` and `description`.
+Each `skills/*/SKILL.md` must include frontmatter with `name` and `description`. Specialist personas are markdown assets under their owning skill and do not register as standalone agents.
 
 ## Testing
 
 Run these checks before opening a PR:
 
 ```bash
-python tests/validate_prompts.py
+python -m py_compile sfce.py __init__.py
 python sfce.py --help
+cd cli && bun run typecheck && bun test && bun run lint -- ..
 ```
 
 Optional CLI smoke test:
