@@ -10,6 +10,7 @@
   "homepage": "https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin",
   "repository": "https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin",
   "license": "MIT",
+  "logo": "assets/logo.svg",
   "keywords": [
     "salesforce",
     "cursor",
@@ -24,5 +25,15 @@
     "workflow-automation",
     "agentforce",
     "knowledge-management"
-  ]
+  ],
+  "category": "developer-tools",
+  "tags": [
+    "salesforce",
+    "compound-engineering",
+    "skills",
+    "workflow",
+    "code-review"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json"
 }

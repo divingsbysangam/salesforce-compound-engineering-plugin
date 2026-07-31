@@ -2,9 +2,13 @@
 title: Close Teardown Gaps Between SF Plugin and Every's Plugin
 type: feat
 date: 2026-03-02
+status: deprecated
+superseded_by: docs/solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md
 ---
 
 # <span data-proof="authored" data-by="ai:claude">Close Teardown Gaps — SF Plugin vs Every's Compound Engineering Plugin</span>
+
+> **Deprecated (2026-07-31).** This v2-era 31-gap matrix is historical. Current inventory lives in [`docs/solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md`](../solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md) (EveryInc `compound-engineering-v3.21.0` vs SF `3.1.0-beta.5`). Do not use this document as the open-gap backlog.
 
 ## <span data-proof="authored" data-by="ai:claude">Overview</span>
 
