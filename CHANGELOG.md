@@ -8,12 +8,15 @@
 
 ### Added
 
+* **EveryInc gap skill ports (`3.1.0-beta.6`)** — `sf-handoff`, `sf-babysit-pr`, `sf-explain`, `sf-sweep`, `sf-retune`, `sf-test-browser` (LWC/Aura/Experience route mapping), with scripts/references where upstream shipped them.
 * **`/sf-tend` responsibility feeds** — local-first Salesforce feeds with one durable thread per feed, source-backed cards, approval-gated actions, receipts, and reviewed learning.
 * **Tend CLI runtime** — `feed`, `card`, `work`, `action`, and `learning` commands with digest-bound stale-action rejection and isolated local state.
+* **Cursor Marketplace packaging** — single-plugin `.cursor-plugin/plugin.json` path fields, `assets/logo.svg`, `mcp.json` dual-ship, `scripts/validate-cursor-plugin.mjs`.
 
 ### Changed
 
-* Plugin manifests now identify `3.1.0-beta.5`; documentation and contributor guidance reflect the agentless 62-skill architecture with 61 specialist personas.
+* Plugin manifests now identify `3.1.0-beta.6`; catalog is **68 skills** + 61 specialist personas.
+* Gaps audit updated: high-priority EveryInc v3.21 skill gaps marked ported; `sf-retune` documented as distinct from `sf-update` / `sf-compound-refresh`.
 
 ## \[3.1.0-beta.3] - 2026-06-22
 

@@ -28,9 +28,9 @@ Fresh gap matrix produced while executing [`2026-07-31-001-feat-everyinc-gap-syn
 
 ## Summary counts
 
-| Axis | EveryInc v3.21.0 | SF v3.1.0-beta.5 | Notes |
+| Axis | EveryInc v3.21.0 | SF v3.1.0-beta.6 | Notes |
 | --- | --- | --- | --- |
-| Skills | 32 | 62 | SF denser (domain + workflow) |
+| Skills | 32 | 68 | SF denser (domain + workflow); +6 EveryInc gap ports |
 | Persona / research assets | 27 | 61 | SF agentless personas under skills |
 | Native plugin manifests | Many (`.claude-plugin`, `.cursor-plugin`, `.codex-plugin`, `.kimi-plugin`, `.grok-plugin`, `.devin-plugin`, `.agy`, `.agents`, `.opencode`, `.pi`, `.cline`, …) | `.claude-plugin`, `.cursor-plugin`, `.codex-plugin` (+ Bun CLI converters for more) | Packaging gap for native-first dirs |
 | `docs/solutions/` | Present | Scaffolded this change | Was missing at audit start |
