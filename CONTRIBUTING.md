@@ -14,7 +14,7 @@ Thanks for contributing.
 ```text
 sf-compound-engineering-plugin/
 ├── .claude-plugin/              # Plugin metadata (Claude plugin-first)
-├── skills/                      # 62 skills + index.md (agentless personas live under skills)
+├── skills/                      # 68 skills + index.md (agentless personas live under skills)
 ├── cli/                         # Bun installer and Tend feed runtime
 ├── tests/                       # Prompt-triggering and validation checks
 ├── sfce.py                      # Optional CLI bootstrap/update utility
