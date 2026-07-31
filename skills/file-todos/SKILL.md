@@ -1,3 +1,9 @@
+---
+name: file-todos
+description: "Track project tasks as individual markdown files in todos/ with status, priority, and context. Use when creating file-based todos, updating todo status, or organizing parallel work items."
+argument-hint: "[optional todo description or todos/ path]"
+---
+
 # File-Based Todos Skill
 
 Track project tasks as individual markdown files in the `todos/` directory. Each file is a self-contained task with status, priority, and context.

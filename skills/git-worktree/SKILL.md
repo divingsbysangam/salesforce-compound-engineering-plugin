@@ -1,3 +1,9 @@
+---
+name: git-worktree
+description: "Manage isolated git worktrees for parallel Salesforce development and hotfix branches. Use when creating, listing, or removing worktrees without disturbing an in-progress feature branch."
+argument-hint: "[create|list|remove] [branch or path]"
+---
+
 # Git Worktree Skill
 
 Manage isolated development branches using git worktrees for parallel Salesforce development.

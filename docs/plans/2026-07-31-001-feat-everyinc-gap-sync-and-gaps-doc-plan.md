@@ -1,7 +1,7 @@
 ---
 title: Fetch EveryInc updates, sync SF plugin, gaps doc, and Cursor Marketplace readiness
 type: feat
-status: active
+status: completed
 date: 2026-07-31
 ---
 
@@ -221,17 +221,17 @@ Optional later: if publishing a private multi-plugin marketplace of SF variants,
 
 ## Acceptance Criteria
 
-- [ ] SF local tree verified/synced against `salesforce-compound-engineering-plugin` (SHA recorded).
-- [ ] EveryInc `compound-engineering-v3.21.0` (or newer) fetched and fingerprinted.
-- [ ] Fresh gaps document written with severity + status columns and closed-gap section.
-- [ ] Repo identity mismatch (`sf-` vs `salesforce-`) documented in the gaps doc.
-- [ ] `docs/solutions/` and `docs/brainstorms/` exist (scaffold OK).
-- [ ] March 2026 gap plan referenced as historical; not used as current inventory.
-- [ ] Top recommended port batch listed (≤10 items) with rationale.
-- [ ] Cursor Marketplace checklist completed against plugin-template + cursor/plugins examples (gaps documented; packaging fixes applied or explicitly deferred with owner).
-- [ ] `.cursor-plugin/plugin.json` declares skills/hooks (and logo when asset exists); `mcp.json` available for Cursor consumers.
-- [ ] Validation script or CLI lint covers Cursor single-plugin checklist.
-- [ ] Submission notes drafted (repo URL, plugin name, validate status, contact) for Cursor team / `kniparko@anysphere.com`.
+- [x] SF local tree verified/synced against `salesforce-compound-engineering-plugin` (SHA recorded).
+- [x] EveryInc `compound-engineering-v3.21.0` (or newer) fetched and fingerprinted.
+- [x] Fresh gaps document written with severity + status columns and closed-gap section.
+- [x] Repo identity mismatch (`sf-` vs `salesforce-`) documented in the gaps doc.
+- [x] `docs/solutions/` and `docs/brainstorms/` exist (scaffold OK).
+- [x] March 2026 gap plan referenced as historical; not used as current inventory.
+- [x] Top recommended port batch listed (≤10 items) with rationale.
+- [x] Cursor Marketplace checklist completed against plugin-template + cursor/plugins examples (gaps documented; packaging fixes applied or explicitly deferred with owner).
+- [x] `.cursor-plugin/plugin.json` declares skills/hooks (and logo when asset exists); `mcp.json` available for Cursor consumers.
+- [x] Validation script or CLI lint covers Cursor single-plugin checklist.
+- [x] Submission notes drafted (repo URL, plugin name, validate status, contact) for Cursor team / `kniparko@anysphere.com`.
 
 ## Success Metrics
 

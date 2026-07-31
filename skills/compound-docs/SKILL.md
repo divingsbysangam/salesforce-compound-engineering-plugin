@@ -1,3 +1,9 @@
+---
+name: compound-docs
+description: "Guide for writing solution documents that feed the institutional knowledge system under docs/solutions/. Use when compounding learnings, authoring solution YAML frontmatter, or teaching /sf-compound output shape."
+argument-hint: "[optional topic or solution draft]"
+---
+
 # <span data-proof="authored" data-by="ai:claude">Compound Docs Skill</span>
 
 <span data-proof="authored" data-by="ai:claude">Guide for writing solution documents that feed the institutional knowledge system.</span>

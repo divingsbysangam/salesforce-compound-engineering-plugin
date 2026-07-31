@@ -46,13 +46,25 @@ Above the loop, **`/sf-strategy`** maintains an optional repo-root `STRATEGY.md`
 /plugin install sf-compound-engineering
 ```
 
+### Cursor
+
+**Local / Git install (current):**
+
+```bash
+bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to cursor
+```
+
+Or open this repo in Cursor; the single-plugin manifest is `.cursor-plugin/plugin.json` (skills at repo root, hooks at `hooks/hooks.json`, MCP at `mcp.json`).
+
+**Cursor Marketplace:** packaging is aligned to the [Cursor plugin template](https://github.com/cursor/plugin-template) single-plugin shape. Listing submission is pending (validate with `node scripts/validate-cursor-plugin.mjs`). See the readiness section in [`docs/solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md`](./docs/solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md).
+
 ### Other AI Coding Tools (11 platforms)
 
 ```bash
 # GitHub Copilot
 bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to copilot
 
-# Cursor
+# Cursor (also see Cursor section above)
 bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to cursor
 
 # Windsurf

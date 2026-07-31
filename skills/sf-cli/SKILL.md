@@ -1,3 +1,9 @@
+---
+name: sf-cli
+description: "Reference for common Salesforce CLI (sf) commands: deploy, retrieve, test, org auth, and metadata operations. Use when looking up sf CLI syntax during Salesforce development workflows."
+argument-hint: "[optional command topic: deploy|retrieve|test|org]"
+---
+
 # Salesforce CLI Skill
 
 Reference for common `sf` CLI commands used in Salesforce development workflows.
