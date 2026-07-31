@@ -106,8 +106,14 @@ Salesforce-aware skills covering the full V3 capability surface — debugging, d
 | `sf-slack-research`            | Slack search for Salesforce org-context decisions                                  |
 | `sf-proof`                     | Markdown HITL via Proof editor                                                     |
 | `sf-demo-reel`                 | Capture demos for PRs (UI / CLI / Setup screen)                                    |
+| `sf-handoff`                   | Session continuity handoff/resume across agents for SF work                        |
+| `sf-babysit-pr`                | Continuous PR watch loop (review + CI + base currency) until merge-ready           |
+| `sf-explain`                   | Durable teaching artifacts for Apex/LWC/Flow concepts, diffs, and work recaps      |
+| `sf-sweep`                     | Sweep Slack/GitHub feedback sources into an `sf-lfg`-ready plan                    |
+| `sf-retune`                    | Measurement-first retune of the plugin skill corpus for a new model                |
+| `sf-test-browser`              | Browser tests for changed LWC / Aura / Experience Cloud / FlexiPage UI             |
 
-Out of scope for this Salesforce plugin (intentionally not shipped): generic frontend design tooling, Figma sync, image generation, non-Salesforce test runners (xcode, browser), and personality-tied reviewers tied to non-Salesforce stacks.
+Out of scope for this Salesforce plugin (intentionally not shipped): generic frontend design tooling, Figma sync, image generation, non-Salesforce native test runners (e.g. Xcode), and personality-tied reviewers tied to non-Salesforce stacks.
 
 ***
 

@@ -6,15 +6,16 @@ date: 2026-07-31
 supersedes: docs/plans/2026-03-02-feat-close-teardown-gaps-plan.md
 ---
 
-# Audit: EveryInc `compound-engineering-v3.21.0` vs SF `3.1.0-beta.5`
+# Audit: EveryInc `compound-engineering-v3.21.0` vs SF `3.1.0-beta.6`
 
-Fresh gap matrix produced while executing [`2026-07-31-001-feat-everyinc-gap-sync-and-gaps-doc-plan.md`](../../plans/2026-07-31-001-feat-everyinc-gap-sync-and-gaps-doc-plan.md). The March 2026 teardown plan is **historical only**.
+Fresh gap matrix produced while executing [`2026-07-31-001-feat-everyinc-gap-sync-and-gaps-doc-plan.md`](../../plans/2026-07-31-001-feat-everyinc-gap-sync-and-gaps-doc-plan.md). The March 2026 teardown plan is **historical only**. Skill ports from the recommended batch landed in **`3.1.0-beta.6`**.
 
 ## Fingerprints
 
 | Tree | Identity | Version | Commit / tag | Skills | Personas |
 | --- | --- | --- | --- | --- | --- |
-| **SF source of truth** | `gellasangameshgupta/salesforce-compound-engineering-plugin` `origin/main` | `3.1.0-beta.5` | `135120693dc1181d2d4cf1672815b8dcc7c38a29` | 62 | 61 |
+| **SF (post-port)** | `gellasangameshgupta/salesforce-compound-engineering-plugin` | `3.1.0-beta.6` | this change | 68 | 61 |
+| **SF audit baseline** | `origin/main` at audit time | `3.1.0-beta.5` | `135120693dc1181d2d4cf1672815b8dcc7c38a29` | 62 | 61 |
 | **EveryInc compare pin** | `EveryInc/compound-engineering-plugin` | `3.21.0` | tag `compound-engineering-v3.21.0` @ `c553b957842fbd87f65f90ff5af4f18deb91f56c` | 32 | 27 |
 
 ### Repo identity note
@@ -87,16 +88,16 @@ Status values: `parity` | `gap` | `intentional_sf` | `sf_ahead`
 
 | EveryInc skill | Severity | Suggested action |
 | --- | --- | --- |
-| `ce-handoff` | high | Port as `sf-handoff` for session continuity across agents/humans |
-| `ce-babysit-pr` | high | Port as `sf-babysit-pr` for CI/PR watch loops |
-| `ce-explain` | medium | Port guidance-style explain skill for Apex/LWC/Flow diffs |
-| `ce-sweep` | medium | Port repo hygiene sweep adapted to SF metadata noise |
-| `ce-retune` | medium | Evaluate vs existing `sf-update` / compound refresh; port if distinct |
+| `ce-handoff` | high | **ported** → `sf-handoff` |
+| `ce-babysit-pr` | high | **ported** → `sf-babysit-pr` |
+| `ce-explain` | medium | **ported** → `sf-explain` |
+| `ce-sweep` | medium | **ported** → `sf-sweep` (feedback-source sweep; SF-aware verify) |
+| `ce-retune` | medium | **ported** → `sf-retune` (distinct: measurement-first corpus retune; requires harness) |
 | `ce-dogfood` | low | Optional — dogfood protocol for plugin authors |
 | `ce-pov` | low | Optional product POV skill |
 | `ce-promote` | low | Evaluate release promote vs SF release-notes / CLI |
 | `ce-riffrec-feedback-analysis` | low | Niche; defer unless RiffRec used |
-| `ce-test-browser` | medium | Useful for LWC UI; port carefully (browser automation) |
+| `ce-test-browser` | medium | **ported** → `sf-test-browser` (LWC/Aura/Experience route mapping) |
 | `ce-test-xcode` | low | Not relevant to Salesforce — skip / intentional non-port |
 
 ### SF-only keepers (intentional / ahead)
@@ -135,25 +136,33 @@ Still open from March spirit: populated institutional `docs/solutions/**` conten
 
 ## Severity-ranked open gaps (actionable)
 
-1. **high** — Port `handoff` and `babysit-pr` skill equivalents.
-2. **high** — Grow real `docs/solutions/` learnings (process + content), not just README.
-3. **medium** — Cursor Marketplace submission (packaging applied this change; external submit remaining).
-4. **medium** — Consider `explain`, `sweep`, `test-browser` ports.
-5. **medium** — Broader native harness manifests vs CLI-only install.
-6. **low** — dogfood / pov / promote / riffrec / xcode (skip xcode).
+1. **high** — Grow real `docs/solutions/` learnings (process + content), not just README.
+2. **medium** — Cursor Marketplace submission (packaging ready; external submit remaining).
+3. **medium** — Broader native harness manifests vs CLI-only install.
+4. **low** — Optional `dogfood` / `pov` / `promote` / `riffrec` (skip xcode).
+5. ~~Port handoff / babysit-pr / explain / sweep / retune / test-browser~~ — **done in 3.1.0-beta.6**.
 
 ## Recommended next port batch (≤10)
 
-1. `sf-handoff` ← `ce-handoff`
-2. `sf-babysit-pr` ← `ce-babysit-pr`
-3. `sf-explain` ← `ce-explain` (Salesforce-flavored)
-4. `sf-sweep` ← `ce-sweep` (metadata-aware)
-5. Evaluate `ce-retune` vs `sf-update` / `sf-compound-refresh`
-6. `sf-test-browser` ← `ce-test-browser` (LWC-focused)
-7. Seed 3–5 real `docs/solutions/` entries from recent SF work
-8. Native-manifest spike for one additional harness (e.g. OpenCode/Pi) if CLI friction reported
-9. Optional `ce-dogfood` for plugin maintainers
-10. Skip `ce-test-xcode`
+**Completed in `3.1.0-beta.6`:** `sf-handoff`, `sf-babysit-pr`, `sf-explain`, `sf-sweep`, `sf-retune`, `sf-test-browser`.
+
+### Retune evaluation (done)
+
+| Skill | Role |
+| --- | --- |
+| `sf-update` | Plugin self-update from GitHub releases |
+| `sf-compound-refresh` | Refresh stale `docs/solutions/` learnings |
+| `sf-retune` | Measurement-first **skill-corpus** retune for a new model (requires A/B harness); refuses without one |
+
+These are complementary, not duplicates.
+
+### Remaining / deferred
+
+1. Seed 3–5 real `docs/solutions/` entries from recent SF work
+2. Native-manifest spike for one additional harness (e.g. OpenCode/Pi) if CLI friction reported
+3. Optional `ce-dogfood` → `sf-dogfood` for plugin maintainers
+4. Optional `ce-pov` / `ce-promote` / `ce-riffrec-feedback-analysis` only if product need appears
+5. Skip `ce-test-xcode` (non-Salesforce)
 
 ## Cursor Marketplace readiness
 

@@ -1,5 +1,6 @@
 ---
 name: sf-sweep
+tier: workflow
 description: "Sweep configured feedback sources (Slack org channels, GitHub Issues on Salesforce repos; email experimental) for new items: acknowledge at source, analyze recordings, verify fixes merged to the default branch, and emit an `sf-lfg`-ready plan. Use for Salesforce team feedback about Apex, LWC, Flow, org, or metadata work. First run sets up sources; supports mode:headless for scheduled runs."
 disable-model-invocation: true
 argument-hint: "[setup|reconfigure] [mode:headless]"

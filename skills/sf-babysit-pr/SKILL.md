@@ -1,5 +1,6 @@
 ---
 name: sf-babysit-pr
+tier: workflow
 description: "Babysits or watches an open GitHub PR until merge-ready, continuously reacting to review comments, CI failures, and routine base movement throughout the PR's life. Use when asked to 'babysit the PR', 'watch the PR', monitor, or keep an eye on an Apex, LWC, Flow, or Salesforce metadata PR over time — not a one-shot request to resolve review comments or debug one CI failure (those are separate skills). GitHub only, including GitHub Enterprise."
 argument-hint: "[PR number, URL, or blank for current branch's PR] [watch|checkpoint] [duration]"
 ---

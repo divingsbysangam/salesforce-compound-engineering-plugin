@@ -1,5 +1,6 @@
 ---
 name: sf-test-browser
+tier: workflow
 description: Run browser tests for Salesforce UI pages affected by the current branch or PR. Use for changed LWC, Aura, Lightning App Builder, Experience Cloud, or static-resource UI behavior when a browser-accessible local or org preview is available.
 argument-hint: "[PR number, branch name, 'current', or --port PORT]"
 ---

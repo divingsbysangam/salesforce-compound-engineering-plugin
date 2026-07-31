@@ -1,4 +1,4 @@
-# SF Compound Engineering Plugin v3.1.0-beta.5
+# SF Compound Engineering Plugin v3.1.0-beta.6
 
 **Instruction-Based Compound Engineering for Salesforce** — a multi-platform plugin (Claude Code, Cursor, Codex, and 9 other AI coding tools) where each iteration becomes smarter than the last through institutional knowledge capture and parallel persona dispatch.
 
@@ -14,7 +14,7 @@
 
   • Ideate     — decide what's worth building (/sf-ideate)
   • Brainstorm — explore requirements through collaborative dialogue (/sf-brainstorm)
-  • Plan       — research & design using 62 skills + parallel research personas (/sf-plan)
+  • Plan       — research & design using 68 skills + parallel research personas (/sf-plan)
   • Deepen     — enhance the plan with section-level parallel research (/sf-deepen)
   • Work       — implement with pre-research + system-wide test checks (/sf-work)
   • Review     — parallel persona dispatch across 61 specialist personas (/sf-review)
@@ -292,7 +292,7 @@ The `sf-learnings-researcher` persona searches these documents by frontmatter me
 ```
 salesforce-compound-engineering-plugin/
 ├── .claude-plugin/
-│   ├── plugin.json           # Plugin manifest (v3.1.0-beta.5)
+│   ├── plugin.json           # Plugin manifest (v3.1.0-beta.6)
 │   └── marketplace.json      # Marketplace loader schema
 ├── .cursor-plugin/           # Cursor plugin manifest
 ├── .codex-plugin/            # Codex plugin manifest
@@ -310,7 +310,7 @@ salesforce-compound-engineering-plugin/
 │   │   ├── tend/             # Local feed state, cards, work, receipts, learning
 │   │   └── utils/            # Auto-detect, merge helpers
 │   └── tests/
-├── skills/                   # 62 skills — each owns the personas it dispatches
+├── skills/                   # 68 skills — each owns the personas it dispatches
 │   ├── index.md              # Skill routing map
 │   ├── sf-review/references/personas/      # ~40 code-review personas
 │   ├── sf-doc-review/references/personas/  #  8 doc-review personas

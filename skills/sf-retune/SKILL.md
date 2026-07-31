@@ -1,5 +1,6 @@
 ---
 name: sf-retune
+tier: workflow
 description: "Retune the Salesforce Compound Engineering plugin skill corpus for a new model, measurement-first: mine the run archive for a baseline, establish a noise floor, audit the corpus adversarially, then cut in measured passes until a pre-registered bar clears. Use when a new model changes how the SF plugin follows Apex, LWC, Flow, org, or metadata workflows. Requires a benchmark harness that can A/B two builds of the corpus; refuses without one."
 disable-model-invocation: true
 argument-hint: "[target model or symptom] [path to the corpus, defaults to ./skills] [bar:<n> consecutive clean runs]"
