@@ -19,6 +19,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate Cursor plugin packaging
+        run: node scripts/validate-cursor-plugin.mjs
       - name: Install locked CLI dependencies
         working-directory: cli
         run: bun install --frozen-lockfile

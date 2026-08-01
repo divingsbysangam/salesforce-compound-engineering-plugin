@@ -48,15 +48,15 @@ Above the loop, **`/sf-strategy`** maintains an optional repo-root `STRATEGY.md`
 
 ### Cursor
 
-**Local / Git install (current):**
+**Install today (CLI / Git):**
 
 ```bash
 bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to cursor
 ```
 
-Or open this repo in Cursor; the single-plugin manifest is `.cursor-plugin/plugin.json` (skills at repo root, hooks at `hooks/hooks.json`, MCP at `mcp.json`).
+Or open this repo in Cursor. Manifest: `.cursor-plugin/plugin.json` (skills at repo root, hooks at `hooks/hooks.json`, MCP at `mcp.json`).
 
-**Cursor Marketplace:** packaging is aligned to the [Cursor plugin template](https://github.com/cursor/plugin-template) single-plugin shape. Listing submission is pending (validate with `node scripts/validate-cursor-plugin.mjs`). See the readiness section in [`docs/solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md`](./docs/solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md).
+**Cursor Marketplace:** packaging matches the [Cursor plugin template](https://github.com/cursor/plugin-template) single-plugin shape and passes `node scripts/validate-cursor-plugin.mjs`. Submit (or re-submit) with the packet in [`docs/solutions/integrations/cursor-marketplace-submission.md`](./docs/solutions/integrations/cursor-marketplace-submission.md) — email `kniparko@anysphere.com` or Cursor team Slack. Marketplace browse/install instructions will replace this note once Cursor lists the plugin.
 
 ### Other AI Coding Tools (11 platforms)
 
