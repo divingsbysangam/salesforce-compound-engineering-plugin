@@ -10,7 +10,7 @@
   "homepage": "https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin",
   "repository": "https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin",
   "license": "MIT",
-  "logo": "assets/logo.svg",
+  "logo": "assets/logo.png",
   "keywords": [
     "salesforce",
     "cursor",

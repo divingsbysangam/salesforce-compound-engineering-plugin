@@ -137,7 +137,7 @@ Still open from March spirit: populated institutional `docs/solutions/**` conten
 ## Severity-ranked open gaps (actionable)
 
 1. **high** — Grow real `docs/solutions/` learnings (process + content), not just README.
-2. **medium** — Cursor Marketplace submission (packaging ready; external submit remaining).
+2. **medium** — Cursor Marketplace listing (packaging + CI + submission packet ready; send email/Slack to Cursor).
 3. **medium** — Broader native harness manifests vs CLI-only install.
 4. **low** — Optional `dogfood` / `pov` / `promote` / `riffrec` (skip xcode).
 5. ~~Port handoff / babysit-pr / explain / sweep / retune / test-browser~~ — **done in 3.1.0-beta.6**.
@@ -179,15 +179,18 @@ Aligned to [cursor/plugin-template](https://github.com/cursor/plugin-template) (
 | Root `mcp.json` for Cursor | parity (dual-ship; `.mcp.json` remains Claude canonical) |
 | Skill frontmatter `name` + `description` | parity (fixed 4 legacy skills) |
 | `node scripts/validate-cursor-plugin.mjs` | parity |
-| External Marketplace listing / email submit | process — draft below; do not send unless requested |
+| External Marketplace listing / email submit | **ready** — copy-paste packet in [`cursor-marketplace-submission.md`](./cursor-marketplace-submission.md); send to `kniparko@anysphere.com` or Cursor Slack |
 
-### Submission packet (draft — do not send yet)
+### Submission packet
+
+Full maintainer runbook + email body: [`cursor-marketplace-submission.md`](./cursor-marketplace-submission.md).
+
+Quick facts:
 
 - **Repository:** https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin
 - **Plugin name:** `sf-compound-engineering`
 - **Display name:** Salesforce Compound Engineering
-- **One-liner:** Salesforce-focused compound engineering skills for Cursor (plan → work → review → compound) with Apex/LWC/Flow/Agentforce depth.
-- **Validate:** `node scripts/validate-cursor-plugin.mjs` (expect pass)
+- **Validate:** `node scripts/validate-cursor-plugin.mjs` (CI enforces on PR/main)
 - **Contact:** Gella Sangamesh Gupta — https://github.com/gellasangameshgupta
 - **Submit to:** Cursor team Slack or `kniparko@anysphere.com` (per plugin-template README)
 

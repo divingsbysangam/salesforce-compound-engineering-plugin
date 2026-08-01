@@ -11,7 +11,7 @@
 * **EveryInc gap skill ports (`3.1.0-beta.6`)** — `sf-handoff`, `sf-babysit-pr`, `sf-explain`, `sf-sweep`, `sf-retune`, `sf-test-browser` (LWC/Aura/Experience route mapping), with scripts/references where upstream shipped them.
 * **`/sf-tend` responsibility feeds** — local-first Salesforce feeds with one durable thread per feed, source-backed cards, approval-gated actions, receipts, and reviewed learning.
 * **Tend CLI runtime** — `feed`, `card`, `work`, `action`, and `learning` commands with digest-bound stale-action rejection and isolated local state.
-* **Cursor Marketplace packaging** — single-plugin `.cursor-plugin/plugin.json` path fields, `assets/logo.svg`, `mcp.json` dual-ship, `scripts/validate-cursor-plugin.mjs`.
+* **Cursor Marketplace packaging** — single-plugin `.cursor-plugin/plugin.json` path fields, `assets/logo.svg`, `mcp.json` dual-ship, `scripts/validate-cursor-plugin.mjs`, CI validation, and submission runbook at `docs/solutions/integrations/cursor-marketplace-submission.md`.
 
 ### Changed
 
