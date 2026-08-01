@@ -13,6 +13,20 @@ Maintainer runbook for listing **Salesforce Compound Engineering** (`sf-compound
 
 This is a **one-time listing action** (plus occasional re-submit notes if Cursor asks for a SHA or metadata refresh). Day-to-day Cursor users can already install via the Bun CLI or by opening this repo; Marketplace listing makes discovery easier.
 
+## Marketplace form fields (fill these)
+
+| Field | Value |
+| --- | --- |
+| **Logotype URL** | `https://raw.githubusercontent.com/gellasangameshgupta/salesforce-compound-engineering-plugin/main/assets/logo.png` |
+| **Description** | Salesforce-focused compound engineering for Cursor: skills for ideate → brainstorm → plan → deepen → work → review → polish → compound, with Apex, LWC, Flow, governor limits, security, and Agentforce depth. |
+| **GitHub repository** | `https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin` |
+
+Alternate logotype (SVG, same 1:1 plate):
+
+`https://raw.githubusercontent.com/gellasangameshgupta/salesforce-compound-engineering-plugin/main/assets/logo.svg`
+
+Logo assets in-repo: `assets/logo.png` (512×512 RGB, solid background plate) and `assets/logo.svg`. Manifest `.cursor-plugin/plugin.json` → `"logo": "assets/logo.png"`.
+
 ## Packaging shape (already done)
 
 This repo uses Cursor’s **single-plugin** layout ([plugin-template](https://github.com/cursor/plugin-template)):
@@ -75,10 +89,9 @@ Salesforce-focused compound engineering skills for Cursor (plan → work → rev
 Author:
 Gella Sangamesh Gupta — https://github.com/gellasangameshgupta
 
-Layout:
-Single-plugin repo (root .cursor-plugin/plugin.json), skills-first / agentless (no agents/ or commands/). Validated with:
-
-  node scripts/validate-cursor-plugin.mjs
+Logo: `assets/logo.png`
+Hooks/MCP: `hooks/hooks.json`, root `mcp.json`
+Validate: `node scripts/validate-cursor-plugin.mjs`
 
 Happy to adjust metadata, logo, or packaging if anything doesn't match your current Marketplace requirements.
 

@@ -1,13 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Salesforce Compound Engineering">
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Salesforce Compound Engineering">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="plate" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#0B5CAB"/>
       <stop offset="100%" stop-color="#032D60"/>
     </linearGradient>
   </defs>
-  <rect width="128" height="128" rx="28" fill="url(#g)"/>
-  <path d="M34 78c8 14 28 22 46 14 10-4 18-12 22-22-8 6-18 10-28 10-16 0-30-8-40-2z" fill="#FFFFFF" opacity=".92"/>
-  <path d="M28 56c10-18 34-28 54-18 8 4 14 10 18 18-10-4-22-4-34 2-12 6-24 8-38-2z" fill="#90D0FE"/>
-  <circle cx="86" cy="40" r="10" fill="#FFFFFF"/>
-  <circle cx="86" cy="40" r="5" fill="#00A1E0"/>
+  <!-- solid 1:1 background plate (full square) -->
+  <rect width="512" height="512" fill="url(#plate)"/>
+  <!-- cloud mark -->
+  <g>
+    <ellipse cx="175" cy="260" rx="85" ry="70" fill="#90D0FE"/>
+    <ellipse cx="250" cy="230" rx="90" ry="80" fill="#90D0FE"/>
+    <ellipse cx="340" cy="260" rx="80" ry="70" fill="#90D0FE"/>
+    <ellipse cx="200" cy="345" rx="90" ry="75" fill="#FFFFFF"/>
+    <ellipse cx="285" cy="320" rx="95" ry="80" fill="#FFFFFF"/>
+    <ellipse cx="375" cy="345" rx="75" ry="75" fill="#FFFFFF"/>
+  </g>
+  <circle cx="345" cy="155" r="45" fill="#FFFFFF"/>
+  <circle cx="345" cy="155" r="23" fill="#00A1E0"/>
 </svg>
