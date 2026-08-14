@@ -1,5 +1,5 @@
 {
-  "name": "@gellasangameshgupta/sf-compound-plugin",
+  "name": "@divingsbysangam/sf-compound-plugin",
   "version": "1.0.0",
   "description": "Multi-tool installer for SF Compound Engineering Plugin — converts Claude Code plugins to Copilot, Windsurf, Gemini, Kiro, OpenCode, Codex",
   "type": "module",
@@ -40,6 +40,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin"
+    "url": "https://github.com/divingsbysangam/salesforce-compound-engineering-plugin"
   }
 }

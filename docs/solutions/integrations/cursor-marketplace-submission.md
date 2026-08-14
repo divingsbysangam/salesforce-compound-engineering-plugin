@@ -17,13 +17,13 @@ This is a **one-time listing action** (plus occasional re-submit notes if Cursor
 
 | Field | Value |
 | --- | --- |
-| **Logotype URL** | `https://raw.githubusercontent.com/gellasangameshgupta/salesforce-compound-engineering-plugin/main/assets/logo.png` |
+| **Logotype URL** | `https://raw.githubusercontent.com/divingsbysangam/salesforce-compound-engineering-plugin/main/assets/logo.png` |
 | **Description** | Salesforce-focused compound engineering for Cursor: skills for ideate → brainstorm → plan → deepen → work → review → polish → compound, with Apex, LWC, Flow, governor limits, security, and Agentforce depth. |
-| **GitHub repository** | `https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin` |
+| **GitHub repository** | `https://github.com/divingsbysangam/salesforce-compound-engineering-plugin` |
 
 Alternate logotype (SVG, same 1:1 plate):
 
-`https://raw.githubusercontent.com/gellasangameshgupta/salesforce-compound-engineering-plugin/main/assets/logo.svg`
+`https://raw.githubusercontent.com/divingsbysangam/salesforce-compound-engineering-plugin/main/assets/logo.svg`
 
 Logo assets in-repo: `assets/logo.png` (512×512 RGB, solid background plate) and `assets/logo.svg`. Manifest `.cursor-plugin/plugin.json` → `"logo": "assets/logo.png"`.
 
@@ -51,7 +51,7 @@ Run from repo root on the commit you will submit:
 ```bash
 node scripts/validate-cursor-plugin.mjs
 git rev-parse HEAD
-git ls-remote https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin.git HEAD
+git ls-remote https://github.com/divingsbysangam/salesforce-compound-engineering-plugin.git HEAD
 ```
 
 Confirm:
@@ -78,8 +78,8 @@ I'd like to submit a plugin for the Cursor Marketplace.
 Plugin name: sf-compound-engineering
 Display name: Salesforce Compound Engineering
 Version: 3.1.0-beta.6
-Repository: https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin
-Homepage: https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin
+Repository: https://github.com/divingsbysangam/salesforce-compound-engineering-plugin
+Homepage: https://github.com/divingsbysangam/salesforce-compound-engineering-plugin
 License: MIT
 Category: developer-tools
 
@@ -87,7 +87,7 @@ One-liner:
 Salesforce-focused compound engineering skills for Cursor (plan → work → review → compound) with Apex, LWC, Flow, and Agentforce depth.
 
 Author:
-Gella Sangamesh Gupta — https://github.com/gellasangameshgupta
+Gella Sangamesh Gupta — https://github.com/divingsbysangam
 
 Logo: `assets/logo.png`
 Hooks/MCP: `hooks/hooks.json`, root `mcp.json`

@@ -42,8 +42,8 @@ dependencies = [
 sfce = "sfce:main"
 
 [project.urls]
-Homepage = "https://github.com/gellasangameshgupta/sf-compound-engineering-plugin"
-Repository = "https://github.com/gellasangameshgupta/sf-compound-engineering-plugin"
+Homepage = "https://github.com/divingsbysangam/sf-compound-engineering-plugin"
+Repository = "https://github.com/divingsbysangam/sf-compound-engineering-plugin"
 
 [tool.hatch.build.targets.wheel]
 packages = ["."]

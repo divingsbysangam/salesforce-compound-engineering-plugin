@@ -12,7 +12,7 @@ superseded_by: docs/solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md
 
 ## <span data-proof="authored" data-by="ai:claude">Overview</span>
 
-<span data-proof="authored" data-by="ai:claude">The teardown (sections 31-38) identified</span> **<span data-proof="authored" data-by="ai:claude">31 gaps</span>** <span data-proof="authored" data-by="ai:claude">across 3 categories between the</span> [<span data-proof="authored" data-by="ai:claude">original compound-engineering-plugin</span>](https://github.com/EveryInc/compound-engineering-plugin) <span data-proof="authored" data-by="ai:claude">and the</span> [<span data-proof="authored" data-by="ai:claude">SF adaptation</span>](https://github.com/sangameshgupta/sf-compound-engineering-plugin)<span data-proof="authored" data-by="ai:claude">. This plan validates each gap against the current codebase state and provides a prioritized implementation roadmap.</span>
+<span data-proof="authored" data-by="ai:claude">The teardown (sections 31-38) identified</span> **<span data-proof="authored" data-by="ai:claude">31 gaps</span>** <span data-proof="authored" data-by="ai:claude">across 3 categories between the</span> [<span data-proof="authored" data-by="ai:claude">original compound-engineering-plugin</span>](https://github.com/EveryInc/compound-engineering-plugin) <span data-proof="authored" data-by="ai:claude">and the</span> [<span data-proof="authored" data-by="ai:claude">SF adaptation</span>](https://github.com/divingsbysangam/salesforce-compound-engineering-plugin)<span data-proof="authored" data-by="ai:claude">. This plan validates each gap against the current codebase state and provides a prioritized implementation roadmap.</span>
 
 ## <span data-proof="authored" data-by="ai:claude">Current State Verified</span>
 
@@ -434,4 +434,4 @@ sf-compound-engineering-plugin/
 
 * <span data-proof="authored" data-by="ai:claude">Original plugin:</span> [<span data-proof="authored" data-by="ai:claude">https://github.com/EveryInc/compound-engineering-plugin</span>](https://github.com/EveryInc/compound-engineering-plugin)
 
-* <span data-proof="authored" data-by="ai:claude">SF plugin:</span> [<span data-proof="authored" data-by="ai:claude">https://github.com/sangameshgupta/sf-compound-engineering-plugin</span>](https://github.com/sangameshgupta/sf-compound-engineering-plugin)
+* <span data-proof="authored" data-by="ai:claude">SF plugin:</span> [<span data-proof="authored" data-by="ai:claude">https://github.com/divingsbysangam/salesforce-compound-engineering-plugin</span>](https://github.com/divingsbysangam/salesforce-compound-engineering-plugin)

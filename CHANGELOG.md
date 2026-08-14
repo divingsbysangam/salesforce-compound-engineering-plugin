@@ -17,6 +17,7 @@
 
 * Plugin manifests now identify `3.1.0-beta.6`; catalog is **68 skills** + 61 specialist personas.
 * Gaps audit updated: high-priority EveryInc v3.21 skill gaps marked ported; `sf-retune` documented as distinct from `sf-update` / `sf-compound-refresh`.
+* **Repository & package migration** — canonical repo moved to [`divingsbysangam/salesforce-compound-engineering-plugin`](https://github.com/divingsbysangam/salesforce-compound-engineering-plugin); prior `gellasangameshgupta/salesforce-compound-engineering-plugin` repo superseded. CLI/npm package renamed `@gellasangameshgupta/sf-compound-plugin` → `@divingsbysangam/sf-compound-plugin`. `homepage`/`repository`/author URLs updated across all four manifests.
 
 ## \[3.1.0-beta.3] - 2026-06-22
 

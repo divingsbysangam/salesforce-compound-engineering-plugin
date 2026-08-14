@@ -597,7 +597,7 @@ Multi-platform manifest layout:
 - Happy path: Each of the 22 ported skills has a SKILL.md with `name` matching the directory and `description` containing at least 3 Salesforce-flavored trigger phrases.
 - Happy path: `sf-debug` description distinguishes it from existing `sf-bug-reproduction-validator` agent — debug is a workflow, the validator is a sub-step inside it.
 - Edge case: Skills that V3 marks as `ce-` only and don't apply to Salesforce (`ce-test-xcode`, `ce-frontend-design`, `ce-gemini-imagegen`, `ce-test-browser`, `ce-work-beta`, `ce-polish-beta`) are explicitly NOT ported.
-- Edge case: `sf-update`'s upstream URL points at the SF plugin's repo (`sangameshgupta/sf-compound-engineering-plugin`), not EveryInc's.
+- Edge case: `sf-update`'s upstream URL points at the SF plugin's repo (`divingsbysangam/salesforce-compound-engineering-plugin`), not EveryInc's.
 - Edge case: `sf-compound-refresh` respects the protected-artifact rule — never deletes `docs/solutions/` content.
 - Integration: Invoking `/sf-debug` in a Salesforce repo loads the skill and the natural-language trigger "why is this trigger failing" auto-routes to the same skill (validates the description's auto-routing in U10).
 
@@ -881,7 +881,7 @@ Ships as `v3.0.0` final. README, CHANGELOG, manifest validation, and live instal
 - **V3 reference (read-only):** `/Users/gellasangamesh/.claude/plugins/cache/every-marketplace/compound-engineering/3.0.6/`
 - **V3 release notes:** `/Users/gellasangamesh/.claude/plugins/cache/every-marketplace/compound-engineering/3.0.6/CHANGELOG.md`
 - **EveryInc plugin GitHub:** `https://github.com/EveryInc/compound-engineering-plugin`
-- **SF plugin GitHub:** `https://github.com/sangameshgupta/sf-compound-engineering-plugin`
+- **SF plugin GitHub:** `https://github.com/divingsbysangam/salesforce-compound-engineering-plugin`
 - **Project memory:** `MEMORY.md` notes on hosted MCP gotchas (preserved verbatim)
 - **Schema validator:** `schema.yaml` (unchanged by this migration)
 - **Project conventions:** `CLAUDE.md` (rewritten in U5)
