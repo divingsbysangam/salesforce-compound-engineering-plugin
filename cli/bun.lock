@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@gellasangameshgupta/sf-compound-plugin",
+      "name": "@divingsbysangam/sf-compound-plugin",
       "dependencies": {
         "citty": "^0.1.6",
         "gray-matter": "^4.0.3",

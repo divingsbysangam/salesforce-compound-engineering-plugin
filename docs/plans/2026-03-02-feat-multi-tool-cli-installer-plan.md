@@ -12,7 +12,7 @@ Build a Bun/TypeScript CLI that converts the SF Compound Engineering Plugin (Cla
 
 Currently, the plugin only works with Claude Code. This CLI will read the plugin's markdown commands, agents, skills, and MCP config, then convert them into each platform's native format — exactly how EveryInc's `@every-env/compound-plugin` works.
 
-**Goal:** `bunx @sangameshgupta/sf-compound-plugin install sf-compound-engineering --to [target]`
+**Goal:** `bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to [target]`
 
 ## Problem Statement
 
@@ -88,7 +88,7 @@ cli/
 **Tasks:**
 
 - [ ] Initialize Bun project: `cli/package.json`, `cli/tsconfig.json`
-  - Package name: `@sangameshgupta/sf-compound-plugin`
+  - Package name: `@divingsbysangam/sf-compound-plugin`
   - Dependencies: `citty`, `js-yaml`, `gray-matter`
 - [ ] `src/parser/types.ts` — Define TypeScript interfaces
   ```typescript
@@ -236,7 +236,7 @@ User request: {{args}}
 
 #### Phase 4: Publish + README
 
-- [ ] Publish to npm as `@sangameshgupta/sf-compound-plugin`
+- [ ] Publish to npm as `@divingsbysangam/sf-compound-plugin`
 - [ ] Add CLI section to main README.md
 - [ ] Add `--scope workspace|global` flag support for Windsurf
 - [ ] Integration tests that verify output files match expected formats
@@ -270,14 +270,14 @@ All names: lowercase, special chars → hyphens, deduplicate with numeric suffix
 
 ### Functional
 
-- [ ] `bunx @sangameshgupta/sf-compound-plugin install sf-compound-engineering --to copilot` writes correct files to `.github/`
-- [ ] `bunx @sangameshgupta/sf-compound-plugin install sf-compound-engineering --to windsurf` writes correct files
-- [ ] `bunx @sangameshgupta/sf-compound-plugin install sf-compound-engineering --to gemini` writes correct TOML commands
-- [ ] `bunx @sangameshgupta/sf-compound-plugin install sf-compound-engineering --to kiro` writes JSON configs + prompt files
-- [ ] `bunx @sangameshgupta/sf-compound-plugin install sf-compound-engineering --to opencode` resolves model aliases
-- [ ] `bunx @sangameshgupta/sf-compound-plugin install sf-compound-engineering --to codex` creates prompt+skill pairs
-- [ ] `bunx @sangameshgupta/sf-compound-plugin install sf-compound-engineering --to all` auto-detects and writes to all found tools
-- [ ] `bunx @sangameshgupta/sf-compound-plugin sync --target [tool]` symlinks skills and merges MCP config
+- [ ] `bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to copilot` writes correct files to `.github/`
+- [ ] `bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to windsurf` writes correct files
+- [ ] `bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to gemini` writes correct TOML commands
+- [ ] `bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to kiro` writes JSON configs + prompt files
+- [ ] `bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to opencode` resolves model aliases
+- [ ] `bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to codex` creates prompt+skill pairs
+- [ ] `bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to all` auto-detects and writes to all found tools
+- [ ] `bunx @divingsbysangam/sf-compound-plugin sync --target [tool]` symlinks skills and merges MCP config
 - [ ] All 7 commands, 33 agents, and 12 skills are converted for each platform
 - [ ] MCP config (Context7) is written in each platform's native format
 - [ ] Existing user config is preserved during merges (user wins on conflict)
@@ -304,7 +304,7 @@ All names: lowercase, special chars → hyphens, deduplicate with numeric suffix
 | TOML generation for Gemini | Use `@iarna/toml` or simple string templating (TOML is simple enough) |
 | Kiro's stdio-only MCP | Context7 uses stdio (npx), so no issue for our plugin |
 | Cursor removed CLI install | Sync-only approach (symlinks + MCP merge) |
-| npm publish scope | Need `@sangameshgupta` org on npm, or use unscoped name |
+| npm publish scope | Need `@divingsbysangam` org on npm, or use unscoped name |
 
 ## Success Metrics
 

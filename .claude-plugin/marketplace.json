@@ -2,12 +2,12 @@
   "name": "sf-compound-engineering-marketplace",
   "owner": {
     "name": "Gella Sangamesh Gupta",
-    "url": "https://github.com/gellasangameshgupta"
+    "url": "https://github.com/divingsbysangam"
   },
   "metadata": {
     "description": "Salesforce-focused compound engineering plugin marketplace for Claude Code, Cursor, and Codex",
     "version": "3.1.0-beta.6",
-    "homepage": "https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin"
+    "homepage": "https://github.com/divingsbysangam/salesforce-compound-engineering-plugin"
   },
   "plugins": [
     {
@@ -17,10 +17,10 @@
       "version": "3.1.0-beta.6",
       "author": {
         "name": "Gella Sangamesh Gupta",
-        "url": "https://github.com/gellasangameshgupta"
+        "url": "https://github.com/divingsbysangam"
       },
-      "homepage": "https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin",
-      "repository": "https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin",
+      "homepage": "https://github.com/divingsbysangam/salesforce-compound-engineering-plugin",
+      "repository": "https://github.com/divingsbysangam/salesforce-compound-engineering-plugin",
       "license": "MIT",
       "tags": [
         "salesforce",

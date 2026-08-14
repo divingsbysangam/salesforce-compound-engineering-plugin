@@ -40,7 +40,7 @@ Above the loop, **`/sf-strategy`** maintains an optional repo-root `STRATEGY.md`
 
 ```bash
 # Add as a Claude Code plugin marketplace
-/plugin marketplace add https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin
+/plugin marketplace add https://github.com/divingsbysangam/salesforce-compound-engineering-plugin
 
 # Install
 /plugin install sf-compound-engineering
@@ -51,7 +51,7 @@ Above the loop, **`/sf-strategy`** maintains an optional repo-root `STRATEGY.md`
 **Install today (CLI / Git):**
 
 ```bash
-bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to cursor
+bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to cursor
 ```
 
 Or open this repo in Cursor. Manifest: `.cursor-plugin/plugin.json` (skills at repo root, hooks at `hooks/hooks.json`, MCP at `mcp.json`).
@@ -62,43 +62,43 @@ Or open this repo in Cursor. Manifest: `.cursor-plugin/plugin.json` (skills at r
 
 ```bash
 # GitHub Copilot
-bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to copilot
+bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to copilot
 
 # Cursor (also see Cursor section above)
-bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to cursor
+bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to cursor
 
 # Windsurf
-bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to windsurf
+bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to windsurf
 
 # Gemini CLI
-bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to gemini
+bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to gemini
 
 # OpenCode
-bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to opencode
+bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to opencode
 
 # Codex
-bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to codex
+bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to codex
 
 # Kiro
-bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to kiro
+bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to kiro
 
 # Factory Droid
-bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to droid
+bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to droid
 
 # Pi
-bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to pi
+bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to pi
 
 # OpenClaw
-bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to openclaw
+bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to openclaw
 
 # Qwen Code
-bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to qwen
+bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to qwen
 
 # Auto-detect and install to all detected tools
-bunx @gellasangameshgupta/sf-compound-plugin install sf-compound-engineering --to all
+bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to all
 
 # Sync from current directory to all detected tools
-bunx @gellasangameshgupta/sf-compound-plugin sync
+bunx @divingsbysangam/sf-compound-plugin sync
 ```
 
 ### What Gets Converted
@@ -301,7 +301,7 @@ salesforce-compound-engineering-plugin/
 ├── PRINCIPLES.md             # Seven governing principles (source of truth)
 ├── CLAUDE.md                 # Project context and protected artifacts
 ├── cli/                      # Multi-tool installer CLI (Bun)
-│   ├── package.json          # @gellasangameshgupta/sf-compound-plugin
+│   ├── package.json          # @divingsbysangam/sf-compound-plugin
 │   ├── src/
 │   │   ├── index.ts          # CLI entry (citty)
 │   │   ├── parser/           # Plugin reader + markdown parser

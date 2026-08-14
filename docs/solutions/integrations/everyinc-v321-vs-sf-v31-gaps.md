@@ -14,7 +14,7 @@ Fresh gap matrix produced while executing [`2026-07-31-001-feat-everyinc-gap-syn
 
 | Tree | Identity | Version | Commit / tag | Skills | Personas |
 | --- | --- | --- | --- | --- | --- |
-| **SF (post-port)** | `gellasangameshgupta/salesforce-compound-engineering-plugin` | `3.1.0-beta.6` | this change | 68 | 61 |
+| **SF (post-port)** | `divingsbysangam/salesforce-compound-engineering-plugin` | `3.1.0-beta.6` | this change | 68 | 61 |
 | **SF audit baseline** | `origin/main` at audit time | `3.1.0-beta.5` | `135120693dc1181d2d4cf1672815b8dcc7c38a29` | 62 | 61 |
 | **EveryInc compare pin** | `EveryInc/compound-engineering-plugin` | `3.21.0` | tag `compound-engineering-v3.21.0` @ `c553b957842fbd87f65f90ff5af4f18deb91f56c` | 32 | 27 |
 
@@ -22,9 +22,9 @@ Fresh gap matrix produced while executing [`2026-07-31-001-feat-everyinc-gap-syn
 
 | Repo | Role |
 | --- | --- |
-| `gellasangameshgupta/salesforce-compound-engineering-plugin` | **Current V3.1 source of truth** (this workspace `origin`) |
-| `gellasangameshgupta/sf-compound-engineering-plugin` | Older / v2 lineage — do not mix into this tree |
-| `sangameshgupta/sf-compound-engineering-plugin` | Earlier public mirror — not the sync source for this audit |
+| `divingsbysangam/salesforce-compound-engineering-plugin` | **Current V3.1 source of truth** (this workspace `origin`) |
+| `gelladivingsbysangam/salesforce-compound-engineering-plugin` | Older / v2 lineage — do not mix into this tree |
+| `divingsbysangam/salesforce-compound-engineering-plugin` | Earlier public mirror — not the sync source for this audit |
 
 ## Summary counts
 
@@ -187,11 +187,11 @@ Full maintainer runbook + email body: [`cursor-marketplace-submission.md`](./cur
 
 Quick facts:
 
-- **Repository:** https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin
+- **Repository:** https://github.com/divingsbysangam/salesforce-compound-engineering-plugin
 - **Plugin name:** `sf-compound-engineering`
 - **Display name:** Salesforce Compound Engineering
 - **Validate:** `node scripts/validate-cursor-plugin.mjs` (CI enforces on PR/main)
-- **Contact:** Gella Sangamesh Gupta — https://github.com/gellasangameshgupta
+- **Contact:** Gella Sangamesh Gupta — https://github.com/divingsbysangam
 - **Submit to:** Cursor team Slack or `kniparko@anysphere.com` (per plugin-template README)
 
 ### Maintainer note on MCP

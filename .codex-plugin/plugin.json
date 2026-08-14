@@ -4,10 +4,10 @@
   "description": "Salesforce-focused compound engineering plugin for Codex. Skills-first V3 architecture with parallel agent dispatch, institutional knowledge compounding, and Apex/LWC/Flow/Integration coverage.",
   "author": {
     "name": "Gella Sangamesh Gupta",
-    "url": "https://github.com/gellasangameshgupta"
+    "url": "https://github.com/divingsbysangam"
   },
-  "homepage": "https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin",
-  "repository": "https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin",
+  "homepage": "https://github.com/divingsbysangam/salesforce-compound-engineering-plugin",
+  "repository": "https://github.com/divingsbysangam/salesforce-compound-engineering-plugin",
   "license": "MIT",
   "keywords": [
     "salesforce",
@@ -34,7 +34,7 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin",
+    "websiteURL": "https://github.com/divingsbysangam/salesforce-compound-engineering-plugin",
     "defaultPrompt": [
       "/sf-brainstorm a new Apex feature",
       "/sf-plan the LWC implementation",

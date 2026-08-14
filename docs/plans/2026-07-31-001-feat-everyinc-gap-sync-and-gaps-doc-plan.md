@@ -38,9 +38,9 @@ Two similarly named remotes exist historically:
 
 | Repo | Role |
 | --- | --- |
-| `gellasangameshgupta/salesforce-compound-engineering-plugin` | **Current V3.1 source of truth** — this workspace’s `origin` |
-| `gellasangameshgupta/sf-compound-engineering-plugin` | Older/v2 lineage (and earlier Claude-plugin-parity experiments) |
-| `sangameshgupta/sf-compound-engineering-plugin` | Public mirror created during earlier work |
+| `divingsbysangam/salesforce-compound-engineering-plugin` | **Current V3.1 source of truth** — this workspace’s `origin` |
+| `gelladivingsbysangam/salesforce-compound-engineering-plugin` | Older/v2 lineage (and earlier Claude-plugin-parity experiments) |
+| `divingsbysangam/salesforce-compound-engineering-plugin` | Public mirror created during earlier work |
 
 **Default for this plan:** treat `salesforce-compound-engineering-plugin` as the SF local sync source (already checked out at `/workspace` @ `1351206`). If the user insists on the older `sf-compound-engineering-plugin` URL, document the mismatch and either rebase or explicitly fork-compare — do not silently mix trees.
 
@@ -79,7 +79,7 @@ Edge cases:
 ### Phase A — Sync SF local (verify / refresh)
 
 1. Confirm remotes and HEAD:
-   - Expected: `origin` → `gellasangameshgupta/salesforce-compound-engineering-plugin`
+   - Expected: `origin` → `divingsbysangam/salesforce-compound-engineering-plugin`
    - Expected: clean `main` tracking `origin/main`
 2. `git fetch origin && git pull --ff-only origin main` (or equivalent).
 3. Record fingerprint in the gaps doc: commit SHA, plugin version from `.claude-plugin/plugin.json` (`3.1.0-beta.5` at plan time), skill count, persona count.
@@ -270,8 +270,8 @@ Optional later: if publishing a private multi-plugin marketplace of SF variants,
 
 ### SF local / remotes
 
-- https://github.com/gellasangameshgupta/salesforce-compound-engineering-plugin (workspace origin)
-- https://github.com/gellasangameshgupta/sf-compound-engineering-plugin (legacy naming)
+- https://github.com/divingsbysangam/salesforce-compound-engineering-plugin (workspace origin)
+- https://github.com/divingsbysangam/sf-compound-engineering-plugin (legacy naming)
 - Local: `/workspace` @ plan-time HEAD `1351206`, plugin `3.1.0-beta.5`
 
 ### Internal plans

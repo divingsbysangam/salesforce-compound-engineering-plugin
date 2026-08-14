@@ -6,7 +6,7 @@ argument-hint: "[no arguments]"
 
 # sf-update
 
-Check the GitHub releases endpoint for sangameshgupta/sf-compound-engineering-plugin against the locally installed version, present the changelog delta, and optionally run `claude /plugin update sf-compound-engineering`.
+Check the GitHub releases endpoint for divingsbysangam/salesforce-compound-engineering-plugin against the locally installed version, present the changelog delta, and optionally run `claude /plugin update sf-compound-engineering`.
 
 \<feature\_description>
 \#$ARGUMENTS
@@ -14,7 +14,7 @@ Check the GitHub releases endpoint for sangameshgupta/sf-compound-engineering-pl
 
 ## Salesforce Angle
 
-* Upstream URL is `https://github.com/sangameshgupta/sf-compound-engineering-plugin`. The skill checks the GitHub releases endpoint for the latest tag and compares against the installed version.
+* Upstream URL is `https://github.com/divingsbysangam/salesforce-compound-engineering-plugin`. The skill checks the GitHub releases endpoint for the latest tag and compares against the installed version.
 
 * Local plugin install lives at the marketplace cache path; reference `.claude-plugin/plugin.json#version` for the installed version.
 
