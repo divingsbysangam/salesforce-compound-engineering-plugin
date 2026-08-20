@@ -16,6 +16,7 @@
 ### Changed
 
 * Plugin manifests now identify `3.1.0-beta.6`; catalog is **68 skills** + 61 specialist personas.
+* **`sf-babysit-pr` 8KB layout** — always-loaded `SKILL.md` is now an orchestrator (~7.4KB); procedure lives in sibling `references/{envelope,setup,tick,settle,report}.md`. Salesforce names, `/tmp/sfce-*` scratch, and never-merge babysit contract unchanged. First EveryInc 3.22.4 cherry-pick (layout pattern only).
 * Gaps audit updated: high-priority EveryInc v3.21 skill gaps marked ported; `sf-retune` documented as distinct from `sf-update` / `sf-compound-refresh`.
 * **Repository & package migration** — canonical repo moved to [`divingsbysangam/salesforce-compound-engineering-plugin`](https://github.com/divingsbysangam/salesforce-compound-engineering-plugin); prior `gellasangameshgupta/salesforce-compound-engineering-plugin` repo superseded. CLI/npm package renamed `@gellasangameshgupta/sf-compound-plugin` → `@divingsbysangam/sf-compound-plugin`. `homepage`/`repository`/author URLs updated across all four manifests.
 

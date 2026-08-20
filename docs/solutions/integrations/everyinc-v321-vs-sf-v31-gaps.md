@@ -3,12 +3,32 @@ title: EveryInc v3.21.0 vs SF Compound Engineering v3.1 gaps audit
 type: audit
 status: active
 date: 2026-07-31
+last_updated: 2026-08-20
 supersedes: docs/plans/2026-03-02-feat-close-teardown-gaps-plan.md
+related: docs/solutions/integrations/everyinc-v322-adoption-verdict.md
 ---
 
 # Audit: EveryInc `compound-engineering-v3.21.0` vs SF `3.1.0-beta.6`
 
 Fresh gap matrix produced while executing [`2026-07-31-001-feat-everyinc-gap-sync-and-gaps-doc-plan.md`](../../plans/2026-07-31-001-feat-everyinc-gap-sync-and-gaps-doc-plan.md). The March 2026 teardown plan is **historical only**. Skill ports from the recommended batch landed in **`3.1.0-beta.6`**.
+
+## 2026-08-20 addendum — EveryInc 3.22.4 (compare-only)
+
+Do **not** merge Every `main`. Decision record: [`everyinc-v322-adoption-verdict.md`](./everyinc-v322-adoption-verdict.md).
+
+| Tree | Version | Date | Notes |
+| --- | --- | --- | --- |
+| EveryInc latest released | `3.22.4` | 2026-08-18 | Tag `compound-engineering-v3.22.4`. 33 bundled skills (32 `ce-*` + `lfg`). |
+| EveryInc `main` (unreleased vs tag) | ahead of 3.22.4 | 2026-08-18–20 | Progressive-disclosure `SKILL.md` split (below-cap sweep). |
+| SF incumbent | `3.1.0-beta.6` | this tree | Still the 3.21.0 skill-port pin; no wholesale 3.22 overlay. |
+
+**New since the 3.21.0 pin (not ports unless named):** `ce-prototype` (defer); repo-local `ce-skill-work` (this tree already has `create-agent-skills`); Agent Plugins `$schema` (Every added then **removed** in 3.22.3 after Codex 8KB truncation — **skip**); omp-native marketplace dirs (packaging gap, not a skill port).
+
+**Still skip / defer:** `ce-test-xcode`; `ce-riffrec-feedback-analysis` unless used; `ce-pov` / `ce-dogfood` / `ce-promote` unless product need.
+
+**Cherry-pick order:** (1) 8KB `SKILL.md` layout starting at `sf-babysit-pr` — **started:** always-loaded `SKILL.md` is now the orchestrator; procedure lives in `skills/sf-babysit-pr/references/`; (2) bugfixes on already-ported `sf-babysit-pr`, `sf-work`, `sf-sweep`, `sf-handoff`, `sf-debug`, `sf-commit-push-pr` — adapt any review-then-ship wording to Principle 1. Other oversized `SKILL.md` files remain a later slice.
+
+The fingerprint table below remains the **3.21.0** inventory. This addendum does not replace those rows.
 
 ## Fingerprints
 
