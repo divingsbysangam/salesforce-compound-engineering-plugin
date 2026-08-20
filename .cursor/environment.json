@@ -1,0 +1,4 @@
+{
+  "name": "SF Compound Engineering Plugin",
+  "install": ".cursor/scripts/cloud-agent-install.sh"
+}
