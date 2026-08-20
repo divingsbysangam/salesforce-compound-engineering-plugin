@@ -1,0 +1,8 @@
+{
+  "name": "SF Compound Engineering Plugin",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "user": "ubuntu",
+  "install": ".cursor/scripts/cloud-agent-install.sh"
+}
