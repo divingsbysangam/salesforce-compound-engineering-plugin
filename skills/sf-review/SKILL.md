@@ -9,6 +9,17 @@ argument-hint: "[optional: file path, directory, PR number; defaults to uncommit
 
 > **Principles enforced:** 1 (preserve the quality ceiling), 3 (jagged intelligence), 5 (taste and oversight). See `PRINCIPLES.md`.
 
+## Required reads
+
+Procedure lives in sibling files, not only in this orchestrator:
+
+- **Review Depth Levels** — read `references/review-depth-levels.md` before acting on this section.
+- **Step 1: Identify and Classify Files** — read `references/step-1-identify-and-classify-files.md` before acting on this section.
+- **Step 2: Dispatch Review Personas in Parallel** — read `references/step-2-dispatch-review-personas-in-parallel.md` before acting on this section.
+- **Step 3: Parallel Research (comprehensive depth only)** — read `references/step-3-parallel-research-comprehensive-depth-only.md` before acting on this section.
+- **Step 4: Consolidate Findings** — read `references/step-4-consolidate-findings.md` before acting on this section.
+- **Output Format** — read `references/output-format.md` before acting on this section.
+
 ## Copy-paste-to-agent
 
 ```
@@ -59,148 +70,3 @@ _Pressure-test-pending hypotheses (see `docs/pressure-tests/`): guidance to pre-
 
 ***
 
-## Review Depth Levels
-
-Select depth based on `$ARGUMENTS.depth` (default: thorough):
-
-| Level             | Agents                                   | Use Case                    |
-| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| **fast**          | Stack-specific agents only               | Quick checks, small changes |
-| **thorough**      | All applicable agents                    | Standard review (default)   |
-| **comprehensive** | All + research + deployment verification | Pre-production, risky changes                                                      |
-
-***
-
-## Step 1: Identify and Classify Files
-
-1. Get files in scope (git diff, directory listing, or PR files).
-2. Classify each file by type:
-
-   * `.cls`, `.trigger` → APEX
-
-   * `.flow-meta.xml` → AUTOMATION
-
-   * `.js`, `.html` (in `lwc/`) → LWC
-
-   * `.xml` (metadata) → ARCHITECTURE
-
-   * Callout/API related → INTEGRATION
-
-***
-
-## Step 2: Dispatch Review Personas in Parallel
-
-Review personas live in `skills/sf-review/references/personas/<name>.md` as **prompt assets — not registered agents** — this skill owns them. Dispatch them as isolated subagents per the `dispatching-parallel-personas` skill (isolated subagents, same-response parallelism, same-file-conflict check); pass each persona file's contents plus the files and code context. Review personas are read-only, so dispatch every applicable one in the same message.
-
-Based on file classification, dispatch applicable personas (each `Task <name>` below = the persona at `references/personas/<name>.md`):
-
-### For APEX files — dispatch in parallel:
-
-* Task apex-governor-guardian(files, code\_context)
-
-* Task apex-security-sentinel(files, code\_context)
-
-* Task apex-bulkification-reviewer(files, code\_context)
-
-* Task apex-trigger-architect(files, code\_context) — if triggers present
-
-* Task apex-exception-handler(files, code\_context)
-
-* Task apex-test-coverage-analyst(files, code\_context) — if test classes present
-
-### For AUTOMATION files — dispatch in parallel:
-
-* Task flow-governor-monitor(files, code\_context)
-
-* Task flow-complexity-analyzer(files, code\_context)
-
-* Task process-automation-strategist(files, code\_context)
-
-* Task validation-rule-reviewer(files, code\_context) — if validation rules
-
-### For LWC files — dispatch in parallel:
-
-* Task lwc-architecture-strategist(files, code\_context)
-
-* Task lwc-performance-oracle(files, code\_context)
-
-* Task lwc-security-reviewer(files, code\_context)
-
-* Task lwc-accessibility-guardian(files, code\_context)
-
-### For INTEGRATION files — dispatch in parallel:
-
-* Task rest-api-architect(files, code\_context)
-
-* Task callout-pattern-reviewer(files, code\_context)
-
-* Task integration-security-sentinel(files, code\_context)
-
-### Always include (ARCHITECTURE — universal):
-
-* Task pattern-recognition-specialist(files, code\_context)
-
-* Task metadata-consistency-checker(files, code\_context)
-
-### Additional agents for "comprehensive" depth:
-
-* Task sf-code-simplicity-reviewer(files, code\_context)
-
-* Task sf-deployment-verification-agent(files, code\_context)
-
-* Task sf-git-history-analyzer(files, code\_context)
-
-***
-
-## Step 3: Parallel Research (comprehensive depth only)
-
-For comprehensive reviews, also dispatch:
-
-* Task sf-best-practices-researcher(feature\_context)
-
-* Task sf-framework-docs-researcher(feature\_context)
-
-Validate findings against official docs:
-
-* `site:developer.salesforce.com`
-
-* `site:salesforce.stackexchange.com`
-
-***
-
-## Step 4: Consolidate Findings
-
-Collect results from all dispatched agents and:
-
-1. Deduplicate findings across agents using the merge/dedup rule in `references/subagent-confidence-rubric.md` (same `file:line` + same root cause → merge; conflicting severity → take the higher).
-2. Attach a confidence tier (High / Medium / Low) to every finding per the tiers in `references/subagent-confidence-rubric.md`; a finding confirmed by a second agent upgrades to High.
-3. Categorize by severity: Critical, High, Medium, Low.
-4. Group by file for easy navigation.
-5. Include fix suggestions with code references.
-
-***
-
-## Output Format
-
-```
-## Review: {target}
-**Depth:** {fast|thorough|comprehensive}
-**Agents dispatched:** {count}
-
-### Critical ({count})
-- [{file}:{line}] {issue} — {fix suggestion}
-
-### High ({count})
-- [{file}:{line}] {issue} — {fix suggestion}
-
-### Medium ({count})
-- [{file}:{line}] {issue} — {fix suggestion}
-
-### Low ({count})
-- [{file}:{line}] {issue} — {fix suggestion}
-
-### Summary
-{overall assessment}
-
-Next: Fix issues and run /sf-review again
-```

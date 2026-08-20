@@ -1,0 +1,6 @@
+# Inspiration
+
+Read with `slds2-uplift/SKILL.md`. Procedure lives here.
+
+## <span data-proof="authored" data-by="ai:claude">Inspiration</span>
+<span data-proof="authored" data-by="ai:claude">Adapted from</span> [<span data-proof="authored" data-by="ai:claude">`forcedotcom/afv-library/skills/uplifting-components-to-slds2`</span>](https://github.com/forcedotcom/afv-library/tree/main/skills/uplifting-components-to-slds2) <span data-proof="authored" data-by="ai:claude">(Apache-2.0). The upstream skill ships dedicated reference files per rule (`rule-no-hardcoded-values.md`,</span> <span data-proof="authored" data-by="ai:claude">`rule-lwc-token-to-slds-hook.md`,</span> <span data-proof="authored" data-by="ai:claude">`rule-no-slds-class-overrides.md`,</span> <span data-proof="authored" data-by="ai:claude">`rule-no-deprecated-tokens-slds1.md`) with exhaustive fix-vs-skip triage tables and decision trees for color hook selection. For the full color-context decision tree (when to choose surface vs accent vs on-accent vs container), consult the upstream references. This plugin's adaptation tightens around the principles framework.</span>

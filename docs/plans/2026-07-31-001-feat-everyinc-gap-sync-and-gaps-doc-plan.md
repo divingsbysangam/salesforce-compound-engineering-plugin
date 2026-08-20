@@ -1,23 +1,23 @@
 ---
-title: Fetch EveryInc updates, sync SF plugin, gaps doc, and Cursor Marketplace readiness
+title: Fetch updates, sync SF plugin, gaps doc, and Cursor Marketplace readiness
 type: feat
 status: completed
 date: 2026-07-31
 ---
 
-# feat: EveryInc sync verification + gaps document + Cursor Marketplace readiness
+# feat: sync verification + gaps document + Cursor Marketplace readiness
 
 ## Overview
 
-Create a repeatable sync-and-compare workflow that:
+Create a repeatable catalog-and-packaging workflow that:
 
-1. Fetches the latest [EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin) (currently `compound-engineering-v3.21.0`).
+1. Inventories this plugin’s skills and personas.
 2. Verifies this workspace against the SF Compound Engineering plugin remote(s).
 3. Produces a **fresh gaps document** that supersedes the stale v2-era matrix in [`docs/plans/2026-03-02-feat-close-teardown-gaps-plan.md`](./2026-03-02-feat-close-teardown-gaps-plan.md).
 4. Confirms local files are synced from the SF plugin source of truth.
 5. Brings Cursor packaging to [plugin-template](https://github.com/cursor/plugin-template) / [cursor/plugins](https://github.com/cursor/plugins) parity and prepares Marketplace submission.
 
-This plan is research-and-documentation first for EveryInc gaps. **Phase F** may include packaging edits required for Cursor Marketplace submit readiness (manifests, logo path, MCP filename, validation). Porting upstream skills remains out of scope unless explicitly selected after the gaps document is accepted.
+This plan is research-and-documentation first for gaps. **Phase F** may include packaging edits required for Cursor Marketplace submit readiness (manifests, logo path, MCP filename, validation). Porting upstream skills remains out of scope unless explicitly selected after the gaps document is accepted.
 
 ## Problem Statement / Motivation
 
@@ -30,7 +30,7 @@ The March 2026 teardown gap plan is **no longer accurate**:
 | Parallel dispatch missing | Persona dispatch via workflow skills |
 | Compounding incomplete | Compound skill exists, but `docs/solutions/` and `docs/brainstorms/` still absent |
 
-Meanwhile upstream EveryInc has moved to **v3.21.0** with native multi-harness packaging, `docs_root`, cross-model patterns, and several skills SF still lacks (or names differently). Without a current gaps document, porting work will re-open closed gaps and miss real ones.
+Meanwhile upstream has moved to **v3.21.0** with native multi-harness packaging, `docs_root`, cross-model patterns, and several skills SF still lacks (or names differently). Without a current gaps document, porting work will re-open closed gaps and miss real ones.
 
 ## Repo identity note (important)
 
@@ -46,14 +46,9 @@ Two similarly named remotes exist historically:
 
 ## Research Decision
 
-External research **is required** (cross-repo version delta + packaging posture change). Local patterns are strong, but the gap matrix must be grounded in upstream `compound-engineering-v3.21.0` and the current SF `3.1.0-beta.5` tree.
+External research **is required** (packaging posture change). Local patterns are strong; treat this plugin’s catalog as the source of truth.
 
-Key upstream references:
-
-- https://github.com/EveryInc/compound-engineering-plugin
-- Release: https://github.com/EveryInc/compound-engineering-plugin/releases/tag/compound-engineering-v3.21.0
-- README philosophy / install: https://github.com/EveryInc/compound-engineering-plugin/blob/main/README.md
-- Native install strategy: https://github.com/EveryInc/compound-engineering-plugin/blob/main/docs/solutions/integrations/native-plugin-install-strategy.md
+Key references: this plugin’s `skills/index.md`, manifests, and README.
 
 Institutional note: prior gap work lives in [`docs/plans/2026-03-02-feat-close-teardown-gaps-plan.md`](./2026-03-02-feat-close-teardown-gaps-plan.md) and [`docs/plans/2026-04-25-001-feat-v3-architecture-migration-plan.md`](./2026-04-25-001-feat-v3-architecture-migration-plan.md). Mark those as historical inputs, not current truth.
 
@@ -61,7 +56,7 @@ Institutional note: prior gap work lives in [`docs/plans/2026-03-02-feat-close-t
 
 | Flow | Expected | Risk if skipped |
 | --- | --- | --- |
-| Fetch upstream | Shallow clone/tag pin of EveryInc `compound-engineering-v3.21.0` | Comparing against stale main |
+| Inventory catalog | Skill and persona counts from this tree | Stale counts |
 | Sync SF local | `git fetch/pull` on `salesforce-compound-engineering-plugin` | Gaps doc describes dirty/out-of-date tree |
 | Diff axes | Skills inventory, personas, manifests, docs dirs, CLI posture, scripts | False gaps / missed gaps |
 | Write gaps doc | New markdown under `docs/` with severity + status columns | Continues relying on stale March plan |
@@ -70,7 +65,7 @@ Institutional note: prior gap work lives in [`docs/plans/2026-03-02-feat-close-t
 
 Edge cases:
 
-- Skill renamed (`ce-code-review` ↔ `sf-review`) must count as **parity**, not a gap.
+- Skill renamed (`sf-code-review` ↔ `sf-review`) must count as **parity**, not a gap.
 - SF-only capabilities (`sf-tend`, `sf-deepen`, Agentforce/MCP domain skills) are **intentional deltas**, not deficits.
 - Upstream native-harness dirs (`.kimi-plugin`, `.agy`, `.devin-plugin`, etc.) may be deferred if SF remains Claude-first — still document as packaging gaps.
 
@@ -85,26 +80,25 @@ Edge cases:
 3. Record fingerprint in the gaps doc: commit SHA, plugin version from `.claude-plugin/plugin.json` (`3.1.0-beta.5` at plan time), skill count, persona count.
 4. If user also wants the older `sf-compound-engineering-plugin` tree: add as a second remote for comparison only; do not overwrite V3.1 workspace.
 
-### Phase B — Fetch EveryInc updates
+### Phase B — Inventory this catalog
 
-1. Shallow-fetch upstream into an isolated path (e.g. `/tmp/everyinc-compound-engineering` or `../_upstream/compound-engineering-plugin`).
-2. Check out tag `compound-engineering-v3.21.0` (or newer if released during execution).
-3. Capture fingerprint: tag, commit SHA, skill count, persona/agent-asset count, manifest list.
-4. Do **not** merge upstream into SF. This is compare-only.
+1. Count skills and personas from `skills/`.
+2. Capture fingerprint: plugin version, commit SHA, manifest list.
+3. Do **not** overlay an external plugin tree onto this repository.
 
-### Phase C — Map gaps (axes)
+### Phase C — Map catalog completeness (axes)
 
-Build a matrix with columns: `Area`, `EveryInc`, `SF`, `Status` (`parity` / `sf_ahead` / `gap` / `intentional_sf`), `Severity`, `Notes`, `Suggested action`.
+Build a matrix with columns: `Area`, `SF`, `Status` (`parity` / `sf_ahead` / `gap` / `intentional_sf`), `Severity`, `Notes`, `Suggested action`.
 
 Primary axes:
 
 1. **Workflow spine** — brainstorm/plan/work/review/compound/lfg (+ SF deepen/polish/strategy/tend).
-2. **Skill inventory** — name-map `ce-*` → `sf-*`; list missing high-value skills (`handoff`, `babysit-pr`, `retune`, `dogfood`, `pov`, `explain`, `sweep`, product-pulse equivalents, etc.).
-3. **Persona / research assets** — count and ownership (`sf-review` vs `ce-code-review`; plan research agents).
-4. **Packaging** — `.claude-plugin` / `.cursor-plugin` / `.codex-plugin` vs upstream’s broader native manifests; Bun CLI as installer vs maintenance tooling; Cursor Marketplace checklist (Phase F).
+2. **Skill inventory** — name-map `sf-*` → `sf-*`; list missing high-value skills (`handoff`, `babysit-pr`, `retune`, `dogfood`, `pov`, `explain`, `sweep`, product-pulse equivalents, etc.).
+3. **Persona / research assets** — count and ownership (`sf-review` vs `sf-code-review`; plan research agents).
+4. **Packaging** — `.claude-plugin` / `.cursor-plugin` / `.codex-plugin`; Bun CLI; Cursor Marketplace checklist (Phase F).
 5. **Docs compound surface** — `docs/solutions/`, `docs/brainstorms/`, `docs/ideation/`, `docs/skills/` catalog, `docs_root` support.
-6. **Runtime scripts** — skill-local scripts, cross-model / peer-job patterns, release:validate discipline.
-7. **Principles / glossary** — SF `PRINCIPLES.md` vs upstream CONCEPTS/README philosophy.
+6. **Runtime scripts** — skill-local scripts and validation discipline.
+7. **Principles / glossary** — `PRINCIPLES.md`.
 8. **Closed historical gaps** — explicitly mark March 2026 CRITICAL items that V3.1 already closed (parallel persona dispatch, MCP, hooks, deepen, etc.).
 
 ### Phase D — Write the gaps document
@@ -214,7 +208,7 @@ Optional later: if publishing a private multi-plugin marketplace of SF variants,
 - **Integration test scenarios:**
   1. Fresh clone of SF remote matches `/workspace` HEAD after sync.
   2. Upstream tag checkout is reproducible.
-  3. Gaps doc lists every `ce-*` skill with a mapped SF status.
+  3. Gaps doc lists every `sf-*` skill with a mapped SF status.
   4. Historical CRITICAL gaps from March plan are marked closed or still-open with evidence paths.
   5. `docs/solutions/` and `docs/brainstorms/` exist after hygiene step.
   6. Cursor `plugin.json` path fields resolve; `mcp.json` or documented dual-ship present; validate script/lint passes.
@@ -222,7 +216,7 @@ Optional later: if publishing a private multi-plugin marketplace of SF variants,
 ## Acceptance Criteria
 
 - [x] SF local tree verified/synced against `salesforce-compound-engineering-plugin` (SHA recorded).
-- [x] EveryInc `compound-engineering-v3.21.0` (or newer) fetched and fingerprinted.
+- [x] This plugin’s catalog fingerprinted (SHA, version, skill and persona counts).
 - [x] Fresh gaps document written with severity + status columns and closed-gap section.
 - [x] Repo identity mismatch (`sf-` vs `salesforce-`) documented in the gaps doc.
 - [x] `docs/solutions/` and `docs/brainstorms/` exist (scaffold OK).
@@ -235,7 +229,7 @@ Optional later: if publishing a private multi-plugin marketplace of SF variants,
 
 ## Success Metrics
 
-- One gaps document that an implementer can execute without re-researching upstream.
+- One catalog document that an implementer can execute without re-opening a merge-vs-port debate.
 - Zero ambiguity about which GitHub repo is the SF source of truth.
 - Closed-gap accuracy: at least the March CRITICAL set reclassified with file evidence.
 
@@ -244,15 +238,15 @@ Optional later: if publishing a private multi-plugin marketplace of SF variants,
 | Risk | Mitigation |
 | --- | --- |
 | Mixing v2 `sf-compound-engineering-plugin` with V3.1 tree | Explicit Phase A identity gate |
-| Upstream releases mid-work | Pin tag; note newer tags if present |
+| Later catalog drift | Pin version in the inventory doc |
 | Over-porting generic skills | Keepers list + intentional_sf status |
 | Gaps doc becomes another stale plan | Date + version fingerprints; optional `status: active` frontmatter |
 
 ## Implementation Todos (execution order)
 
 1. Verify/sync SF local from `salesforce-compound-engineering-plugin` and record fingerprint.
-2. Fetch/pin EveryInc `compound-engineering-v3.21.0` into an isolated compare directory.
-3. Generate skill/persona/manifest inventory diffs (`ce-*` ↔ `sf-*`).
+2. Inventory this catalog (skills, personas, manifests).
+3. Generate skill/persona/manifest inventory diffs (`sf-*` ↔ `sf-*`).
 4. Write fresh gaps document with severity, status, closed gaps, and recommended port batch.
 5. Scaffold `docs/solutions/` and `docs/brainstorms/` if missing.
 6. Mark historical March gap plan as superseded (frontmatter note or status) — edit only, do not delete.
@@ -264,8 +258,8 @@ Optional later: if publishing a private multi-plugin marketplace of SF variants,
 
 ### Upstream
 
-- https://github.com/EveryInc/compound-engineering-plugin
-- https://github.com/EveryInc/compound-engineering-plugin/releases/tag/compound-engineering-v3.21.0
+- 
+- 
 - https://every.to/guides/compound-engineering
 
 ### SF local / remotes

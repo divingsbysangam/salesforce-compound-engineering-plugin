@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Salesforce-focused compound engineering plugin marketplace for Claude Code, Cursor, and Codex",
-    "version": "3.1.0-beta.6",
+    "version": "3.1.0",
     "homepage": "https://github.com/divingsbysangam/salesforce-compound-engineering-plugin"
   },
   "plugins": [
@@ -14,7 +14,7 @@
       "name": "sf-compound-engineering",
       "source": "./",
       "description": "Salesforce-focused compound engineering plugin (V3 skills-first architecture) with parallel agent dispatch, institutional knowledge compounding, and Apex/LWC/Flow/Integration coverage.",
-      "version": "3.1.0-beta.6",
+      "version": "3.1.0",
       "author": {
         "name": "Gella Sangamesh Gupta",
         "url": "https://github.com/divingsbysangam"

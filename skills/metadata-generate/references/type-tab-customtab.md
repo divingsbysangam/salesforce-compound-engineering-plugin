@@ -1,0 +1,31 @@
+# Type: `tab` — CustomTab
+
+Read with `metadata-generate/SKILL.md`. Procedure lives here.
+
+## <span data-proof="authored" data-by="ai:claude">Type:</span> <span data-proof="authored" data-by="ai:claude">`tab`</span> <span data-proof="authored" data-by="ai:claude">— CustomTab</span>
+### <span data-proof="authored" data-by="ai:claude">Strict element allowlist (Principle 1 — anything else fails deploy)</span>
+
+<span data-proof="authored" data-by="ai:claude">The root element MUST be</span> <span data-proof="authored" data-by="ai:claude">`<CustomTab>`</span> <span data-proof="authored" data-by="ai:claude">(NOT</span> <span data-proof="authored" data-by="ai:claude">`<Tab>`). Namespace:</span> <span data-proof="authored" data-by="ai:claude">`xmlns="http://soap.sforce.com/2006/04/metadata"`.</span>
+
+| <span data-proof="authored" data-by="ai:claude">Tab type</span>             | <span data-proof="authored" data-by="ai:claude">ONLY these elements (nothing else)</span>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **<span data-proof="authored" data-by="ai:claude">Object tabs</span>**      | <span data-proof="authored" data-by="ai:claude">`<customObject>true</customObject>`,</span> <span data-proof="authored" data-by="ai:claude">`<motif>`</span> <span data-proof="authored" data-by="ai:claude">(required),</span> <span data-proof="authored" data-by="ai:claude">`<description>`</span> <span data-proof="authored" data-by="ai:claude">(optional)</span>                                                                                                                                                                                                                                                                                                             |
+| **<span data-proof="authored" data-by="ai:claude">Web tabs</span>**         | <span data-proof="authored" data-by="ai:claude">`<customObject>false</customObject>`,</span> <span data-proof="authored" data-by="ai:claude">`<label>`,</span> <span data-proof="authored" data-by="ai:claude">`<motif>`,</span> <span data-proof="authored" data-by="ai:claude">`<url>`,</span> <span data-proof="authored" data-by="ai:claude">`<urlEncodingKey>UTF-8</urlEncodingKey>`,</span> <span data-proof="authored" data-by="ai:claude">`<description>`</span> <span data-proof="authored" data-by="ai:claude">(optional),</span> <span data-proof="authored" data-by="ai:claude">`<frameHeight>`</span> <span data-proof="authored" data-by="ai:claude">(optional)</span> |
+| **<span data-proof="authored" data-by="ai:claude">Visualforce tabs</span>** | <span data-proof="authored" data-by="ai:claude">`<customObject>false</customObject>`,</span> <span data-proof="authored" data-by="ai:claude">`<label>`,</span> <span data-proof="authored" data-by="ai:claude">`<motif>`,</span> <span data-proof="authored" data-by="ai:claude">`<page>`,</span> <span data-proof="authored" data-by="ai:claude">`<description>`</span> <span data-proof="authored" data-by="ai:claude">(optional)</span>                                                                                                                                                                                                                                           |
+
+### <span data-proof="authored" data-by="ai:claude">Forbidden elements (every one fails deploy)</span>
+
+<span data-proof="authored" data-by="ai:claude">`<sobjectName>`,</span> <span data-proof="authored" data-by="ai:claude">`<name>`,</span> <span data-proof="authored" data-by="ai:claude">`<fullName>`,</span> <span data-proof="authored" data-by="ai:claude">`<apiVersion>`,</span> <span data-proof="authored" data-by="ai:claude">`<isHidden>`,</span> <span data-proof="authored" data-by="ai:claude">`<tabVisibility>`,</span> <span data-proof="authored" data-by="ai:claude">`<type>`,</span> <span data-proof="authored" data-by="ai:claude">`<mobileReady>`,</span> <span data-proof="authored" data-by="ai:claude">`<urlFrameHeight>`,</span> <span data-proof="authored" data-by="ai:claude">`<urlType>`,</span> <span data-proof="authored" data-by="ai:claude">`<urlRedirect>`,</span> <span data-proof="authored" data-by="ai:claude">`<encodingKey>`,</span> <span data-proof="authored" data-by="ai:claude">`<height>`,</span> <span data-proof="authored" data-by="ai:claude">`<auraComponent>`.</span>
+
+### <span data-proof="authored" data-by="ai:claude">Motif selection (Principle 5 — taste)</span>
+
+<span data-proof="authored" data-by="ai:claude">`<motif>`</span> <span data-proof="authored" data-by="ai:claude">is the icon style. Pick one that</span> **<span data-proof="authored" data-by="ai:claude">semantically matches</span>** <span data-proof="authored" data-by="ai:claude">the tab's purpose. Don't reuse the same motif for every tab — that's a clear "AI slop" signal.</span>
+
+### <span data-proof="authored" data-by="ai:claude">File</span>
+
+```
+force-app/main/default/tabs/<TabApiName>.tab-meta.xml
+```
+
+***
+

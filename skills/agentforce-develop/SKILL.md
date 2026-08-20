@@ -8,6 +8,26 @@ argument-hint: "[agent name, .agent file path, or agent description; optional 'e
 
 > **<span data-proof="authored" data-by="ai:claude">Principles enforced:</span>** <span data-proof="authored" data-by="ai:claude">1 (preserve the quality ceiling), 4 (spec is the artifact), 7 (institutional memory). See</span> <span data-proof="authored" data-by="ai:claude">`PRINCIPLES.md`.</span>
 
+## Required reads
+
+Procedure lives in sibling files, not only in this orchestrator:
+
+- **When to use this skill** — read `references/when-to-use-this-skill.md` before acting on this section.
+- **Rules that always apply** — read `references/rules-that-always-apply.md` before acting on this section.
+- **⚠️ Deprecated Syntax — Use `subagent` not `topic` (April 2026)** — read `references/deprecated-syntax-use-subagent-not-topic-april-2026.md` before acting on this section.
+- **Step 0: Pre-implementation research (parallel, Principle 7)** — read `references/step-0-pre-implementation-research-parallel-principle-7.md` before acting on this section.
+- **Step 1: Design the agent and produce an Agent Spec** — read `references/step-1-design-the-agent-and-produce-an-agent-spec.md` before acting on this section.
+- **Step 2: Validate environment prerequisites** — read `references/step-2-validate-environment-prerequisites.md` before acting on this section.
+- **Step 3: Generate the authoring bundle** — read `references/step-3-generate-the-authoring-bundle.md` before acting on this section.
+- **Step 4: Write Agent Script in the `.agent` file** — read `references/step-4-write-agent-script-in-the-agent-file.md` before acting on this section.
+- **Step 5: Validate compilation** — read `references/step-5-validate-compilation.md` before acting on this section.
+- **Step 6: Generate backing logic (Apex / Flow / Prompt Template stubs)** — read `references/step-6-generate-backing-logic-apex-flow-prompt-template-stubs.md` before acting on this section.
+- **Step 7: Preview with live actions and read traces (Principle 3)** — read `references/step-7-preview-with-live-actions-and-read-traces-principle-3.md` before acting on this section.
+- **Step 8: Publish, activate, verify** — read `references/step-8-publish-activate-verify.md` before acting on this section.
+- **Step 9: End-user access (employee agents only)** — read `references/step-9-end-user-access-employee-agents-only.md` before acting on this section.
+- **Capture learnings (Principle 7)** — read `references/capture-learnings-principle-7.md` before acting on this section.
+- **Inspiration** — read `references/inspiration.md` before acting on this section.
+
 ## <span data-proof="authored" data-by="ai:claude">Copy-paste-to-agent</span>
 
 ```
@@ -19,260 +39,3 @@ with sf agent validate, preview behavior with sf agent preview --use-live-action
 publish + activate. Never proceed past spec creation without explicit user approval.
 Always pass --json on every sf CLI command.
 ```
-
-## <span data-proof="authored" data-by="ai:claude">When to use this skill</span>
-
-<span data-proof="authored" data-by="ai:claude">Use</span> <span data-proof="authored" data-by="ai:claude">`agentforce-develop`</span> <span data-proof="authored" data-by="ai:claude">for the</span> **<span data-proof="authored" data-by="ai:claude">authoring lifecycle</span>** <span data-proof="authored" data-by="ai:claude">of an Agentforce agent:</span>
-
-* <span data-proof="authored" data-by="ai:claude">Designing the subagent graph and Agent Spec</span>
-
-* <span data-proof="authored" data-by="ai:claude">Writing or editing</span> <span data-proof="authored" data-by="ai:claude">`.agent`</span> <span data-proof="authored" data-by="ai:claude">files inside an</span> <span data-proof="authored" data-by="ai:claude">`aiAuthoringBundle`</span>
-
-* <span data-proof="authored" data-by="ai:claude">Generating and deploying backing logic (Apex</span> <span data-proof="authored" data-by="ai:claude">`@InvocableMethod`, Flows, Prompt Templates)</span>
-
-* <span data-proof="authored" data-by="ai:claude">Validating compilation, previewing behavior, publishing, activating</span>
-
-<span data-proof="authored" data-by="ai:claude">Sister skills:</span>
-
-* <span data-proof="authored" data-by="ai:claude">`/agentforce-test`</span> <span data-proof="authored" data-by="ai:claude">— once the agent compiles, write or run test suites against it</span>
-
-* <span data-proof="authored" data-by="ai:claude">`/agentforce-observe`</span> <span data-proof="authored" data-by="ai:claude">— once the agent is in production, analyze STDM session traces and reproduce issues</span>
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Rules that always apply</span>
-
-1. **<span data-proof="authored" data-by="ai:claude">`--json`</span>** **<span data-proof="authored" data-by="ai:claude">on every</span>** **<span data-proof="authored" data-by="ai:claude">`sf`</span><span data-proof="authored" data-by="ai:claude">command.</span>**  <span data-proof="authored" data-by="ai:claude">Always. Read the JSON directly; don't pipe through</span> <span data-proof="authored" data-by="ai:claude">`jq`</span> <span data-proof="authored" data-by="ai:claude">or</span> <span data-proof="authored" data-by="ai:claude">`2>/dev/null`</span> <span data-proof="authored" data-by="ai:claude">and don't strip the structured output. LLMs parse JSON natively — that's the agent-native default (Principle 6).</span>
-2. **<span data-proof="authored" data-by="ai:claude">Verify target org first.</span>** <span data-proof="authored" data-by="ai:claude">Run</span> <span data-proof="authored" data-by="ai:claude">`sf config get target-org --json`. If none is set, ask the user before doing anything else.</span>
-3. **<span data-proof="authored" data-by="ai:claude">Diagnose before you fix.</span>** <span data-proof="authored" data-by="ai:claude">When the agent misbehaves,</span> *<span data-proof="authored" data-by="ai:claude">always</span>* <span data-proof="authored" data-by="ai:claude">preview with</span> <span data-proof="authored" data-by="ai:claude">`--use-live-actions --authoring-bundle <Name>`, send a representative utterance, and read the resulting trace file</span> *<span data-proof="authored" data-by="ai:claude">before</span>* <span data-proof="authored" data-by="ai:claude">editing the</span> <span data-proof="authored" data-by="ai:claude">`.agent`</span> <span data-proof="authored" data-by="ai:claude">file or backing logic. Modifying without trace evidence is the jagged-intelligence failure mode (Principle 3).</span>
-4. **<span data-proof="authored" data-by="ai:claude">Spec approval is a hard gate (Principle 4).</span>** <span data-proof="authored" data-by="ai:claude">Never proceed past the Agent Spec without explicit user approval. The spec IS the contract.</span>
-
-***
-
-## ⚠️ Deprecated Syntax — Use `subagent` not `topic` (April 2026)
-
-As of April 2026, the `topic` keyword in Agent Script is **deprecated**. Always use the `subagent` equivalents. Using `topic` will produce deprecation warnings and may break in future API versions.
-
-| Deprecated (before April 2026) | Current (April 2026+) |
-|---|---|
-| `topic name:` | `subagent name:` |
-| `start_agent topic_selector:` | `start_agent agent_router:` |
-| `@topic.name` | `@subagent.name` |
-| `go_to_x: @utils.transition to @topic.x` | `go_to_x: @utils.transition to @subagent.x` |
-
-If you see a `.agent` file using the old `topic` syntax, rewrite all occurrences before building on top of it. Mix-and-match is not supported — the entire file must be consistently on one convention.
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Step 0: Pre-implementation research (parallel, Principle 7)</span>
-
-<span data-proof="authored" data-by="ai:claude">Before designing the agent, dispatch in parallel:</span>
-
-* <span data-proof="authored" data-by="ai:claude">Task</span> <span data-proof="authored" data-by="ai:claude">`sf-learnings-researcher(agent_description)`</span> <span data-proof="authored" data-by="ai:claude">— has anyone solved this agent shape before?</span> **<span data-proof="authored" data-by="ai:claude">Must-read.</span>** <span data-proof="authored" data-by="ai:claude">Returned solutions are constraints on the design, not optional context.</span>
-
-* <span data-proof="authored" data-by="ai:claude">Task</span> <span data-proof="authored" data-by="ai:claude">`sf-repo-research-analyst(agent_description)`</span> <span data-proof="authored" data-by="ai:claude">— what</span> <span data-proof="authored" data-by="ai:claude">`@InvocableMethod`</span> <span data-proof="authored" data-by="ai:claude">classes,</span> <span data-proof="authored" data-by="ai:claude">`AutoLaunchedFlow`s,</span> <span data-proof="authored" data-by="ai:claude">`PromptTemplate`s, and custom objects already exist in</span> <span data-proof="authored" data-by="ai:claude">`sfdx-project.json`</span> <span data-proof="authored" data-by="ai:claude">package directories? Existing backing logic should be reused, not regenerated.</span>
-
-* <span data-proof="authored" data-by="ai:claude">Task</span> <span data-proof="authored" data-by="ai:claude">`sf-framework-docs-researcher("Agentforce Agent Script")`</span> <span data-proof="authored" data-by="ai:claude">— confirm API version, license, and any platform constraints.</span>
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Step 1: Design the agent and produce an Agent Spec</span>
-
-<span data-proof="authored" data-by="ai:claude">The Agent Spec is the artifact. Write it before any code.</span>
-
-<span data-proof="authored" data-by="ai:claude">The spec must include:</span>
-
-* **<span data-proof="authored" data-by="ai:claude">Purpose</span>** <span data-proof="authored" data-by="ai:claude">— one paragraph stating what the agent does and what it explicitly does</span> *<span data-proof="authored" data-by="ai:claude">not</span>* <span data-proof="authored" data-by="ai:claude">do.</span>
-
-* **<span data-proof="authored" data-by="ai:claude">Agent type</span>** <span data-proof="authored" data-by="ai:claude">—</span> <span data-proof="authored" data-by="ai:claude">`employee`</span> <span data-proof="authored" data-by="ai:claude">(internal user-facing) or</span> <span data-proof="authored" data-by="ai:claude">`service`</span> <span data-proof="authored" data-by="ai:claude">(external messaging-facing). Drives environment prerequisites.</span>
-
-* **<span data-proof="authored" data-by="ai:claude">Subagents</span>** <span data-proof="authored" data-by="ai:claude">— one per coherent topic. Name, description (with routing keywords), and the actions each subagent calls.</span>
-
-* **<span data-proof="authored" data-by="ai:claude">Actions</span>** <span data-proof="authored" data-by="ai:claude">— for each, mark</span> <span data-proof="authored" data-by="ai:claude">`EXISTS`</span> <span data-proof="authored" data-by="ai:claude">(with file path) or</span> <span data-proof="authored" data-by="ai:claude">`NEEDS STUB`</span> <span data-proof="authored" data-by="ai:claude">(with proposed Apex/Flow/Template name and signature). Don't generate stubs for actions that already exist somewhere in the package.</span>
-
-* **<span data-proof="authored" data-by="ai:claude">Flow control</span>** <span data-proof="authored" data-by="ai:claude">— start agent, transitions between subagents, and any</span> <span data-proof="authored" data-by="ai:claude">`available when:`</span> <span data-proof="authored" data-by="ai:claude">guards.</span>
-
-* **<span data-proof="authored" data-by="ai:claude">Variables</span>** <span data-proof="authored" data-by="ai:claude">— names, types, scope, and which subagents read/write them.</span>
-
-* **<span data-proof="authored" data-by="ai:claude">Verification Strategy (Principle 2)</span>** <span data-proof="authored" data-by="ai:claude">— what utterances will prove this agent works? Name at least one routing test, one happy-path action invocation test, one guardrail test (off-topic), and one safety probe.</span>
-
-**<span data-proof="authored" data-by="ai:claude">STOP. Save the spec to</span>** **<span data-proof="authored" data-by="ai:claude">`docs/plans/YYYY-MM-DD-feat-<agent-slug>-spec.md`. Present to the user. Do not proceed without explicit approval.</span>**
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Step 2: Validate environment prerequisites</span>
-
-<span data-proof="authored" data-by="ai:claude">Pick the right path based on agent type:</span>
-
-* **<span data-proof="authored" data-by="ai:claude">Employee agent</span>** <span data-proof="authored" data-by="ai:claude">— verify the</span> <span data-proof="authored" data-by="ai:claude">`config:`</span> <span data-proof="authored" data-by="ai:claude">block does NOT include</span> <span data-proof="authored" data-by="ai:claude">`default_agent_user`,</span> <span data-proof="authored" data-by="ai:claude">`connection messaging:`, or</span> <span data-proof="authored" data-by="ai:claude">`MessagingSession`-linked variables. Remove if present.</span>
-
-* **<span data-proof="authored" data-by="ai:claude">Service agent</span>** <span data-proof="authored" data-by="ai:claude">— query the org for an Einstein Agent User. If none exists, walk the user through creating one before code generation.</span>
-
-<span data-proof="authored" data-by="ai:claude">Do not generate the authoring bundle until environment is validated.</span>
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Step 3: Generate the authoring bundle</span>
-
-```bash proof:W3sidHlwZSI6InByb29mQXV0aG9yZWQiLCJmcm9tIjowLCJ0byI6MTA0LCJhdHRycyI6eyJieSI6ImFpOmNsYXVkZSJ9fV0=
-sf agent generate authoring-bundle --json --no-spec --name "<Display Label>" --api-name <Developer_Name>
-```
-
-<span data-proof="authored" data-by="ai:claude">This produces an</span> <span data-proof="authored" data-by="ai:claude">`aiAuthoringBundle`</span> <span data-proof="authored" data-by="ai:claude">directory under</span> <span data-proof="authored" data-by="ai:claude">`force-app/main/default/aiAuthoringBundles/<Developer_Name>/`</span> <span data-proof="authored" data-by="ai:claude">containing a</span> <span data-proof="authored" data-by="ai:claude">`.agent`</span> <span data-proof="authored" data-by="ai:claude">file (Agent Script source) and</span> <span data-proof="authored" data-by="ai:claude">`bundle-meta.xml`.</span>
-
-<span data-proof="authored" data-by="ai:claude">Never create</span> <span data-proof="authored" data-by="ai:claude">`.agent`</span> <span data-proof="authored" data-by="ai:claude">or</span> <span data-proof="authored" data-by="ai:claude">`bundle-meta.xml`</span> <span data-proof="authored" data-by="ai:claude">files manually. Always go through</span> <span data-proof="authored" data-by="ai:claude">`sf agent generate`.</span>
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Step 4: Write Agent Script in the</span> <span data-proof="authored" data-by="ai:claude">`.agent`</span> <span data-proof="authored" data-by="ai:claude">file</span>
-
-<span data-proof="authored" data-by="ai:claude">Edit the generated</span> <span data-proof="authored" data-by="ai:claude">`.agent`</span> <span data-proof="authored" data-by="ai:claude">file. Agent Script syntax in one paragraph:</span>
-
-* <span data-proof="authored" data-by="ai:claude">`->`</span> <span data-proof="authored" data-by="ai:claude">introduces a</span> **<span data-proof="authored" data-by="ai:claude">logic instruction</span>** <span data-proof="authored" data-by="ai:claude">— deterministic execution, business rules, variable assignment, conditionals.</span>
-
-* <span data-proof="authored" data-by="ai:claude">`|`</span> <span data-proof="authored" data-by="ai:claude">introduces a</span> **<span data-proof="authored" data-by="ai:claude">prompt instruction</span>** <span data-proof="authored" data-by="ai:claude">— natural-language text sent to the LLM.</span>
-
-* <span data-proof="authored" data-by="ai:claude">Indentation is whitespace-significant. Pick tabs OR spaces; do not mix.</span>
-
-* <span data-proof="authored" data-by="ai:claude">Variable interpolation:</span> <span data-proof="authored" data-by="ai:claude">`{!@variables.name}`.</span>
-
-* <span data-proof="authored" data-by="ai:claude">Comments:</span> <span data-proof="authored" data-by="ai:claude">`# this is a comment`.</span>
-
-**<span data-proof="authored" data-by="ai:claude">Anti-patterns to avoid (Principle 5 — taste):</span>**
-
-* <span data-proof="authored" data-by="ai:claude">Mixing personality and routing in</span> <span data-proof="authored" data-by="ai:claude">`start_agent`. Persona belongs in</span> <span data-proof="authored" data-by="ai:claude">`system: instructions:`</span> <span data-proof="authored" data-by="ai:claude">only;</span> <span data-proof="authored" data-by="ai:claude">`start_agent`</span> <span data-proof="authored" data-by="ai:claude">is a router.</span>
-
-* <span data-proof="authored" data-by="ai:claude">Identical</span> <span data-proof="authored" data-by="ai:claude">`instructions:`</span> <span data-proof="authored" data-by="ai:claude">text across subagents. Each subagent's instructions must be distinct enough to drive routing.</span>
-
-* <span data-proof="authored" data-by="ai:claude">"Dead hub" subagents — defined but never reached from any transition.</span>
-
-* <span data-proof="authored" data-by="ai:claude">Orphan actions — listed in</span> <span data-proof="authored" data-by="ai:claude">`subagent: actions:`</span> <span data-proof="authored" data-by="ai:claude">Level 1 but never invoked from Level 2</span> <span data-proof="authored" data-by="ai:claude">`reasoning: actions:`.</span>
-
-<span data-proof="authored" data-by="ai:claude">Agent Script is NOT JavaScript, AppleScript, or Python. Do not let LLM training-set pattern-matching pull syntax from those languages.</span>
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Step 5: Validate compilation</span>
-
-```bash proof:W3sidHlwZSI6InByb29mQXV0aG9yZWQiLCJmcm9tIjowLCJ0byI6NjksImF0dHJzIjp7ImJ5IjoiYWk6Y2xhdWRlIn19XQ==
-sf agent validate authoring-bundle --json --api-name <Developer_Name>
-```
-
-<span data-proof="authored" data-by="ai:claude">If validation fails, fix syntax and structural errors before generating any backing logic. A</span> <span data-proof="authored" data-by="ai:claude">`.agent`</span> <span data-proof="authored" data-by="ai:claude">file that doesn't compile is not worth writing tests for.</span>
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Step 6: Generate backing logic (Apex / Flow / Prompt Template stubs)</span>
-
-<span data-proof="authored" data-by="ai:claude">For each action marked</span> <span data-proof="authored" data-by="ai:claude">`NEEDS STUB`</span> <span data-proof="authored" data-by="ai:claude">in the spec:</span>
-
-```bash proof:W3sidHlwZSI6InByb29mQXV0aG9yZWQiLCJmcm9tIjowLCJ0byI6OTgsImF0dHJzIjp7ImJ5IjoiYWk6Y2xhdWRlIn19XQ==
-sf template generate apex class --name <ClassName> --output-dir <PACKAGE_DIR>/main/default/classes
-```
-
-<span data-proof="authored" data-by="ai:claude">Replace the class body with the invocable pattern (`@InvocableMethod`</span> <span data-proof="authored" data-by="ai:claude">with</span> <span data-proof="authored" data-by="ai:claude">`@InvocableVariable`</span> <span data-proof="authored" data-by="ai:claude">inputs and outputs). Then deploy:</span>
-
-```bash proof:W3sidHlwZSI6InByb29mQXV0aG9yZWQiLCJmcm9tIjowLCJ0byI6NjMsImF0dHJzIjp7ImJ5IjoiYWk6Y2xhdWRlIn19XQ==
-sf project deploy start --json --metadata ApexClass:<ClassName>
-```
-
-<span data-proof="authored" data-by="ai:claude">Fix deploy errors before generating the next stub. One stub at a time, deploy and verify, then move on.</span>
-
-<span data-proof="authored" data-by="ai:claude">For Flow and Prompt Template stubs, follow the same one-at-a-time discipline.</span>
-
-> **⚠️ API Version must match your org.** Before deploying, always verify the org's current API version:
-> ```bash
-> sf org display --json -o <org> | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['result'].get('apiVersion','check sfdx-project.json'))"
-> ```
-> Set **all** `.cls-meta.xml` files to the org's actual API version (e.g. `66.0` for Spring '26, `67.0` for Summer '26). A mismatch causes `Invalid api version` deploy errors.
-
-> **⚠️ Targeted deploy — use Package XML, not `--metadata` with multiple types.** When deploying an agent bundle alongside Apex classes and a permission set, `--metadata ApexClass:<Name>` only works for a single component type. Use a Package XML manifest instead:
-> ```xml
-> <!-- manifest/package.xml -->
-> <Package xmlns="http://soap.sforce.com/2006/04/metadata">
->   <types><members>MyClass</members><name>ApexClass</name></types>
->   <types><members>MyPermSet</members><name>PermissionSet</name></types>
->   <types><members>MyBundle</members><name>AiAuthoringBundle</name></types>
->   <version>66.0</version>
-> </Package>
-> ```
-> Deploy with: `sf project deploy start --json --manifest manifest/package.xml -o <org>`
-> This also prevents pre-existing test failures in unrelated components from blocking your deploy.
->
-> Note: `--source-file` is NOT a valid flag for `sf project deploy start`. Use `--manifest` or `--metadata`.
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Step 7: Preview with live actions and read traces (Principle 3)</span>
-
-```bash proof:W3sidHlwZSI6InByb29mQXV0aG9yZWQiLCJmcm9tIjowLCJ0byI6ODQsImF0dHJzIjp7ImJ5IjoiYWk6Y2xhdWRlIn19XQ==
-sf agent preview start --json --use-live-actions --authoring-bundle <Developer_Name>
-```
-
-<span data-proof="authored" data-by="ai:claude">Capture the session ID, then:</span>
-
-```bash proof:W3sidHlwZSI6InByb29mQXV0aG9yZWQiLCJmcm9tIjowLCJ0byI6MTkzLCJhdHRycyI6eyJieSI6ImFpOmNsYXVkZSJ9fV0=
-sf agent preview send --json --authoring-bundle <Developer_Name> --session-id <ID> --utterance "<test message>"
-sf agent preview end --json --authoring-bundle <Developer_Name> --session-id <ID>
-```
-
-<span data-proof="authored" data-by="ai:claude">Trace files land at:</span> <span data-proof="authored" data-by="ai:claude">`.sfdx/agents/<Developer_Name>/sessions/<sessionId>/traces/<planId>.json`.</span>
-
-> **⚠️ Default preview is SIMULATED — Apex is never called.** By default, `sf agent preview` runs in simulated mode and mocks all action responses. To invoke real deployed Apex, you MUST pass `--use-live-actions`:
-> ```bash
-> sf agent preview start --json --use-live-actions --authoring-bundle <Developer_Name> -o <org>
-> ```
-> Add `--apex-debug` to generate Apex debug logs during the preview session:
-> ```bash
-> sf agent preview start --json --use-live-actions --apex-debug --authoring-bundle <Developer_Name> -o <org>
-> ```
-> **Debug logs must be set on the Agent User, not the admin user.** The Apex runs in the context of the Einstein Agent User created for your service agent. In Setup → Debug Logs, add the agent user (e.g. `sangameshgella.51a07bde9b13@agentforce.com`) — adding the admin user will produce no logs for agent-invoked Apex.
-
-<span data-proof="authored" data-by="ai:claude">Confirm subagent routing, gating, and action invocations match the Agent Spec. If behavior diverges from spec, the diagnosis flow is in</span> <span data-proof="authored" data-by="ai:claude">`/agentforce-observe`</span> <span data-proof="authored" data-by="ai:claude">(jq queries against trace JSON to surface routing, action invocation, grounding, and safety scores). Return here only after correcting.</span>
-
-**<span data-proof="authored" data-by="ai:claude">Checkpoint — do NOT proceed to publish unless ALL of the following are true:</span>**
-
-* <span data-proof="authored" data-by="ai:claude">`validate authoring-bundle`</span> <span data-proof="authored" data-by="ai:claude">passes with zero errors</span>
-
-* <span data-proof="authored" data-by="ai:claude">Live preview run with at least one representative utterance per subagent</span>
-
-* <span data-proof="authored" data-by="ai:claude">Traces confirm correct subagent routing and action invocation</span>
-
-* <span data-proof="authored" data-by="ai:claude">Safety probe utterances handled correctly</span>
-
-* <span data-proof="authored" data-by="ai:claude">User explicitly approves deployment</span>
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Step 8: Publish, activate, verify</span>
-
-```bash proof:W3sidHlwZSI6InByb29mQXV0aG9yZWQiLCJmcm9tIjowLCJ0byI6MzYxLCJhdHRycyI6eyJieSI6ImFpOmNsYXVkZSJ9fV0=
-# Publish — validates metadata, creates a permanent version
-sf agent publish authoring-bundle --json --api-name <Developer_Name>
-
-# Activate — makes the new version available to users
-sf agent activate --json --api-name <Developer_Name>
-
-# Verify with --api-name (NOT --authoring-bundle) post-activation
-sf agent preview start --json --api-name <Developer_Name>
-```
-
-<span data-proof="authored" data-by="ai:claude">Every publish creates a permanent, immutable version number. Treat publish as production-grade.</span>
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Step 9: End-user access (employee agents only)</span>
-
-<span data-proof="authored" data-by="ai:claude">For employee agents, configure permission sets and assign access. For service agents, the agent is reached through messaging channels — no end-user perm assignment.</span>
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Capture learnings (Principle 7)</span>
-
-<span data-proof="authored" data-by="ai:claude">When the build is complete or you fixed a non-obvious bug, run</span> <span data-proof="authored" data-by="ai:claude">`/sf-compound`</span> <span data-proof="authored" data-by="ai:claude">to capture the learning under</span> <span data-proof="authored" data-by="ai:claude">`docs/solutions/`. Agent debugging produces patterns that will not be in any general Salesforce knowledge base — this is exactly the institutional memory the plugin compounds.</span>
-
-***
-
-## <span data-proof="authored" data-by="ai:claude">Inspiration</span>
-
-<span data-proof="authored" data-by="ai:claude">This skill is adapted from</span> [<span data-proof="authored" data-by="ai:claude">`forcedotcom/afv-library/skills/developing-agentforce`</span>](https://github.com/forcedotcom/afv-library/tree/main/skills/developing-agentforce) <span data-proof="authored" data-by="ai:claude">(Apache-2.0). The upstream skill ships with eight reference files (`references/agent-script-core-language.md`,</span> <span data-proof="authored" data-by="ai:claude">`references/agent-design-and-spec-creation.md`,</span> <span data-proof="authored" data-by="ai:claude">`references/salesforce-cli-for-agents.md`,</span> <span data-proof="authored" data-by="ai:claude">`references/agent-validation-and-debugging.md`,</span> <span data-proof="authored" data-by="ai:claude">`references/agent-metadata-and-lifecycle.md`,</span> <span data-proof="authored" data-by="ai:claude">`references/agent-user-setup.md`,</span> <span data-proof="authored" data-by="ai:claude">`references/agent-access-guide.md`,</span> <span data-proof="authored" data-by="ai:claude">`references/agent-subagent-map-diagrams.md`) that hold the full syntax tables and command references. For deep details — Agent Script grammar, complete CLI flag tables, permission set examples — read the upstream references. This plugin's adaptation focuses on the lifecycle gate structure and integrates with the seven-principle framework in</span> <span data-proof="authored" data-by="ai:claude">`PRINCIPLES.md`.</span>

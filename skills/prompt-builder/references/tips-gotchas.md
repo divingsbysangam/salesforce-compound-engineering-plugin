@@ -1,0 +1,17 @@
+# Tips & Gotchas
+
+Read with `prompt-builder/SKILL.md`. Procedure lives here.
+
+## <span data-proof="authored" data-by="ai:claude">Tips & Gotchas</span>
+1. **<span data-proof="authored" data-by="ai:claude">API version 60+ required</span>** <span data-proof="authored" data-by="ai:claude">for all metadata operations with</span> <span data-proof="authored" data-by="ai:claude">`GenAiPromptTemplate`</span>
+2. **<span data-proof="authored" data-by="ai:claude">Dependencies must exist first</span>** <span data-proof="authored" data-by="ai:claude">—</span> <span data-proof="authored" data-by="ai:claude">`relatedEntity`, referenced Flows, Apex classes must be in the target org or deployed together</span>
+3. **<span data-proof="authored" data-by="ai:claude">Known bug</span>**<span data-proof="authored" data-by="ai:claude">: Templates referencing Flows that contain Apex fail on single-package deploy. Deploy Apex + Flow first, then the template</span>
+4. **<span data-proof="authored" data-by="ai:claude">Hash version IDs</span>** <span data-proof="authored" data-by="ai:claude">can cause schema validation errors on scratch orgs — this is a known Salesforce issue</span>
+5. **<span data-proof="authored" data-by="ai:claude">`isPreview: true`</span>** <span data-proof="authored" data-by="ai:claude">returns the resolved prompt without calling the LLM — useful for debugging merge field resolution</span>
+6. **<span data-proof="authored" data-by="ai:claude">JSON output pattern</span>** <span data-proof="authored" data-by="ai:claude">— instruct the template to return structured JSON, then parse with</span> <span data-proof="authored" data-by="ai:claude">`@InvocableMethod`</span> <span data-proof="authored" data-by="ai:claude">in Apex for Flow consumption</span>
+7. **<span data-proof="authored" data-by="ai:claude">Einstein Trust Layer</span>** <span data-proof="authored" data-by="ai:claude">— all template invocations pass through toxicity detection; access safety scores via</span> <span data-proof="authored" data-by="ai:claude">`safetyScoreRepresentation`</span>
+8. **<span data-proof="authored" data-by="ai:claude">Record Summary is Copilot-only</span>** <span data-proof="authored" data-by="ai:claude">— cannot be invoked from Flow, Apex, or REST API</span>
+9. **<span data-proof="authored" data-by="ai:claude">Temperature 0</span>** <span data-proof="authored" data-by="ai:claude">is the default and recommended for deterministic business outputs</span>
+10. **<span data-proof="authored" data-by="ai:claude">Activation required</span>** <span data-proof="authored" data-by="ai:claude">— templates must be saved AND activated before they appear as invocable actions in Flow</span>
+11. **<span data-proof="authored" data-by="ai:claude">Input key format</span>** <span data-proof="authored" data-by="ai:claude">— always prefix with</span> <span data-proof="authored" data-by="ai:claude">`Input:`</span> <span data-proof="authored" data-by="ai:claude">when passing parameters (e.g.,</span> <span data-proof="authored" data-by="ai:claude">`Input:Case`,</span> <span data-proof="authored" data-by="ai:claude">`Input:Contact`)</span>
+12. **<span data-proof="authored" data-by="ai:claude">`GenAiPromptTemplateActv`</span>** <span data-proof="authored" data-by="ai:claude">is the activation metadata — always deploy alongside</span> <span data-proof="authored" data-by="ai:claude">`GenAiPromptTemplate`</span>

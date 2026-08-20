@@ -16,7 +16,7 @@ Atomic flow: commit (using sf-commit conventions) → push → open PR (using sf
 
 - PR description includes deploy plan, test plan, and Salesforce-specific risk callouts.
 - Push refuses force-push to main/master without explicit user confirmation.
-- Skips the evidence prompt when commit message and diff are sufficient — same heuristic as V3 ce-commit-push-pr.
+- Skips the evidence prompt when commit message and diff are sufficient.
 
 ## Interaction Method
 
