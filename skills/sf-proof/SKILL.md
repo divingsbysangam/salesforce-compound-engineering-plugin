@@ -1,6 +1,6 @@
 ---
 name: sf-proof
-description: "Render a Salesforce planning document (plan, requirements, brainstorm) in Every's Proof editor for human-in-the-loop review and comment-driven iteration. Use when the user says 'view this in proof', 'share this plan to proof', 'HITL this Apex design'."
+description: "Render a Salesforce planning document (plan, requirements, brainstorm) in the Proof editor for human-in-the-loop review and comment-driven iteration. Use when the user says 'view this in proof', 'share this plan to proof', 'HITL this Apex design'."
 argument-hint: "[markdown file path or proofeditor.ai URL]"
 ---
 

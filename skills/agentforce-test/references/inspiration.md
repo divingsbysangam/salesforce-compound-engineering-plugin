@@ -1,0 +1,6 @@
+# Inspiration
+
+Read with `agentforce-test/SKILL.md`. Procedure lives here.
+
+## <span data-proof="authored" data-by="ai:claude">Inspiration</span>
+<span data-proof="authored" data-by="ai:claude">This skill is adapted from</span> [<span data-proof="authored" data-by="ai:claude">`forcedotcom/afv-library/skills/testing-agentforce`</span>](https://github.com/forcedotcom/afv-library/blob/main/skills/testing-agentforce/SKILL.md) <span data-proof="authored" data-by="ai:claude">(Apache-2.0). The upstream skill ships with reference files (`references/preview-testing.md`,</span> <span data-proof="authored" data-by="ai:claude">`references/batch-testing.md`,</span> <span data-proof="authored" data-by="ai:claude">`references/action-execution.md`,</span> <span data-proof="authored" data-by="ai:claude">`references/test-report-format.md`,</span> <span data-proof="authored" data-by="ai:claude">`references/troubleshooting.md`) covering the full diagnosis tables, multi-turn YAML examples, integration testing patterns, and exit-code conventions. For exhaustive detail — full failure-type tables, every CLI flag, complete YAML field reference — consult the upstream. This plugin's adaptation tightens the workflow around the principles framework and the plugin's parallel-dispatch model.</span>

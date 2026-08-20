@@ -1,0 +1,6 @@
+# Inspiration
+
+Read with `apex-trigger-refactor/SKILL.md`. Procedure lives here.
+
+## <span data-proof="authored" data-by="ai:claude">Inspiration</span>
+<span data-proof="authored" data-by="ai:claude">Adapted from</span> [<span data-proof="authored" data-by="ai:claude">`forcedotcom/afv-library/skills/trigger-refactor-pipeline`</span>](https://github.com/forcedotcom/afv-library/tree/main/skills/trigger-refactor-pipeline) <span data-proof="authored" data-by="ai:claude">(Apache-2.0). The upstream skill ships a Python-based static analyzer (`scripts/analyze_trigger.py`), a handler-patterns reference, and a baseline anti-pattern trigger to practice on. For the analyzer script and the full handler pattern catalog, consult the upstream. This plugin's adaptation is opinionated about one-fix-per-commit phasing and integrates with the principles framework +</span> <span data-proof="authored" data-by="ai:claude">`apex-trigger-architect`</span> <span data-proof="authored" data-by="ai:claude">review agent.</span>

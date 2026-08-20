@@ -1,0 +1,18 @@
+# Step 2: Choose the target pattern
+
+Read with `apex-trigger-refactor/SKILL.md`. Procedure lives here.
+
+## <span data-proof="authored" data-by="ai:claude">Step 2: Choose the target pattern</span>
+<span data-proof="authored" data-by="ai:claude">The plugin doesn't impose a framework — match the project's existing one:</span>
+
+| <span data-proof="authored" data-by="ai:claude">Detected framework</span>                  | <span data-proof="authored" data-by="ai:claude">Target shape</span>                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **<span data-proof="authored" data-by="ai:claude">Trigger Actions Framework (TAF)</span>** | <span data-proof="authored" data-by="ai:claude">Custom Metadata-driven action classes implementing</span> <span data-proof="authored" data-by="ai:claude">`TriggerAction.*`</span> <span data-proof="authored" data-by="ai:claude">interfaces</span>                                                                                                                                          |
+| **<span data-proof="authored" data-by="ai:claude">fflib</span>**                           | <span data-proof="authored" data-by="ai:claude">Domain class extending</span> <span data-proof="authored" data-by="ai:claude">`fflib_SObjectDomain`</span>                                                                                                                                                                                                                                    |
+| **<span data-proof="authored" data-by="ai:claude">Custom handler</span>**                  | <span data-proof="authored" data-by="ai:claude">Class with</span> <span data-proof="authored" data-by="ai:claude">`before<Context>`</span> <span data-proof="authored" data-by="ai:claude">/</span> <span data-proof="authored" data-by="ai:claude">`after<Context>`</span> <span data-proof="authored" data-by="ai:claude">methods, called from a single dispatch line in the trigger</span> |
+| **<span data-proof="authored" data-by="ai:claude">None</span>**                            | <span data-proof="authored" data-by="ai:claude">Default to plain Trigger Handler pattern from</span> <span data-proof="authored" data-by="ai:claude">`apex-patterns`</span> <span data-proof="authored" data-by="ai:claude">— single class, context methods, recursion guard</span>                                                                                                           |
+
+<span data-proof="authored" data-by="ai:claude">When</span> <span data-proof="authored" data-by="ai:claude">`none`</span> <span data-proof="authored" data-by="ai:claude">is detected, propose the target pattern in the analysis report and</span> **<span data-proof="authored" data-by="ai:claude">ask the user to confirm</span>** <span data-proof="authored" data-by="ai:claude">before refactoring. Don't unilaterally pick a framework.</span>
+
+***
+
