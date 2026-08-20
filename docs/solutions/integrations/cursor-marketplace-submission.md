@@ -77,7 +77,7 @@ I'd like to submit a plugin for the Cursor Marketplace.
 
 Plugin name: sf-compound-engineering
 Display name: Salesforce Compound Engineering
-Version: 3.1.0-beta.6
+Version: 3.1.0
 Repository: https://github.com/divingsbysangam/salesforce-compound-engineering-plugin
 Homepage: https://github.com/divingsbysangam/salesforce-compound-engineering-plugin
 License: MIT
@@ -109,6 +109,6 @@ Also acceptable per [plugin-template](https://github.com/cursor/plugin-template)
 
 ## Related
 
-- Gaps audit: [`everyinc-v321-vs-sf-v31-gaps.md`](./everyinc-v321-vs-sf-v31-gaps.md)
+- Catalog: [`../../skills/index.md`](../../skills/index.md)
 - Template: https://github.com/cursor/plugin-template
 - Examples: https://github.com/cursor/plugins

@@ -1,6 +1,6 @@
 {
   "name": "sf-compound-engineering",
-  "version": "3.1.0-beta.6",
+  "version": "3.1.0",
   "description": "Salesforce-focused compound engineering plugin for Codex. Skills-first V3 architecture with parallel agent dispatch, institutional knowledge compounding, and Apex/LWC/Flow/Integration coverage.",
   "author": {
     "name": "Gella Sangamesh Gupta",
@@ -26,7 +26,7 @@
   "interface": {
     "displayName": "Salesforce Compound Engineering",
     "shortDescription": "Salesforce-focused compound engineering plugin with parallel agent dispatch and institutional knowledge.",
-    "longDescription": "sf-compound-engineering is a Salesforce-flavored fork of Every's Compound Engineering plugin (V3). It provides skills for brainstorming, planning, deepening, working, reviewing, and compounding learnings on Salesforce projects (Apex, LWC, Flow, Integration, metadata deployments). Specialized review and research agents dispatch in parallel via the Task tool. Salesforce-specific institutional knowledge is captured in docs/solutions/ and surfaced by sf-learnings-researcher. Skills install natively in Codex; for the full experience with specialized review agents, use Claude Code or Cursor.",
+    "longDescription": "sf-compound-engineering is a skills-first Salesforce compound engineering plugin. It provides skills for brainstorming, planning, deepening, working, reviewing, and compounding learnings on Salesforce projects (Apex, LWC, Flow, Integration, metadata deployments). Specialized review and research personas dispatch in parallel via the Task tool. Salesforce-specific institutional knowledge is captured in docs/solutions/ and surfaced by sf-learnings-researcher. Skills install natively in Codex; for the full experience with specialized review personas, use Claude Code or Cursor.",
     "developerName": "Gella Sangamesh Gupta",
     "category": "Coding",
     "capabilities": [

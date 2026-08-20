@@ -1,22 +1,22 @@
 ---
-title: Close Teardown Gaps Between SF Plugin and Every's Plugin
+title: Close Teardown Gaps Between SF Plugin and an external plugin
 type: feat
 date: 2026-03-02
 status: deprecated
 superseded_by: docs/solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md
 ---
 
-# <span data-proof="authored" data-by="ai:claude">Close Teardown Gaps — SF Plugin vs Every's Compound Engineering Plugin</span>
+# <span data-proof="authored" data-by="ai:claude">Close Teardown Gaps — SF Plugin vs Compound Engineering Plugin</span>
 
-> **Deprecated (2026-07-31).** This v2-era 31-gap matrix is historical. Current inventory lives in [`docs/solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md`](../solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md) (EveryInc `compound-engineering-v3.21.0` vs SF `3.1.0-beta.5`). Do not use this document as the open-gap backlog.
+> **Deprecated (2026-07-31, wording 2026-08-20).** Historical v2-era gap matrix. Current catalog lives in [`docs/solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md`](../solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md). Do not use this document as the open-gap backlog.
 
 ## <span data-proof="authored" data-by="ai:claude">Overview</span>
 
-<span data-proof="authored" data-by="ai:claude">The teardown (sections 31-38) identified</span> **<span data-proof="authored" data-by="ai:claude">31 gaps</span>** <span data-proof="authored" data-by="ai:claude">across 3 categories between the</span> [<span data-proof="authored" data-by="ai:claude">original compound-engineering-plugin</span>](https://github.com/EveryInc/compound-engineering-plugin) <span data-proof="authored" data-by="ai:claude">and the</span> [<span data-proof="authored" data-by="ai:claude">SF adaptation</span>](https://github.com/divingsbysangam/salesforce-compound-engineering-plugin)<span data-proof="authored" data-by="ai:claude">. This plan validates each gap against the current codebase state and provides a prioritized implementation roadmap.</span>
+<span data-proof="authored" data-by="ai:claude">The teardown (sections 31-38) identified</span> **<span data-proof="authored" data-by="ai:claude">31 gaps</span>** <span data-proof="authored" data-by="ai:claude">across 3 categories between the</span> <span data-proof="authored" data-by="ai:claude">original compound-engineering-plugin</span> <span data-proof="authored" data-by="ai:claude">and the</span> [<span data-proof="authored" data-by="ai:claude">SF adaptation</span>](https://github.com/divingsbysangam/salesforce-compound-engineering-plugin)<span data-proof="authored" data-by="ai:claude">. This plan validates each gap against the current codebase state and provides a prioritized implementation roadmap.</span>
 
 ## <span data-proof="authored" data-by="ai:claude">Current State Verified</span>
 
-| <span data-proof="authored" data-by="ai:claude">Metric</span>           | <span data-proof="authored" data-by="ai:claude">SF Plugin (Actual)</span>                                                                                                  | <span data-proof="authored" data-by="ai:claude">Every's Plugin</span>                                          |
+| <span data-proof="authored" data-by="ai:claude">Metric</span>           | <span data-proof="authored" data-by="ai:claude">SF Plugin (Actual)</span>                                                                                                  | <span data-proof="authored" data-by="ai:claude">an external plugin</span>                                          |
 | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | <span data-proof="authored" data-by="ai:claude">Agents</span>           | <span data-proof="authored" data-by="ai:claude">23 (5 categories: apex/architecture/automation/integration/lwc)</span>                                                     | <span data-proof="authored" data-by="ai:claude">29 (5 categories: review/research/design/workflow/docs)</span> |
 | <span data-proof="authored" data-by="ai:claude">Commands</span>         | <span data-proof="authored" data-by="ai:claude">4 (sf-plan, sf-work, sf-review, sf-compound)</span>                                                                        | <span data-proof="authored" data-by="ai:claude">22 (5 core + 17 utility)</span>                                |
@@ -32,7 +32,7 @@ superseded_by: docs/solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md
 
 ### <span data-proof="authored" data-by="ai:claude">CRITICAL Gaps (4) — Must Fix First</span>
 
-| <span data-proof="authored" data-by="ai:claude">#</span> | <span data-proof="authored" data-by="ai:claude">Gap</span>                              | <span data-proof="authored" data-by="ai:claude">What SF Plugin Has</span>                                                                                                                                                                                                                                                              | <span data-proof="authored" data-by="ai:claude">What Every's Plugin Has</span>                                                                                                                                                                               |
+| <span data-proof="authored" data-by="ai:claude">#</span> | <span data-proof="authored" data-by="ai:claude">Gap</span>                              | <span data-proof="authored" data-by="ai:claude">What SF Plugin Has</span>                                                                                                                                                                                                                                                              | <span data-proof="authored" data-by="ai:claude">What an external plugin Has</span>                                                                                                                                                                               |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | <span data-proof="authored" data-by="ai:claude">1</span> | **<span data-proof="authored" data-by="ai:claude">Parallel Agent Dispatch</span>**      | <span data-proof="authored" data-by="ai:claude">Agents are passive markdown checklists read sequentially</span>                                                                                                                                                                                                                        | <span data-proof="authored" data-by="ai:claude">Active subagents dispatched in parallel via</span> <span data-proof="authored" data-by="ai:claude">`Task agent-name(context)`</span>                                                                         |
 | <span data-proof="authored" data-by="ai:claude">2</span> | **<span data-proof="authored" data-by="ai:claude">Multi-Agent Parallel Review</span>**  | <span data-proof="authored" data-by="ai:claude">Single-pass checklist review in</span> <span data-proof="authored" data-by="ai:claude">`/sf-review`</span>                                                                                                                                                                             | <span data-proof="authored" data-by="ai:claude">15+ agents in parallel via Task tool</span>                                                                                                                                                                  |
@@ -216,7 +216,7 @@ prevention: string     # How to avoid in future
 
 <span data-proof="authored" data-by="ai:claude">New skill:</span> <span data-proof="authored" data-by="ai:claude">`skills/git-worktree/SKILL.md`</span> <span data-proof="authored" data-by="ai:claude">with</span> <span data-proof="authored" data-by="ai:claude">`scripts/worktree-manager.sh`</span>
 
-* <span data-proof="authored" data-by="ai:claude">Port from Every's plugin</span>
+* <span data-proof="authored" data-by="ai:claude">Port from an external plugin</span>
 
 * <span data-proof="authored" data-by="ai:claude">Add SF-specific auth file handling (`.env`,</span> <span data-proof="authored" data-by="ai:claude">`sfdx-project.json`,</span> <span data-proof="authored" data-by="ai:claude">`.sfdx/`)</span>
 
@@ -432,6 +432,6 @@ sf-compound-engineering-plugin/
 
 * <span data-proof="authored" data-by="ai:claude">Teardown document:</span> <span data-proof="authored" data-by="ai:claude">`Compound-Engineering-Plugin-Teardown.md`</span> <span data-proof="authored" data-by="ai:claude">(sections 31-38)</span>
 
-* <span data-proof="authored" data-by="ai:claude">Original plugin:</span> [<span data-proof="authored" data-by="ai:claude">https://github.com/EveryInc/compound-engineering-plugin</span>](https://github.com/EveryInc/compound-engineering-plugin)
+* <span data-proof="authored" data-by="ai:claude">Original plugin:</span> <span data-proof="authored" data-by="ai:claude">>
 
 * <span data-proof="authored" data-by="ai:claude">SF plugin:</span> [<span data-proof="authored" data-by="ai:claude">https://github.com/divingsbysangam/salesforce-compound-engineering-plugin</span>](https://github.com/divingsbysangam/salesforce-compound-engineering-plugin)

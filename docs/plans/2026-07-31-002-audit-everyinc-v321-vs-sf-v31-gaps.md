@@ -1,14 +1,16 @@
 ---
-title: Audit pointer — EveryInc v3.21 vs SF v3.1 gaps
+title: Audit pointer — catalog inventory
 type: audit
-status: active
+status: deprecated
 date: 2026-07-31
+last_updated: 2026-08-20
 ---
 
 # Audit pointer
 
-The durable gaps audit (fingerprints, skill matrix, closed March gaps, Cursor Marketplace readiness, recommended port batch) lives at:
+Retired. Catalog and layout rules live in:
 
-[`docs/solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md`](../solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md)
+- [`docs/solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md`](../solutions/integrations/everyinc-v321-vs-sf-v31-gaps.md)
+- [`docs/solutions/integrations/everyinc-v322-adoption-verdict.md`](../solutions/integrations/everyinc-v322-adoption-verdict.md)
 
-Produced by executing [`2026-07-31-001-feat-everyinc-gap-sync-and-gaps-doc-plan.md`](./2026-07-31-001-feat-everyinc-gap-sync-and-gaps-doc-plan.md).
+Those filenames are historical. Their bodies no longer compare this product to an external plugin. See README Credits for the single consideration note.

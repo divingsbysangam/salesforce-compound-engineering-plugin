@@ -10,7 +10,7 @@ Build a Bun/TypeScript CLI that converts the SF Compound Engineering Plugin (Cla
 
 ## Overview
 
-Currently, the plugin only works with Claude Code. This CLI will read the plugin's markdown commands, agents, skills, and MCP config, then convert them into each platform's native format — exactly how EveryInc's `@every-env/compound-plugin` works.
+Currently, the plugin only works with Claude Code. This CLI will read the plugin's markdown commands, agents, skills, and MCP config, then convert them into each platform's native format — exactly how  `this plugin’s installer` works.
 
 **Goal:** `bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to [target]`
 
@@ -314,8 +314,8 @@ All names: lowercase, special chars → hyphens, deduplicate with numeric suffix
 
 ## References
 
-- EveryInc converter: https://github.com/EveryInc/compound-engineering-plugin
-- npm package: `@every-env/compound-plugin` v0.12.0
+- converter: 
+- npm package: `this plugin’s installer` v0.12.0
 - Copilot agent format: `.github/agents/*.agent.md`
 - Windsurf workflows: `.windsurf/workflows/*.md`
 - Gemini commands: `.gemini/commands/*.toml`

@@ -4,25 +4,28 @@
 
 <span data-proof="authored" data-by="ai:claude">The format is based on</span> [<span data-proof="authored" data-by="ai:claude">Keep a Changelog</span>](https://keepachangelog.com/en/1.1.0/) <span data-proof="authored" data-by="ai:claude">and this project adheres to</span> [<span data-proof="authored" data-by="ai:claude">Semantic Versioning</span>](https://semver.org/spec/v2.0.0.html)<span data-proof="authored" data-by="ai:claude">.</span>
 
-## [Unreleased]
+## [3.1.0] - 2026-08-20
+
+First stable (non-beta) release. Skills-first Salesforce compound engineering — not an instruction pack.
 
 ### Added
 
-* **EveryInc gap skill ports (`3.1.0-beta.6`)** — `sf-handoff`, `sf-babysit-pr`, `sf-explain`, `sf-sweep`, `sf-retune`, `sf-test-browser` (LWC/Aura/Experience route mapping), with scripts/references where upstream shipped them.
+* Workflow skills `sf-handoff`, `sf-babysit-pr`, `sf-explain`, `sf-sweep`, `sf-retune`, `sf-test-browser` (LWC/Aura/Experience route mapping), with scripts/references where this catalog ships them.
 * **`/sf-tend` responsibility feeds** — local-first Salesforce feeds with one durable thread per feed, source-backed cards, approval-gated actions, receipts, and reviewed learning.
 * **Tend CLI runtime** — `feed`, `card`, `work`, `action`, and `learning` commands with digest-bound stale-action rejection and isolated local state.
 * **Cursor Marketplace packaging** — single-plugin `.cursor-plugin/plugin.json` path fields, `assets/logo.svg`, `mcp.json` dual-ship, `scripts/validate-cursor-plugin.mjs`, CI validation, and submission runbook at `docs/solutions/integrations/cursor-marketplace-submission.md`.
 
 ### Changed
 
-* Plugin manifests now identify `3.1.0-beta.6`; catalog is **68 skills** + 61 specialist personas.
-* **`sf-babysit-pr` 8KB layout** — always-loaded `SKILL.md` is now an orchestrator (~7.4KB); procedure lives in sibling `references/{envelope,setup,tick,settle,report}.md`. Salesforce names, `/tmp/sfce-*` scratch, and never-merge babysit contract unchanged. First EveryInc 3.22.4 cherry-pick (layout pattern only).
-* Gaps audit updated: high-priority EveryInc v3.21 skill gaps marked ported; `sf-retune` documented as distinct from `sf-update` / `sf-compound-refresh`.
+* Plugin manifests identify **`3.1.0`**. Catalog is **68 skills** + 61 specialist personas.
+* **Progressive-disclosure skill layout** — always-loaded `SKILL.md` files stay under 8KB; procedure lives in sibling `references/` (including `sf-babysit-pr` and the rest of the oversized catalog). Salesforce names, `/tmp/sfce-*` scratch, and never-merge babysit contract unchanged.
+* `sf-debug` documents `mode:pipeline` for babysit/lfg. `sf-work` requires a writable checkout. `sf-babysit-pr` decodes `gh` output as UTF-8 and dispatches a worker when the host has no skill-invocation primitive.
+* `sf-retune` documented as distinct from `sf-update` / `sf-compound-refresh`.
 * **Repository & package migration** — canonical repo moved to [`divingsbysangam/salesforce-compound-engineering-plugin`](https://github.com/divingsbysangam/salesforce-compound-engineering-plugin); prior `gellasangameshgupta/salesforce-compound-engineering-plugin` repo superseded. CLI/npm package renamed `@gellasangameshgupta/sf-compound-plugin` → `@divingsbysangam/sf-compound-plugin`. `homepage`/`repository`/author URLs updated across all four manifests.
 
 ## \[3.1.0-beta.3] - 2026-06-22
 
-**Agentless, skill-native reshape.** Following upstream `EveryInc/compound-engineering-plugin#967`, the plugin no longer ships standalone registered agents — formal agent definitions are not a reliable common denominator across Claude, Codex, Cursor, Gemini, Pi, OpenCode, etc. The 60 specialist behaviors are preserved as **persona prompt assets** dispatched as isolated subagents (parallel on Claude Code, inline where unsupported). No quality loss: review still runs many isolated specialist lenses; only the manifest-level agent registration goes away.
+**Agentless, skill-native reshape.** The plugin no longer ships standalone registered agents — formal agent definitions are not a reliable common denominator across Claude, Codex, Cursor, Gemini, Pi, OpenCode, etc. The 60 specialist behaviors are preserved as **persona prompt assets** dispatched as isolated subagents (parallel on Claude Code, inline where unsupported). No quality loss: review still runs many isolated specialist lenses; only the manifest-level agent registration goes away.
 
 ### Changed
 
@@ -37,7 +40,7 @@
 
 ## \[3.1.0-beta.1] - 2026-06-22
 
-Adopts the EveryInc compound-engineering 8-step "sandwich" upgrade, Salesforce-flavored: humans own the two ends (ideate + polish), the AI runs the middle in the loop. Selective port — browser-test, image-gen, and Rails-style skills were intentionally skipped as having no Salesforce audience.
+Adopts the skills-first sandwich loop, Salesforce-flavored: humans own the two ends (ideate + polish), the AI runs the middle in the loop.
 
 ### Added
 

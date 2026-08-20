@@ -1,6 +1,6 @@
-# SF Compound Engineering Plugin v3.1.0-beta.6
+# SF Compound Engineering Plugin v3.1.0
 
-**Instruction-Based Compound Engineering for Salesforce** — a multi-platform plugin (Claude Code, Cursor, Codex, and 9 other AI coding tools) where each iteration becomes smarter than the last through institutional knowledge capture and parallel persona dispatch.
+**Skills-first compound engineering for Salesforce** — a multi-platform plugin (Claude Code, Cursor, Codex, and 9 other AI coding tools) where each iteration becomes smarter than the last through institutional knowledge capture and parallel persona dispatch. This is a skill-native product, not an instruction pack: workflows auto-route from natural language and from `/sf-*` invocation.
 
 > **V3 is a skills-first architecture.** Commands were retired — every entry point is now a **skill** that auto-routes from natural-language phrases via its `description` frontmatter, with direct slash invocation (`/sf-<name>`) still supported. See [`CHANGELOG.md`](./CHANGELOG.md) for the migration guide from v2.x.
 
@@ -292,7 +292,7 @@ The `sf-learnings-researcher` persona searches these documents by frontmatter me
 ```
 salesforce-compound-engineering-plugin/
 ├── .claude-plugin/
-│   ├── plugin.json           # Plugin manifest (v3.1.0-beta.6)
+│   ├── plugin.json           # Plugin manifest (v3.1.0)
 │   └── marketplace.json      # Marketplace loader schema
 ├── .cursor-plugin/           # Cursor plugin manifest
 ├── .codex-plugin/            # Codex plugin manifest
@@ -385,7 +385,7 @@ MIT License
 ## Credits
 
 * Built for the Salesforce developer community
-* Inspired by [EveryInc's Compound Engineering Plugin](https://github.com/EveryInc/compound-engineering-plugin)
+* We considered [Every Inc's compound-engineering plugin](https://github.com/EveryInc/compound-engineering-plugin) while shaping the loop. This catalog, `sf-*` names, `PRINCIPLES.md`, and Salesforce skills are this product — not a tracking fork.
 * Inspired by [GitHub Spec-Kit](https://github.com/github/spec-kit)
 * Generating & Agentforce skills adapted from [`forcedotcom/afv-library`](https://github.com/forcedotcom/afv-library) (Apache-2.0)
 * Seven-principles framework distilled from Andrej Karpathy's Y Combinator AI Startup School talk

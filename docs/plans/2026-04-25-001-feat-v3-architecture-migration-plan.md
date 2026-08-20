@@ -10,9 +10,9 @@ origin: Compound-Engineering-Plugin-Teardown.md
 
 ## Overview
 
-Bring `sf-compound-engineering-plugin` to architectural parity with EveryInc's `compound-engineering-plugin` v3.0.6 while preserving its Salesforce identity. V3 is a breaking restructure: it eliminated the `commands/` directory entirely (skills now serve as user-invocable workflows via `/ce-<name>` syntax), renamed every agent to `<name>.agent.md` with a flat layout under `agents/`, adopted the `ce-` prefix as a stable namespace, and added per-platform manifests for Cursor and Codex alongside the Claude one.
+Bring `sf-compound-engineering-plugin` to architectural parity with  `compound-engineering-plugin` v3.0.6 while preserving its Salesforce identity. V3 is a breaking restructure: it eliminated the `commands/` directory entirely (skills now serve as user-invocable workflows via `/sf-<name>` syntax), renamed every agent to `<name>.agent.md` with a flat layout under `agents/`, adopted the `sf-` prefix as a stable namespace, and added per-platform manifests for Cursor and Codex alongside the Claude one.
 
-The current plugin is at v2.2.0 and tracks the **v2.x model**: 7 commands in `commands/`, 35 categorized agents under `agents/{apex,architecture,automation,integration,lwc,research,workflow}/`, 16 skills, no `.cursor-plugin` or `.codex-plugin` manifests, no V3 capability skills (`ce-debug`, `ce-ideate`, `ce-optimize`, `ce-pr-description`, `ce-resolve-pr-feedback`, `ce-update`, `ce-setup`, `ce-sessions`, `ce-doc-review`, etc.). The teardown that motivated this migration was based on the older v2.38.1 snapshot and predates the V3 breaking changes.
+The current plugin is at v2.2.0 and tracks the **v2.x model**: 7 commands in `commands/`, 35 categorized agents under `agents/{apex,architecture,automation,integration,lwc,research,workflow}/`, 16 skills, no `.cursor-plugin` or `.codex-plugin` manifests, no V3 capability skills (`sf-debug`, `sf-ideate`, `sf-optimize`, `sf-pr-description`, `sf-resolve-pr-feedback`, `sf-update`, `sf-setup`, `sf-sessions`, `sf-doc-review`, etc.). The teardown that motivated this migration was based on the older v2.38.1 snapshot and predates the V3 breaking changes.
 
 This plan migrates the plugin to **v3.0.0** in three phases: (1) structural — convert commands to skills, flatten and rename agents, add multi-platform manifests; (2) capability — port the 22 V3-only skills and 16 V3-only agents that have direct Salesforce relevance, all `sf-` prefixed; (3) routing/docs — rebuild the index files, CLAUDE.md, README, marketplace.json. Salesforce-specific agents (Apex, LWC, Flow, Integration, Architecture, etc.) retain their domain content; only their filenames, frontmatter, and routing change.
 
@@ -20,14 +20,14 @@ This plan migrates the plugin to **v3.0.0** in three phases: (1) structural — 
 
 ## Problem Frame
 
-The teardown (`Compound-Engineering-Plugin-Teardown.md`) compared the SF plugin against EveryInc v2.38.1 and produced a roadmap to close v2.x-era gaps. The SF plugin team executed most of that roadmap: brainstorm/plan/deepen/work/review/compound/lfg commands all exist, `docs/solutions/` exists, the research and workflow agent categories were built, MCP integration was added, and the plugin shipped at v2.2.0.
+The teardown (`Compound-Engineering-Plugin-Teardown.md`) compared the SF plugin against v2.38.1 and produced a roadmap to close v2.x-era gaps. The SF plugin team executed most of that roadmap: brainstorm/plan/deepen/work/review/compound/lfg commands all exist, `docs/solutions/` exists, the research and workflow agent categories were built, MCP integration was added, and the plugin shipped at v2.2.0.
 
-But EveryInc shipped v3.0.0 (and is now at v3.0.6) **after** the teardown. V3 is a breaking architectural shift, not an additive release:
+But shipped v3.0.0 (and is now at v3.0.6) **after** the teardown. V3 is a breaking architectural shift, not an additive release:
 
-1. **Commands are gone.** `/ce-plan`, `/ce-work`, `/ce-brainstorm` are now skills. Skills carry rich `description` frontmatter that lets the harness auto-route natural-language phrases ("plan this", "what should I build", "review this PR") to the right skill — a capability commands cannot match. The SF plugin's 7 `sf-*` commands cannot auto-route the same way.
-2. **Agent naming changed.** All agents are now `agents/<name>.agent.md` (flat, with `.agent.md` suffix) and uniformly prefixed `ce-`. The flat layout simplifies the harness loader and removes the maintenance burden of category routing tables. Our `agents/{apex,lwc,...}/<name>.md` layout still works in Claude Code but diverges from V3's loader expectations.
+1. **Commands are gone.** `/sf-plan`, `/sf-work`, `/sf-brainstorm` are now skills. Skills carry rich `description` frontmatter that lets the harness auto-route natural-language phrases ("plan this", "what should I build", "review this PR") to the right skill — a capability commands cannot match. The SF plugin's 7 `sf-*` commands cannot auto-route the same way.
+2. **Agent naming changed.** All agents are now `agents/<name>.agent.md` (flat, with `.agent.md` suffix) and uniformly prefixed `sf-`. The flat layout simplifies the harness loader and removes the maintenance burden of category routing tables. Our `agents/{apex,lwc,...}/<name>.md` layout still works in Claude Code but diverges from V3's loader expectations.
 3. **Multi-platform shipped.** V3 added `.cursor-plugin/plugin.json` and `.codex-plugin/plugin.json` so the same plugin can install natively in Cursor and Codex CLI. The SF plugin only ships `.claude-plugin/`.
-4. **Capability surface grew.** V3 added `ce-debug`, `ce-ideate`, `ce-optimize`, `ce-pr-description`, `ce-resolve-pr-feedback`, `ce-doc-review`, `ce-clean-gone-branches`, `ce-worktree` (skill), `ce-update`, `ce-setup`, `ce-sessions`, `ce-session-inventory`, `ce-session-extract`, `ce-slack-research`, `ce-test-browser`, `ce-frontend-design`, `ce-gemini-imagegen`, `ce-demo-reel`, `ce-release-notes`, `ce-report-bug`, `ce-proof`, `ce-agent-native-architecture`, `ce-agent-native-audit`, `ce-compound-refresh` — 24 new skills. Plus 16+ new review agents (`ce-correctness-reviewer`, `ce-maintainability-reviewer`, `ce-testing-reviewer`, `ce-architecture-strategist`, `ce-feasibility-reviewer`, etc.) that the V3 `ce-code-review` and `ce-doc-review` skills dispatch.
+4. **Capability surface grew.** V3 added `sf-debug`, `sf-ideate`, `sf-optimize`, `sf-pr-description`, `sf-resolve-pr-feedback`, `sf-doc-review`, `sf-clean-gone-branches`, `sf-worktree` (skill), `sf-update`, `sf-setup`, `sf-sessions`, `sf-session-inventory`, `sf-session-extract`, `sf-slack-research`, `sf-test-browser`, `sf-frontend-design`, `sf-gemini-imagegen`, `sf-demo-reel`, `sf-release-notes`, `sf-report-bug`, `sf-proof`, `sf-agent-native-architecture`, `sf-agent-native-audit`, `sf-compound-refresh` — 24 new skills. Plus 16+ new review agents (`sf-correctness-reviewer`, `sf-maintainability-reviewer`, `sf-testing-reviewer`, `sf-architecture-strategist`, `sf-feasibility-reviewer`, etc.) that the V3 `sf-code-review` and `sf-doc-review` skills dispatch.
 5. **The teardown is now stale.** Its gap analysis tables, file-by-file guide, and priority matrix all assumed the v2.x architecture. Following them verbatim would re-target the now-deprecated structure.
 
 The SF plugin's value is its Salesforce specialization. The migration must preserve that domain depth (Apex bulkification, governor limits, sharing model, LWC patterns, MCP tool builder, etc.) while adopting V3's architecture so the plugin stays compatible with Claude Code's evolving plugin ecosystem and gains V3's auto-routing and capability surface.
@@ -36,7 +36,7 @@ The SF plugin's value is its Salesforce specialization. The migration must prese
 
 ## Requirements Trace
 
-- R1. Architecture parity: directory layout, file naming, frontmatter conventions, and manifest structure match EveryInc v3.0.6.
+- R1. Architecture parity: directory layout, file naming, frontmatter conventions, and manifest structure match v3.0.6.
 - R2. Salesforce identity preserved: every existing Salesforce-specific agent and skill survives the migration (renamed and reformatted, never deleted).
 - R3. Workflow continuity: every existing user-facing entry point (`/sf-brainstorm`, `/sf-plan`, `/sf-deepen`, `/sf-work`, `/sf-review`, `/sf-compound`, `/sf-lfg`) remains invocable post-migration.
 - R4. Capability port: V3-only skills and agents that have Salesforce relevance ship as `sf-` prefixed equivalents. Personality-tied reviewers (Kieran/DHH/Julik/Ankane/Swift-iOS) are explicitly out of scope unless they map to a Salesforce persona.
@@ -51,11 +51,11 @@ The SF plugin's value is its Salesforce specialization. The migration must prese
 
 ## Scope Boundaries
 
-- Re-implementing V3 personality reviewers (`ce-kieran-rails-reviewer`, `ce-dhh-rails-reviewer`, `ce-julik-frontend-races-reviewer`, `ce-ankane-readme-writer`, `ce-swift-ios-reviewer`) — these are tied to non-Salesforce stacks.
+- Re-implementing V3 personality reviewers (`sf-kieran-rails-reviewer`, `sf-dhh-rails-reviewer`, `sf-julik-frontend-races-reviewer`, `sf-ankane-readme-writer`, `sf-swift-ios-reviewer`) — these are tied to non-Salesforce stacks.
 - Building a Bun/TypeScript cross-platform converter CLI (V3 ships one in `src/`); the SF plugin's existing Python `sfce.py` CLI is retained as-is for now.
 - Implementing V3's `lfg` skill verbatim — the existing `sf-lfg.md` orchestration is ported to skill form, not replaced with V3's flow.
 - Editing the existing institutional knowledge in `docs/solutions/` — frontmatter and content are preserved; only the routing references in `agents/index.md` change if needed.
-- Building Salesforce-specific replacements for `ce-frontend-design`, `ce-gemini-imagegen`, `ce-test-xcode`, `ce-test-browser`, `ce-figma-design-sync`, `ce-design-iterator`, `ce-design-implementation-reviewer` — these are non-Salesforce design/test workflows.
+- Building Salesforce-specific replacements for `sf-frontend-design`, `sf-gemini-imagegen`, `sf-test-xcode`, `sf-test-browser`, `sf-figma-design-sync`, `sf-design-iterator`, `sf-design-implementation-reviewer` — these are non-Salesforce design/test workflows.
 
 ### Deferred to Follow-Up Work
 
@@ -91,7 +91,7 @@ The SF plugin's value is its Salesforce specialization. The migration must prese
 
 ### External References
 
-- EveryInc compound-engineering-plugin v3.0.6 release notes (cached `CHANGELOG.md`): documents the BREAKING `ce-` rename and the rationale for the skill-first model.
+- compound-engineering-plugin v3.0.6 release notes (cached `CHANGELOG.md`): documents the BREAKING `sf-` rename and the rationale for the skill-first model.
 - Claude Code plugin docs (`https://docs.anthropic.com/en/docs/claude-code/plugins`): plugin manifest schema, skill auto-routing, and `agents/<name>.agent.md` layout expectations.
 - V3 plugin manifests: `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`, `.codex-plugin/plugin.json` in the cache — copy-and-adapt sources.
 
@@ -99,7 +99,7 @@ The SF plugin's value is its Salesforce specialization. The migration must prese
 
 ## Key Technical Decisions
 
-- **Naming prefix is `sf-`, not `ce-`.** Every renamed agent and ported skill keeps `sf-` to preserve Salesforce identity in routing and discovery. Rationale: an end user installing this plugin alongside V3 should see two distinct namespaces; calling them both `ce-*` would collide and dilute purpose.
+- **Naming prefix is `sf-`, not `sf-`.** Every renamed agent and ported skill keeps `sf-` to preserve Salesforce identity in routing and discovery. Rationale: an end user installing this plugin alongside V3 should see two distinct namespaces; calling them both `sf-*` would collide and dilute purpose.
 - **Agent suffix `.agent.md` and flat layout.** Match V3 exactly. The category folders (`apex/`, `lwc/`, etc.) collapse into the topical prefix already encoded in agent names (`sf-apex-*`, `sf-lwc-*`, `sf-flow-*`, `sf-integration-*`, `sf-architecture-*`). Rationale: Claude Code's plugin loader treats agents as a flat namespace; categorization is a docs concern, not a filesystem concern.
 - **Commands directory deleted, not vestigial.** Once skills replace them, leaving `commands/` adds confusion (which entry point is canonical?). Rationale: V3 made the same call; keeping a stub makes the migration look incomplete.
 - **Version bump 2.2.0 → 3.0.0.** This is a BREAKING release: filenames change, command directory disappears, anyone who hard-coded paths breaks. SemVer requires major bump. Rationale also signals architectural parity with V3.
@@ -126,8 +126,8 @@ The SF plugin's value is its Salesforce specialization. The migration must prese
 - **Exact skill description text for each ported skill.** Each must enumerate natural-language triggers Salesforce engineers actually type; this is best discovered while writing the skill, not in the plan.
 - **Whether some Salesforce agents collapse during the rename.** E.g., `agents/architecture/pattern-recognition-specialist.md` and `agents/integration/mcp-server-configuration-reviewer.md` may have content overlap that becomes obvious when they're flat siblings. Decision deferred to implementation; the default is to keep both and rename.
 - **Codex/Cursor manifest specifics.** The `interface.capabilities`, `defaultPrompt`, and `category` fields in the Codex manifest depend on what Codex actually reads at install time; the V3 cache shows one shape but Codex may evolve. Will mirror V3's shape on first pass and adjust if Codex reports a parse error.
-- **Whether to add `ce-` aliases for backward compatibility.** Some users may have hard-coded `/sf-plan` in scripts. Adding stub aliases would smooth the migration but adds maintenance. Deferred — decide based on user feedback during alpha.
-- **Final list of V3 skills to port.** A short list is locked (debug, ideate, optimize, pr-description, resolve-pr-feedback, doc-review, update, setup, sessions, clean-gone-branches, worktree, agent-native-architecture, agent-native-audit, compound-refresh, commit, commit-push-pr, demo-reel, release-notes, report-bug, proof, slack-research). Edge cases (`ce-test-browser`, `ce-frontend-design`, `ce-gemini-imagegen`) are deferred — port only if a Salesforce-shaped use case is identified during U6.
+- **Whether to add `sf-` aliases for backward compatibility.** Some users may have hard-coded `/sf-plan` in scripts. Adding stub aliases would smooth the migration but adds maintenance. Deferred — decide based on user feedback during alpha.
+- **Final list of V3 skills to port.** A short list is locked (debug, ideate, optimize, pr-description, resolve-pr-feedback, doc-review, update, setup, sessions, clean-gone-branches, worktree, agent-native-architecture, agent-native-audit, compound-refresh, commit, commit-push-pr, demo-reel, release-notes, report-bug, proof, slack-research). Edge cases (`sf-test-browser`, `sf-frontend-design`, `sf-gemini-imagegen`) are deferred — port only if a Salesforce-shaped use case is identified during U6.
 
 ---
 
@@ -419,7 +419,7 @@ Multi-platform manifest layout:
 **Execution note:** Process the 35 files in deterministic alphabetical order so the diff is reviewable; use `git mv` so history follows the rename.
 
 **Patterns to follow:**
-- V3 agent file `/Users/gellasangamesh/.claude/plugins/cache/every-marketplace/compound-engineering/3.0.6/agents/ce-correctness-reviewer.agent.md` for frontmatter shape.
+- V3 agent file `/Users/gellasangamesh/.claude/plugins/cache/every-marketplace/compound-engineering/3.0.6/agents/sf-correctness-reviewer.agent.md` for frontmatter shape.
 - Existing `agents/research/sf-learnings-researcher.md` already uses `sf-` prefix — confirm its renamed form is `agents/sf-learnings-researcher.agent.md`.
 
 **Test scenarios:**
@@ -455,18 +455,18 @@ Multi-platform manifest layout:
 - Rewrite frontmatter:
   - `name: sf-<name>` (matches directory)
   - `description:` — Salesforce-flavored auto-routing description that lists the natural-language trigger phrases. Example for `sf-plan`: `"Create structured implementation plans for Salesforce features. Use when planning Apex changes, LWC components, Flow automation, integrations, or metadata deployments. Trigger phrases: 'plan this Apex feature', 'how should I build this LWC', 'plan the integration', 'break down this requirement'."`
-  - `argument-hint: "[optional: feature description, requirements doc path, plan path to deepen]"` (mirroring `ce-plan`'s shape)
+  - `argument-hint: "[optional: feature description, requirements doc path, plan path to deepen]"` (mirroring `sf-plan`'s shape)
 - Update body to use V3 skill conventions:
   - Add `<feature_description> #$ARGUMENTS </feature_description>` injection block.
-  - Add the "Interaction Method" section copied from V3's `ce-plan` template, customized to Salesforce.
+  - Add the "Interaction Method" section copied from V3's `sf-plan` template, customized to Salesforce.
   - Update internal cross-references: `/sf-deepen` → `/sf-deepen` (unchanged), `Task sf-learnings-researcher(...)` → `Task sf-learnings-researcher(...)` (unchanged since agent prefix is preserved).
 - Delete the 7 source files and the `commands/` directory.
 
 **Execution note:** Do `sf-brainstorm` first since its skill description is the most complex (auto-routing on phrases like "let's brainstorm a Salesforce feature"). Use it as the template for the other six.
 
 **Patterns to follow:**
-- V3 skill `/Users/gellasangamesh/.claude/plugins/cache/every-marketplace/compound-engineering/3.0.6/skills/ce-plan/SKILL.md` for skill structure and frontmatter.
-- V3 skill `/Users/gellasangamesh/.claude/plugins/cache/every-marketplace/compound-engineering/3.0.6/skills/ce-debug/SKILL.md` for argument injection pattern.
+- V3 skill `/Users/gellasangamesh/.claude/plugins/cache/every-marketplace/compound-engineering/3.0.6/skills/sf-plan/SKILL.md` for skill structure and frontmatter.
+- V3 skill `/Users/gellasangamesh/.claude/plugins/cache/every-marketplace/compound-engineering/3.0.6/skills/sf-debug/SKILL.md` for argument injection pattern.
 
 **Test scenarios:**
 - Happy path: Each of the seven new `skills/sf-<name>/SKILL.md` files exists, has valid frontmatter (`name`, `description`, `argument-hint`), and the body preserves the original command's workflow logic.
@@ -569,13 +569,13 @@ Multi-platform manifest layout:
 - Modify: `skills/index.md` — replace placeholders with real entries.
 
 **Approach:**
-- For each V3 skill, read `/Users/gellasangamesh/.claude/plugins/cache/every-marketplace/compound-engineering/3.0.6/skills/ce-<name>/SKILL.md` and any `references/` or `scripts/`.
+- For each V3 skill, read `/Users/gellasangamesh/.claude/plugins/cache/every-marketplace/compound-engineering/3.0.6/skills/sf-<name>/SKILL.md` and any `references/` or `scripts/`.
 - Create `skills/sf-<name>/SKILL.md` with:
   - Name: `sf-<name>` (e.g., `sf-debug`).
   - Description: rewritten to enumerate Salesforce-specific trigger phrases. Examples: `sf-debug` description includes "debug this trigger", "why is this Apex test failing", "trace this LWC error", "investigate this deploy failure"; `sf-pr-description` includes "write a PR description for this Apex change", "describe this metadata bundle".
   - Body: keep V3's procedural skeleton (phases, decision points, file naming conventions) but substitute Salesforce contexts: file path examples become `force-app/main/default/classes/<Name>.cls` instead of `app/models/`, build commands become `sf project deploy` instead of `bun run build`, test commands become `sf apex run test` instead of `bundle exec rspec`.
   - References: copy and adapt any `references/` files (decision trees, prompt-extension snippets) with Salesforce-specific examples. For `sf-debug`, references include "common Salesforce error patterns" (governor limit exceeded, SOQL row count, mixed DML).
-- For `sf-update`: this skill checks if there's a newer plugin version. Adapt to point at the `sf-compound-engineering-plugin` GitHub releases endpoint instead of EveryInc's.
+- For `sf-update`: this skill checks if there's a newer plugin version. Adapt to point at the `sf-compound-engineering-plugin` GitHub releases endpoint instead of .
 - For `sf-setup`: this skill walks new users through plugin install. Adapt to validate Salesforce CLI presence (`sf --version`), `sfdx-project.json` existence, and the optional Salesforce DX MCP server.
 - For `sf-sessions` family: V3 uses these to introspect Claude Code session history; the Salesforce variant adds filters for Apex/LWC/Flow file types in the search dimension.
 - For `sf-clean-gone-branches`: largely identical to V3 (git-based, not Salesforce-specific). Keep the skill but rename and re-author the description.
@@ -596,8 +596,8 @@ Multi-platform manifest layout:
 **Test scenarios:**
 - Happy path: Each of the 22 ported skills has a SKILL.md with `name` matching the directory and `description` containing at least 3 Salesforce-flavored trigger phrases.
 - Happy path: `sf-debug` description distinguishes it from existing `sf-bug-reproduction-validator` agent — debug is a workflow, the validator is a sub-step inside it.
-- Edge case: Skills that V3 marks as `ce-` only and don't apply to Salesforce (`ce-test-xcode`, `ce-frontend-design`, `ce-gemini-imagegen`, `ce-test-browser`, `ce-work-beta`, `ce-polish-beta`) are explicitly NOT ported.
-- Edge case: `sf-update`'s upstream URL points at the SF plugin's repo (`divingsbysangam/salesforce-compound-engineering-plugin`), not EveryInc's.
+- Edge case: Skills that V3 marks as `sf-` only and don't apply to Salesforce (`sf-test-xcode`, `sf-frontend-design`, `sf-gemini-imagegen`, `sf-test-browser`, `sf-work-beta`, `sf-polish-beta`) are explicitly NOT ported.
+- Edge case: `sf-update`'s upstream URL points at the SF plugin's repo (`divingsbysangam/salesforce-compound-engineering-plugin`), not .
 - Edge case: `sf-compound-refresh` respects the protected-artifact rule — never deletes `docs/solutions/` content.
 - Integration: Invoking `/sf-debug` in a Salesforce repo loads the skill and the natural-language trigger "why is this trigger failing" auto-routes to the same skill (validates the description's auto-routing in U10).
 
@@ -609,7 +609,7 @@ Multi-platform manifest layout:
 
 - U7. **Port V3-only review and research agents as sf- variants**
 
-**Goal:** Add Salesforce-flavored implementations of the V3 review/research agents that the V3 `ce-code-review` and `ce-doc-review` skills dispatch — these are the personas that turn `sf-review` and `sf-doc-review` from a single-LLM call into a parallel multi-persona analysis.
+**Goal:** Add Salesforce-flavored implementations of the V3 review/research agents that the V3 `sf-code-review` and `sf-doc-review` skills dispatch — these are the personas that turn `sf-review` and `sf-doc-review` from a single-LLM call into a parallel multi-persona analysis.
 
 **Requirements:** R4
 
@@ -645,7 +645,7 @@ Multi-platform manifest layout:
 - Modify: `agents/index.md` — add new entries.
 
 **Approach:**
-- For each V3 agent, read the cache file (e.g., `/Users/gellasangamesh/.claude/plugins/cache/every-marketplace/compound-engineering/3.0.6/agents/ce-correctness-reviewer.agent.md`) and create a Salesforce-flavored counterpart.
+- For each V3 agent, read the cache file (e.g., `/Users/gellasangamesh/.claude/plugins/cache/every-marketplace/compound-engineering/3.0.6/agents/sf-correctness-reviewer.agent.md`) and create a Salesforce-flavored counterpart.
 - Frontmatter pattern:
   - `name: sf-<name>` (e.g., `sf-correctness-reviewer`)
   - `description:` Salesforce-flavored: where applicable, prepend "Always-on" or "Conditional" matching V3's pattern.
@@ -671,7 +671,7 @@ Multi-platform manifest layout:
   - `sf-issue-intelligence-analyst`: GitHub Issues + Jira analysis with Salesforce-specific issue shape detection (governor-limit incidents, deploy failures).
   - `sf-session-historian`: searches Claude Code session history filtered by Salesforce file types.
   - `sf-slack-researcher` and `sf-web-researcher`: counterparts to V3's research agents with Salesforce-specific search seeds.
-- Update `skills/sf-review/SKILL.md` to dispatch the conditional and always-on personas via the Task tool, mirroring V3's `ce-code-review` skill structure.
+- Update `skills/sf-review/SKILL.md` to dispatch the conditional and always-on personas via the Task tool, mirroring V3's `sf-code-review` skill structure.
 - Update `skills/sf-doc-review/SKILL.md` to dispatch the doc-review lens personas.
 
 **Execution note:** Always-on personas (correctness, maintainability, testing, project-standards) come first since `sf-review` will dispatch them on every invocation. Conditional personas (data-migrations, api-contract, security, performance, reliability) come second. Doc-review personas (lens reviewers) come third.
@@ -848,7 +848,7 @@ Multi-platform manifest layout:
 | Personality reviewer absences could surface as "missing capability" complaints from V3-fluent users | CHANGELOG explicitly notes their absence with rationale (Salesforce-only project scope) |
 | Renaming `agents/research/sf-learnings-researcher.md` to `agents/sf-learnings-researcher.agent.md` breaks any solution YAML frontmatter that references an agent path | Solution frontmatter doesn't currently reference agent paths — verify by `grep agents/ docs/solutions/`; if any references exist, update them in U2 |
 | Codex `interface.capabilities` field is a closed enum that may reject our values | Mirror V3's exact values (`Interactive`, `Read`, `Write`); validate during U9 |
-| Auto-routing competes with EveryInc V3 plugin if both installed simultaneously | `sf-` vs `ce-` namespace separation prevents collision by design |
+| Auto-routing competes with V3 plugin if both installed simultaneously | `sf-` vs `sf-` namespace separation prevents collision by design |
 
 ---
 
@@ -880,7 +880,7 @@ Ships as `v3.0.0` final. README, CHANGELOG, manifest validation, and live instal
 - **Origin document:** `Compound-Engineering-Plugin-Teardown.md` (the 1628-line teardown that started this migration; predates V3 breaking changes)
 - **V3 reference (read-only):** `/Users/gellasangamesh/.claude/plugins/cache/every-marketplace/compound-engineering/3.0.6/`
 - **V3 release notes:** `/Users/gellasangamesh/.claude/plugins/cache/every-marketplace/compound-engineering/3.0.6/CHANGELOG.md`
-- **EveryInc plugin GitHub:** `https://github.com/EveryInc/compound-engineering-plugin`
+- **plugin GitHub:** `
 - **SF plugin GitHub:** `https://github.com/divingsbysangam/salesforce-compound-engineering-plugin`
 - **Project memory:** `MEMORY.md` notes on hosted MCP gotchas (preserved verbatim)
 - **Schema validator:** `schema.yaml` (unchanged by this migration)
