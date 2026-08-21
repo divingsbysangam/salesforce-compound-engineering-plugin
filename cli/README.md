@@ -1,4 +1,6 @@
-# @divings/sf-compound-plugin
+# salesforce-compound-engineering-plugin
+
+> Renamed from `@divings/sf-compound-plugin`, which is superseded at 1.0.1 and no longer updated.
 
 Installer for the [SF Compound Engineering Plugin](https://github.com/divingsbysangam/salesforce-compound-engineering-plugin) — Salesforce-aware compound engineering workflows for 11 AI coding tools that are not Claude Code.
 
@@ -11,10 +13,10 @@ Run it from the project you want the plugin installed into:
 
 ```bash
 cd ~/code/my-salesforce-project
-bunx @divings/sf-compound-plugin install sf-compound-engineering --to cursor
+bunx salesforce-compound-engineering-plugin install sf-compound-engineering --to cursor
 ```
 
-`npx -y @divings/sf-compound-plugin …` works the same way if you do not have Bun.
+`npx -y salesforce-compound-engineering-plugin …` works the same way if you do not have Bun.
 
 The plugin source is downloaded from GitHub on first run and cached under
 `$XDG_CACHE_HOME/sfce/plugins` (or `~/.cache/sfce/plugins`). Converted files are
@@ -39,9 +41,18 @@ output directory.
 ### Other commands
 
 ```bash
-bunx @divings/sf-compound-plugin sync            # re-run conversion in place
-bunx @divings/sf-compound-plugin lint            # check for dangling references
-bunx @divings/sf-compound-plugin feed list       # Tend runtime
+bunx salesforce-compound-engineering-plugin sync            # re-run conversion in place
+bunx salesforce-compound-engineering-plugin lint            # check for dangling references
+bunx salesforce-compound-engineering-plugin feed list       # Tend runtime
+```
+
+## Installed globally
+
+`npm i -g salesforce-compound-engineering-plugin` provides two identical commands —
+the full package name, and `sf-compound-plugin` as a shorter alias:
+
+```bash
+sf-compound-plugin install sf-compound-engineering --to cursor
 ```
 
 ## Requirements
