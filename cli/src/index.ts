@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import { defineCommand, runMain } from "citty";
-import { resolve } from "path";
+import { isAbsolute, relative, resolve } from "path";
 import { readPlugin } from "./parser/plugin.js";
 import { lint as lintPlugin } from "./lint/index.js";
 import { detectInstalledTools, isValidTarget } from "./utils/detect.js";
+import { resolvePluginSource } from "./utils/source.js";
 import { CopilotConverter } from "./converters/copilot.js";
 import { WindsurfConverter } from "./converters/windsurf.js";
 import { GeminiConverter } from "./converters/gemini.js";
@@ -33,12 +34,82 @@ const CONVERTERS: Record<TargetPlatform, BaseConverter> = {
   qwen: new QwenConverter(),
 };
 
+/**
+ * Convert a plugin into one or more target tools.
+ *
+ * `pluginDir` is where the plugin is read from; `outputDir` is where the
+ * converted files land. They are deliberately separate — an install writes
+ * into the user's project, not back into the plugin it came from.
+ */
+function runConvert(opts: {
+  pluginDir: string;
+  outputDir: string;
+  target: string;
+  scope: string;
+}): void {
+  const plugin = readPlugin(opts.pluginDir);
+  console.log(`Found: ${plugin.name} v${plugin.version}`);
+  console.log(`  ${plugin.commands.length} commands, ${plugin.agents.length} agents, ${plugin.skills.length} skills`);
+  console.log(`  ${Object.keys(plugin.mcpServers).length} MCP servers`);
+  console.log(`Requested install directory: ${opts.outputDir}\n`);
+
+  const targets =
+    opts.target === "all"
+      ? detectInstalledTools(opts.outputDir)
+      : [opts.target as TargetPlatform];
+
+  if (targets.length === 0) {
+    console.log(
+      `No supported AI coding tools detected in ${opts.outputDir}. Specify one with --to.`,
+    );
+    process.exit(0);
+  }
+
+  for (const t of targets) {
+    const converter = CONVERTERS[t];
+    console.log(`\nConverting for ${converter.label}...`);
+
+    // Scope must be set before installRoot is read — it changes the answer.
+    if (t === "windsurf") {
+      (converter as WindsurfConverter).setScope(opts.scope as "global" | "workspace");
+    }
+
+    // Several targets only load from a user-global directory and cannot honour
+    // --output. Say where the files actually go rather than letting the
+    // requested directory stand as an unearned promise.
+    const root = converter.installRoot(opts.outputDir, plugin);
+    if (!isInside(root, opts.outputDir)) {
+      console.log(
+        `  Note: ${converter.label} installs into ${root}, outside the requested ` +
+          `directory${t === "windsurf" ? " — pass --scope workspace to keep it in the project" : ""}.`,
+      );
+    }
+
+    converter.convert(plugin, opts.outputDir);
+  }
+}
+
+/** True when `child` is `parent` or sits beneath it. */
+function isInside(child: string, parent: string): boolean {
+  const rel = relative(parent, child);
+  return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
+}
+
+/** Flags shared by `install` and `sync`, so the two stay in step. */
+const convertArgs = {
+  to: { type: "string", description: "Target: copilot, windsurf, gemini, kiro, opencode, codex, cursor, droid, pi, openclaw, qwen, or all" },
+  output: { type: "string", description: "Directory to install into (default: current directory)" },
+  scope: { type: "string", description: "Scope: global or workspace (for Windsurf)", default: "global" },
+  ref: { type: "string", description: "Branch or tag to fetch when downloading a plugin by name" },
+  offline: { type: "boolean", description: "Never fetch — use a cached plugin copy or fail", default: false },
+} as const;
+
 const install = defineCommand({
   meta: { name: "install", description: "Install plugin to target AI coding tool" },
   args: {
     plugin: { type: "positional", description: "Plugin name or path", required: true },
-    to: { type: "string", description: "Target: copilot, windsurf, gemini, kiro, opencode, codex, cursor, droid, pi, openclaw, qwen, or all", required: true },
-    scope: { type: "string", description: "Scope: global or workspace (for Windsurf)", default: "global" },
+    ...convertArgs,
+    to: { ...convertArgs.to, required: true },
   },
   run({ args }) {
     const target = args.to;
@@ -48,31 +119,34 @@ const install = defineCommand({
       process.exit(1);
     }
 
-    // Resolve plugin path — if it's a name, use current directory
-    const pluginDir = resolve(args.plugin === "sf-compound-engineering" ? "." : args.plugin);
-    console.log(`Reading plugin from: ${pluginDir}`);
-
-    const plugin = readPlugin(pluginDir);
-    console.log(`Found: ${plugin.name} v${plugin.version}`);
-    console.log(`  ${plugin.commands.length} commands, ${plugin.agents.length} agents, ${plugin.skills.length} skills`);
-    console.log(`  ${Object.keys(plugin.mcpServers).length} MCP servers\n`);
-
-    const targets = target === "all" ? detectInstalledTools() : [target as TargetPlatform];
-
-    if (targets.length === 0) {
-      console.log("No supported AI coding tools detected. Specify a target with --to.");
-      process.exit(0);
+    let source;
+    try {
+      source = resolvePluginSource(args.plugin, {
+        offline: args.offline,
+        ref: args.ref,
+      });
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exit(1);
     }
 
-    for (const t of targets) {
-      const converter = CONVERTERS[t];
-      console.log(`\nConverting for ${converter.label}...`);
-
-      if (t === "windsurf") {
-        (converter as WindsurfConverter).setScope(args.scope as "global" | "workspace");
-      }
-      converter.convert(plugin, pluginDir);
+    const label =
+      source.origin === "fetch"
+        ? `Downloaded plugin from: ${source.remote}`
+        : source.origin === "cache"
+          ? `Using cached plugin from: ${source.remote}`
+          : `Reading plugin from: ${source.dir}`;
+    console.log(label);
+    if (source.origin === "fetch" || source.origin === "cache") {
+      console.log(`  cached at: ${source.dir}`);
     }
+
+    runConvert({
+      pluginDir: source.dir,
+      outputDir: resolve(args.output ?? "."),
+      target,
+      scope: args.scope,
+    });
 
     console.log("\nDone! Plugin installed successfully.");
   },
@@ -82,7 +156,8 @@ const sync = defineCommand({
   meta: { name: "sync", description: "Sync current directory plugin to target AI coding tools" },
   args: {
     target: { type: "string", description: "Target platform or 'all'", default: "all" },
-    scope: { type: "string", description: "Scope: global or workspace (for Windsurf)", default: "global" },
+    output: convertArgs.output,
+    scope: convertArgs.scope,
   },
   run({ args }) {
     const target = args.target;
@@ -95,25 +170,12 @@ const sync = defineCommand({
     const pluginDir = resolve(".");
     console.log(`Syncing plugin from: ${pluginDir}`);
 
-    const plugin = readPlugin(pluginDir);
-    console.log(`Found: ${plugin.name} v${plugin.version}`);
-
-    const targets = target === "all" ? detectInstalledTools() : [target as TargetPlatform];
-
-    if (targets.length === 0) {
-      console.log("No supported AI coding tools detected. Specify a target with --target.");
-      process.exit(0);
-    }
-
-    for (const t of targets) {
-      const converter = CONVERTERS[t];
-      console.log(`\nConverting for ${converter.label}...`);
-
-      if (t === "windsurf") {
-        (converter as WindsurfConverter).setScope(args.scope as "global" | "workspace");
-      }
-      converter.convert(plugin, pluginDir);
-    }
+    runConvert({
+      pluginDir,
+      outputDir: resolve(args.output ?? "."),
+      target,
+      scope: args.scope,
+    });
 
     console.log("\nDone! Plugin synced successfully.");
   },

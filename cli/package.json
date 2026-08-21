@@ -1,17 +1,18 @@
 {
-  "name": "@divingsbysangam/sf-compound-plugin",
+  "name": "@divings/sf-compound-plugin",
   "version": "1.0.0",
   "description": "Multi-tool installer for SF Compound Engineering Plugin — converts Claude Code plugins to Copilot, Windsurf, Gemini, Kiro, OpenCode, Codex",
   "type": "module",
   "bin": {
-    "sf-compound-plugin": "./dist/index.js"
+    "sf-compound-plugin": "dist/index.js"
   },
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target node",
     "dev": "bun run src/index.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
-    "lint": "bun run src/index.ts lint"
+    "lint": "bun run src/index.ts lint",
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "citty": "^0.1.6",
@@ -40,6 +41,17 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/divingsbysangam/salesforce-compound-engineering-plugin"
+    "url": "git+https://github.com/divingsbysangam/salesforce-compound-engineering-plugin.git",
+    "directory": "cli"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/divingsbysangam/salesforce-compound-engineering-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/divingsbysangam/salesforce-compound-engineering-plugin/issues"
   }
 }

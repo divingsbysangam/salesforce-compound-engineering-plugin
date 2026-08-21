@@ -11,8 +11,13 @@ export class OpenClawConverter extends BaseConverter {
   // session-start lifecycle callback rather than an external hook.
   readonly hookClass = "lifecycle-callback" as const;
 
+  installRoot(_outputDir: string, plugin: ClaudePlugin): string {
+    // OpenClaw loads extensions only from its user-global directory.
+    return join(homedir(), ".openclaw", "extensions", normalizeName(plugin.name));
+  }
+
   convert(plugin: ClaudePlugin, outputDir: string): void {
-    const clawDir = join(homedir(), ".openclaw", "extensions", normalizeName(plugin.name));
+    const clawDir = this.installRoot(outputDir, plugin);
 
     this.convertAgents(plugin, clawDir);
     this.convertCommands(plugin, clawDir);

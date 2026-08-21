@@ -8,9 +8,12 @@ export class DroidConverter extends BaseConverter {
   readonly target: TargetPlatform = "droid";
   readonly label = "Factory Droid";
 
+  installRoot(outputDir: string): string {
+    return outputDir !== "." ? join(outputDir, ".factory") : join(homedir(), ".factory");
+  }
+
   convert(plugin: ClaudePlugin, outputDir: string): void {
-    // Droid installs globally to ~/.factory
-    const droidDir = outputDir !== "." ? join(outputDir, ".factory") : join(homedir(), ".factory");
+    const droidDir = this.installRoot(outputDir);
 
     this.convertAgents(plugin, droidDir);
     this.convertCommands(plugin, droidDir);

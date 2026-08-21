@@ -4,6 +4,20 @@
 
 <span data-proof="authored" data-by="ai:claude">The format is based on</span> [<span data-proof="authored" data-by="ai:claude">Keep a Changelog</span>](https://keepachangelog.com/en/1.1.0/) <span data-proof="authored" data-by="ai:claude">and this project adheres to</span> [<span data-proof="authored" data-by="ai:claude">Semantic Versioning</span>](https://semver.org/spec/v2.0.0.html)<span data-proof="authored" data-by="ai:claude">.</span>
 
+## [Unreleased]
+
+### Fixed
+
+* **Installation paths (DIV-58).** `install` now writes into the directory you run it from instead of back into the plugin, via a new `--output <dir>` flag. Passing a plugin *name* downloads the plugin from GitHub into `$XDG_CACHE_HOME/sfce/plugins` rather than resolving against the working directory, so the advertised one-line install works from any project. Tool auto-detection (`--to all`) now inspects the output directory.
+* **npm publish readiness.** `prepublishOnly` build, `publishConfig.access: public`, `engines`, repository `directory`, and a package README added to `cli/package.json` so the first publish succeeds.
+* **Package renamed to `@divings/sf-compound-plugin`.** The previously advertised `@divingsbysangam` scope does not exist on npm — scopes must match an npm username or an org you own — so publishing it returned `404 Scope not found`. The package now ships under the `@divings` org.
+
+### Added
+
+* `BaseConverter.installRoot()` — each converter declares where it actually writes, and `install` reports any destination outside the requested `--output` directory. Windsurf at global scope, OpenClaw and Qwen install user-globally because that is the only place those tools load from.
+* `docs/install-verification.md` — clean-environment verification log behind the README install matrix.
+* README install matrix with prerequisites, last-verified date, known limitations, and owner per path.
+
 ## [3.1.0] - 2026-08-20
 
 First stable (non-beta) release. Skills-first Salesforce compound engineering — not an instruction pack.

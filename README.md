@@ -36,6 +36,10 @@ Above the loop, **`/sf-strategy`** maintains an optional repo-root `STRATEGY.md`
 
 ## Quick Start
 
+Every command below is verified against a clean environment on the date in the
+[install matrix](#install-matrix). If one of them fails for you, that is a bug —
+please [open an issue](https://github.com/divingsbysangam/salesforce-compound-engineering-plugin/issues).
+
 ### Claude Code (Native)
 
 ```bash
@@ -46,60 +50,91 @@ Above the loop, **`/sf-strategy`** maintains an optional repo-root `STRATEGY.md`
 /plugin install sf-compound-engineering
 ```
 
-### Cursor
+No CLI, no npm, no clone — Claude Code reads `.claude-plugin/marketplace.json` straight from the repository.
 
-**Install today (CLI / Git):**
+### Every other AI coding tool
+
+Run the installer **from the project you want the plugin installed into**. It
+downloads the plugin from GitHub on first run, caches it, and writes the
+converted files into your project:
 
 ```bash
-bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to cursor
+cd ~/code/my-salesforce-project
+bunx @divings/sf-compound-plugin install sf-compound-engineering --to cursor
 ```
 
-Or open this repo in Cursor. Manifest: `.cursor-plugin/plugin.json` (skills at repo root, hooks at `hooks/hooks.json`, MCP at `mcp.json`).
+No Bun? `npx -y @divings/sf-compound-plugin …` works identically — the CLI ships
+as a plain Node binary and needs only Node 18+.
+
+Swap `--to cursor` for any target: `copilot`, `windsurf`, `gemini`, `opencode`,
+`codex`, `kiro`, `droid`, `pi`, `openclaw`, `qwen`, or `all` to install into
+every tool detected in that project.
+
+```bash
+# Install into every AI tool detected in this project
+bunx @divings/sf-compound-plugin install sf-compound-engineering --to all
+
+# Install somewhere other than the current directory
+bunx @divings/sf-compound-plugin install sf-compound-engineering --to codex --output ~/code/other-project
+
+# Pin to a branch or tag instead of the default branch
+# (tags are listed at github.com/divingsbysangam/salesforce-compound-engineering-plugin/tags)
+bunx @divings/sf-compound-plugin install sf-compound-engineering --to cursor --ref v3.1.0-beta.3
+
+# Reuse the cached copy without touching the network
+bunx @divings/sf-compound-plugin install sf-compound-engineering --to cursor --offline
+```
+
+The downloaded plugin is cached under `$XDG_CACHE_HOME/sfce/plugins` (or
+`~/.cache/sfce/plugins`). Re-running `install` refreshes that cache; if the
+refresh fails, the cached copy is used rather than failing the install.
+
+**Prefer to work from a checkout?** Pass a path instead of a name — no download happens:
+
+```bash
+git clone https://github.com/divingsbysangam/salesforce-compound-engineering-plugin
+cd ~/code/my-salesforce-project
+bunx @divings/sf-compound-plugin install ../salesforce-compound-engineering-plugin --to cursor
+```
+
+Contributors working inside a clone can use `sync`, which converts the plugin in place:
+
+```bash
+cd salesforce-compound-engineering-plugin
+(cd cli && bun install)
+bun run cli/src/index.ts sync --target all
+```
+
+`sync` reads the plugin from the current directory, so run it from the repository
+root — not from `cli/`. Its output is gitignored.
+
+### Cursor notes
+
+Manifest: `.cursor-plugin/plugin.json` (skills at repo root, hooks at `hooks/hooks.json`, MCP at `mcp.json`).
 
 **Cursor Marketplace:** packaging matches the [Cursor plugin template](https://github.com/cursor/plugin-template) single-plugin shape and passes `node scripts/validate-cursor-plugin.mjs`. Submit (or re-submit) with the packet in [`docs/solutions/integrations/cursor-marketplace-submission.md`](./docs/solutions/integrations/cursor-marketplace-submission.md) — email `kniparko@anysphere.com` or Cursor team Slack. Marketplace browse/install instructions will replace this note once Cursor lists the plugin.
 
-### Other AI Coding Tools (11 platforms)
+### Install matrix
 
-```bash
-# GitHub Copilot
-bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to copilot
+Owner for every path: [@divingsbysangam](https://github.com/divingsbysangam). Verification log: [`docs/install-verification.md`](./docs/install-verification.md).
 
-# Cursor (also see Cursor section above)
-bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to cursor
+| Path | Prerequisites | Last verified | Status | Known limitations |
+| --- | --- | --- | --- | --- |
+| **Claude Code** `/plugin marketplace add` | Claude Code with plugin support | 2026-08-21 | Manifests verified reachable and schema-valid | `/plugin` cannot be driven from a shell, so this path is confirmed by manifest checks, not by an automated install run |
+| **Cursor** `--to cursor` | Node 18+ or Bun 1.0+, `git` | 2026-08-21 | Verified from the published npm package, clean environment — 68 skills in ~5s | Skills install as **symlinks** into the plugin cache — clearing `~/.cache/sfce` breaks them; re-run `install` to repair. Commands and agents are not converted (Cursor is sync-only) |
+| **Codex** `--to codex` | Node 18+ or Bun 1.0+, `git` | 2026-08-21 | Verified from the published npm package, clean environment — 68 skills in ~1s (`bunx`) and ~5s (`npx`) | Skills are copied, not symlinked — re-run `install` to pick up plugin updates |
+| **GitHub Copilot** `--to copilot` | Node 18+ or Bun 1.0+, `git` | 2026-08-21 | Verified from the published npm package, clean environment — 68 skills in ~1s | Writes into `.github/`, which is usually committed — review the diff before pushing |
+| **Gemini CLI** `--to gemini`, **Factory Droid** `--to droid` | Node 18+ or Bun 1.0+, `git` | 2026-08-21 | Conversion verified from a clean environment via `--to all` (68 skills each) | Not yet exercised as a first-class `--to <tool>` run |
+| **Windsurf** `--to windsurf` | Node 18+ or Bun 1.0+, `git` | 2026-08-21 | Conversion verified from a clean environment via `--to all` | **Ignores `--output` at the default global scope** — installs into `~/.codeium/windsurf` instead. Pass `--scope workspace` to keep it inside the project. `--to all` picks Windsurf up from your home directory even in a project that does not use it |
+| **OpenCode, Kiro, Pi** | Node 18+ or Bun 1.0+, `git` | — | Converters are unit-tested, but **no clean-environment install has been run** | Treat as unverified until these rows carry a date. Please report failures on the issue tracker |
+| **OpenClaw** `--to openclaw`, **Qwen** `--to qwen` | Node 18+ or Bun 1.0+, `git` | — | Converters are unit-tested, but **no clean-environment install has been run** | **Ignore `--output`** — both tools load extensions only from `~/.openclaw/extensions/` and `~/.qwen/extensions/`, so the install is user-global and the requested project is left unchanged. `install` prints the real destination |
+| **Python `sfce` CLI** (`pyproject.toml`) | — | — | Not published; superseded by the Bun CLI | Predates the Bun installer and is not part of any advertised install path |
 
-# Windsurf
-bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to windsurf
+> **Targets that cannot honour `--output`.** Windsurf at its default global scope, OpenClaw and Qwen install into a user-global directory because that is the only place those tools load from. `install` prints the actual destination for each, so the requested directory is never reported as an unearned promise.
 
-# Gemini CLI
-bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to gemini
+> **What "verified" means here.** Verified rows mean the documented command was run against the published npm package, from an empty directory with an empty plugin cache, and put the expected files in the expected place. It does not yet mean a fresh user confirmed the tool loads them — that is what the DIV-58 installer round is for.
 
-# OpenCode
-bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to opencode
-
-# Codex
-bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to codex
-
-# Kiro
-bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to kiro
-
-# Factory Droid
-bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to droid
-
-# Pi
-bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to pi
-
-# OpenClaw
-bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to openclaw
-
-# Qwen Code
-bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to qwen
-
-# Auto-detect and install to all detected tools
-bunx @divingsbysangam/sf-compound-plugin install sf-compound-engineering --to all
-
-# Sync from current directory to all detected tools
-bunx @divingsbysangam/sf-compound-plugin sync
-```
+> **Agents column, honestly:** the plugin is agentless as of V3.1, so every converter reports `0 agents`. Specialist personas travel inside `skills/` and reach every platform.
 
 ### What Gets Converted
 
@@ -301,7 +336,7 @@ salesforce-compound-engineering-plugin/
 ├── PRINCIPLES.md             # Seven governing principles (source of truth)
 ├── CLAUDE.md                 # Project context and protected artifacts
 ├── cli/                      # Multi-tool installer CLI (Bun)
-│   ├── package.json          # @divingsbysangam/sf-compound-plugin
+│   ├── package.json          # @divings/sf-compound-plugin
 │   ├── src/
 │   │   ├── index.ts          # CLI entry (citty)
 │   │   ├── parser/           # Plugin reader + markdown parser
