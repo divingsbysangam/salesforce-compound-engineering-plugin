@@ -136,6 +136,38 @@ but discovery and tool-load confirmation, which needs the fresh-installer round.
 The `npx` path was added to the README as a result of this round — the docs had
 only ever shown `bunx`, which silently assumed Bun.
 
+## Round 3 — 2026-08-21, the renamed package
+
+`salesforce-compound-engineering-plugin@1.0.1` published; shasum `f6b66e1e`
+matches the pre-publish dry run byte for byte, so the registry serves exactly
+the artifact verified locally. `@divings/sf-compound-plugin` deprecated at both
+1.0.0 and 1.0.1.
+
+README commands run verbatim, each from an empty directory with an empty plugin
+cache:
+
+| Command | Time | Result |
+| --- | --- | --- |
+| `bunx salesforce-compound-engineering-plugin install sf-compound-engineering --to cursor` | 3.5s | 68 skills into `.cursor/skills/` |
+| `bunx … --to codex` | 1.2s | 68 skills, cache reused |
+| `bunx … --to copilot` | 1.3s | 68 skills into `.github/skills/` |
+| `npx -y … --to codex` | 3.2s | 68 skills, plain Node |
+
+Checks specific to this round:
+
+- **Both bins resolve.** A global install exposes `salesforce-compound-engineering-plugin` and `sf-compound-plugin`; both report `1.0.1`. The package-named bin is what makes the documented one-liner independent of `bunx`/`npx` single-bin fallback behaviour.
+- **The 1.0.1 destination fix is in the published binary**, not just the repository. `--to openclaw` prints the real `~/.openclaw/extensions/…` destination and leaves the requested project empty, which is the corrected behaviour rather than the 1.0.0 defect.
+- **The deprecation fires.** Installing the old name emits `npm warn deprecated @divings/sf-compound-plugin@1.0.1: renamed to salesforce-compound-engineering-plugin`.
+
+### The recurring gap this round closes
+
+Three times in this issue a merge did not reach users: the package was never
+published, the destination fix was published-before-merge, and the rename landed
+in the repository while npm still 404'd the new name. Merging changes what the
+docs say; publishing changes what the docs describe. Nothing enforces the two
+happening together — worth a release check in CI that compares `cli/package.json`
+name and version against `npm view` on pushes to `main`.
+
 ## Known caveats
 
 ### Targets that cannot honour `--output`
