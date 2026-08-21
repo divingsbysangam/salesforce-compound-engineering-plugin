@@ -12,7 +12,8 @@
 
 * **Installation paths (DIV-58).** `install` now writes into the directory you run it from instead of back into the plugin, via a new `--output <dir>` flag. Passing a plugin *name* downloads the plugin from GitHub into `$XDG_CACHE_HOME/sfce/plugins` rather than resolving against the working directory, so the advertised one-line install works from any project. Tool auto-detection (`--to all`) now inspects the output directory.
 * **npm publish readiness.** `prepublishOnly` build, `publishConfig.access: public`, `engines`, repository `directory`, and a package README added to `cli/package.json` so the first publish succeeds.
-* **Package renamed to `@divings/sf-compound-plugin`.** The previously advertised `@divingsbysangam` scope does not exist on npm — scopes must match an npm username or an org you own — so publishing it returned `404 Scope not found`. The package now ships under the `@divings` org.
+* **Package renamed to `salesforce-compound-engineering-plugin`.** The name now matches the repository. Two earlier names did not survive contact with npm: `@divingsbysangam/sf-compound-plugin` named a scope that does not exist (scopes must match an npm username or an org you own, and `divingsbysangam` is the GitHub org), and `@divings/sf-compound-plugin` published successfully but scoped the package to an org name that says nothing about what it installs. The unscoped name is what `bunx` users will actually type.
+* **`@divings/sf-compound-plugin` is superseded** at `1.0.1`. It stays on the registry — npm does not remove published versions — and should be deprecated to point at the new name.
 
 ### Added
 

@@ -60,11 +60,13 @@ converted files into your project:
 
 ```bash
 cd ~/code/my-salesforce-project
-bunx @divings/sf-compound-plugin install sf-compound-engineering --to cursor
+bunx salesforce-compound-engineering-plugin install sf-compound-engineering --to cursor
 ```
 
-No Bun? `npx -y @divings/sf-compound-plugin …` works identically — the CLI ships
-as a plain Node binary and needs only Node 18+.
+No Bun? `npx -y salesforce-compound-engineering-plugin …` works identically — the CLI ships
+as a plain Node binary and needs only Node 18+. Installed globally
+(`npm i -g salesforce-compound-engineering-plugin`), the same tool is available as the
+shorter `sf-compound-plugin`.
 
 Swap `--to cursor` for any target: `copilot`, `windsurf`, `gemini`, `opencode`,
 `codex`, `kiro`, `droid`, `pi`, `openclaw`, `qwen`, or `all` to install into
@@ -72,17 +74,17 @@ every tool detected in that project.
 
 ```bash
 # Install into every AI tool detected in this project
-bunx @divings/sf-compound-plugin install sf-compound-engineering --to all
+bunx salesforce-compound-engineering-plugin install sf-compound-engineering --to all
 
 # Install somewhere other than the current directory
-bunx @divings/sf-compound-plugin install sf-compound-engineering --to codex --output ~/code/other-project
+bunx salesforce-compound-engineering-plugin install sf-compound-engineering --to codex --output ~/code/other-project
 
 # Pin to a branch or tag instead of the default branch
 # (tags are listed at github.com/divingsbysangam/salesforce-compound-engineering-plugin/tags)
-bunx @divings/sf-compound-plugin install sf-compound-engineering --to cursor --ref v3.1.0-beta.3
+bunx salesforce-compound-engineering-plugin install sf-compound-engineering --to cursor --ref v3.1.0-beta.3
 
 # Reuse the cached copy without touching the network
-bunx @divings/sf-compound-plugin install sf-compound-engineering --to cursor --offline
+bunx salesforce-compound-engineering-plugin install sf-compound-engineering --to cursor --offline
 ```
 
 The downloaded plugin is cached under `$XDG_CACHE_HOME/sfce/plugins` (or
@@ -94,7 +96,7 @@ refresh fails, the cached copy is used rather than failing the install.
 ```bash
 git clone https://github.com/divingsbysangam/salesforce-compound-engineering-plugin
 cd ~/code/my-salesforce-project
-bunx @divings/sf-compound-plugin install ../salesforce-compound-engineering-plugin --to cursor
+bunx salesforce-compound-engineering-plugin install ../salesforce-compound-engineering-plugin --to cursor
 ```
 
 Contributors working inside a clone can use `sync`, which converts the plugin in place:
@@ -336,7 +338,7 @@ salesforce-compound-engineering-plugin/
 ├── PRINCIPLES.md             # Seven governing principles (source of truth)
 ├── CLAUDE.md                 # Project context and protected artifacts
 ├── cli/                      # Multi-tool installer CLI (Bun)
-│   ├── package.json          # @divings/sf-compound-plugin
+│   ├── package.json          # salesforce-compound-engineering-plugin
 │   ├── src/
 │   │   ├── index.ts          # CLI entry (citty)
 │   │   ├── parser/           # Plugin reader + markdown parser
