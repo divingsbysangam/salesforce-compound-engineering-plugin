@@ -1,0 +1,37 @@
+name: Release check
+
+# Does the registry serve what this repo advertises?
+#
+# Blocking on `main`, where "merged but never published" is a live defect users
+# hit. Advisory on pull requests, where a version bump legitimately precedes the
+# publish it describes — failing there would punish the correct workflow.
+#
+# The daily run catches drift that no commit causes: a version deprecated, a
+# `latest` tag moved, a package unpublished within npm's 72-hour window.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  npm-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+      - name: Check the registry against cli/package.json
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            node scripts/check-npm-release.mjs --warn-only
+          else
+            node scripts/check-npm-release.mjs
+          fi

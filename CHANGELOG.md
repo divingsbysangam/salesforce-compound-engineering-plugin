@@ -18,6 +18,7 @@
 ### Added
 
 * `BaseConverter.installRoot()` — each converter declares where it actually writes, and `install` reports any destination outside the requested `--output` directory. Windsurf at global scope, OpenClaw and Qwen install user-globally because that is the only place those tools load from.
+* `scripts/check-npm-release.mjs` and a **Release check** workflow — fails a push to `main` when the npm registry does not serve the name and version `cli/package.json` declares, or when the READMEs advertise a different package than the manifest. Advisory on pull requests; runs daily.
 * `docs/install-verification.md` — clean-environment verification log behind the README install matrix.
 * README install matrix with prerequisites, last-verified date, known limitations, and owner per path.
 
