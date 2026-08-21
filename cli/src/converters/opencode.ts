@@ -14,9 +14,12 @@ export class OpenCodeConverter extends BaseConverter {
   readonly target: TargetPlatform = "opencode";
   readonly label = "OpenCode";
 
+  installRoot(outputDir: string): string {
+    return outputDir !== "." ? join(outputDir, ".opencode") : join(homedir(), ".config", "opencode");
+  }
+
   convert(plugin: ClaudePlugin, outputDir: string): void {
-    // OpenCode installs globally to ~/.config/opencode
-    const ocDir = outputDir !== "." ? join(outputDir, ".opencode") : join(homedir(), ".config", "opencode");
+    const ocDir = this.installRoot(outputDir);
 
     this.convertAgents(plugin, ocDir);
     this.convertCommands(plugin, ocDir);

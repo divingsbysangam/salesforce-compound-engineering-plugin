@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { defineCommand, runMain } from "citty";
-import { join, resolve } from "path";
-import { homedir } from "os";
+import { isAbsolute, relative, resolve } from "path";
 import { readPlugin } from "./parser/plugin.js";
 import { lint as lintPlugin } from "./lint/index.js";
 import { detectInstalledTools, isValidTarget } from "./utils/detect.js";
@@ -52,7 +51,7 @@ function runConvert(opts: {
   console.log(`Found: ${plugin.name} v${plugin.version}`);
   console.log(`  ${plugin.commands.length} commands, ${plugin.agents.length} agents, ${plugin.skills.length} skills`);
   console.log(`  ${Object.keys(plugin.mcpServers).length} MCP servers`);
-  console.log(`Installing into: ${opts.outputDir}\n`);
+  console.log(`Requested install directory: ${opts.outputDir}\n`);
 
   const targets =
     opts.target === "all"
@@ -66,26 +65,34 @@ function runConvert(opts: {
     process.exit(0);
   }
 
-  // Windsurf at global scope is the one target that writes outside outputDir.
-  // Say so up front rather than letting `--output` quietly under-report where
-  // files landed — especially under `--to all`, which picks windsurf up by
-  // home-directory detection.
-  if (targets.includes("windsurf") && opts.scope === "global") {
-    console.log(
-      `Note: Windsurf is installed at global scope, into ${join(homedir(), ".codeium", "windsurf")} ` +
-        `rather than ${opts.outputDir}. Pass --scope workspace to keep it inside the project.`,
-    );
-  }
-
   for (const t of targets) {
     const converter = CONVERTERS[t];
     console.log(`\nConverting for ${converter.label}...`);
 
+    // Scope must be set before installRoot is read — it changes the answer.
     if (t === "windsurf") {
       (converter as WindsurfConverter).setScope(opts.scope as "global" | "workspace");
     }
+
+    // Several targets only load from a user-global directory and cannot honour
+    // --output. Say where the files actually go rather than letting the
+    // requested directory stand as an unearned promise.
+    const root = converter.installRoot(opts.outputDir, plugin);
+    if (!isInside(root, opts.outputDir)) {
+      console.log(
+        `  Note: ${converter.label} installs into ${root}, outside the requested ` +
+          `directory${t === "windsurf" ? " — pass --scope workspace to keep it in the project" : ""}.`,
+      );
+    }
+
     converter.convert(plugin, opts.outputDir);
   }
+}
+
+/** True when `child` is `parent` or sits beneath it. */
+function isInside(child: string, parent: string): boolean {
+  const rel = relative(parent, child);
+  return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
 }
 
 /** Flags shared by `install` and `sync`, so the two stay in step. */

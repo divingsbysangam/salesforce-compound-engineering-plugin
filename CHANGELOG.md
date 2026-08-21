@@ -14,6 +14,7 @@
 
 ### Added
 
+* `BaseConverter.installRoot()` — each converter declares where it actually writes, and `install` reports any destination outside the requested `--output` directory. Windsurf at global scope, OpenClaw and Qwen install user-globally because that is the only place those tools load from.
 * `docs/install-verification.md` — clean-environment verification log behind the README install matrix.
 * README install matrix with prerequisites, last-verified date, known limitations, and owner per path.
 

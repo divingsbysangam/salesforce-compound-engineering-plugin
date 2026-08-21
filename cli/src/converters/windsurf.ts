@@ -16,10 +16,14 @@ export class WindsurfConverter extends BaseConverter {
     this.scope = scope;
   }
 
-  convert(plugin: ClaudePlugin, outputDir: string): void {
-    const baseDir = this.scope === "global"
+  installRoot(outputDir: string): string {
+    return this.scope === "global"
       ? join(homedir(), ".codeium", "windsurf")
       : join(outputDir, ".windsurf");
+  }
+
+  convert(plugin: ClaudePlugin, outputDir: string): void {
+    const baseDir = this.installRoot(outputDir);
 
     this.convertAgents(plugin, baseDir);
     this.convertCommands(plugin, baseDir);

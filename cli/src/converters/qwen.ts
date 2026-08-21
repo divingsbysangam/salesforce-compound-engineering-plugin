@@ -10,8 +10,13 @@ export class QwenConverter extends BaseConverter {
   // Qwen Code always loads QWEN.md as hierarchical context.
   readonly instructionsFileName = "QWEN.md";
 
+  installRoot(_outputDir: string, plugin: ClaudePlugin): string {
+    // Qwen loads extensions only from its user-global directory.
+    return join(homedir(), ".qwen", "extensions", normalizeName(plugin.name));
+  }
+
   convert(plugin: ClaudePlugin, outputDir: string): void {
-    const qwenDir = join(homedir(), ".qwen", "extensions", normalizeName(plugin.name));
+    const qwenDir = this.installRoot(outputDir, plugin);
 
     this.convertAgents(plugin, qwenDir);
     this.convertCommands(plugin, qwenDir);

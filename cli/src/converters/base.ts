@@ -30,6 +30,19 @@ export abstract class BaseConverter {
   abstract convert(plugin: ClaudePlugin, outputDir: string): void;
 
   /**
+   * Where this converter actually writes, given the requested output directory.
+   *
+   * Most targets install into the project and can use the default. The targets
+   * that install into a user-global location (Windsurf at global scope,
+   * OpenClaw, Qwen) override this so callers can report the real destination
+   * rather than the requested one. Converters resolve their base directory
+   * through this method, so the reported path cannot drift from the written one.
+   */
+  installRoot(outputDir: string, _plugin: ClaudePlugin): string {
+    return outputDir;
+  }
+
+  /**
    * Emit the plugin's session-start primer for this platform.
    *
    * Called by each converter with its already-resolved output base dir. The

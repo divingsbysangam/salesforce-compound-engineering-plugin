@@ -8,9 +8,12 @@ export class PiConverter extends BaseConverter {
   readonly target: TargetPlatform = "pi";
   readonly label = "Pi";
 
+  installRoot(outputDir: string): string {
+    return outputDir !== "." ? join(outputDir, ".pi", "agent") : join(homedir(), ".pi", "agent");
+  }
+
   convert(plugin: ClaudePlugin, outputDir: string): void {
-    // Pi installs globally to ~/.pi/agent
-    const piDir = outputDir !== "." ? join(outputDir, ".pi", "agent") : join(homedir(), ".pi", "agent");
+    const piDir = this.installRoot(outputDir);
 
     this.convertAgents(plugin, piDir);
     this.convertCommands(plugin, piDir);

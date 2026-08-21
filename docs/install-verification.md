@@ -138,6 +138,24 @@ only ever shown `bunx`, which silently assumed Bun.
 
 ## Known caveats
 
+### Targets that cannot honour `--output`
+
+Three targets install into a user-global directory regardless of `--output`,
+because that is the only location the tool loads from:
+
+| Target | Destination |
+| --- | --- |
+| Windsurf (default `--scope global`) | `~/.codeium/windsurf` |
+| OpenClaw | `~/.openclaw/extensions/<plugin>` |
+| Qwen | `~/.qwen/extensions/<plugin>` |
+
+Each converter declares this through `installRoot()`, which is also what
+`convert()` resolves its base directory from, so the reported destination cannot
+drift from the written one. `install` prints a note whenever the destination
+falls outside the requested directory. Caught in review of PR #9 — the first
+version of this fix warned only about Windsurf and let OpenClaw and Qwen report
+a project directory they never wrote to.
+
 ### Windsurf scope
 
 `--scope global` (the default) makes Windsurf the one target that ignores
