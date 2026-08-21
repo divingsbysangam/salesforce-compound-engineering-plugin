@@ -1,0 +1,12 @@
+# Pinned action SHAs are only safe if something keeps them current — an
+# unmaintained pin is a permanent freeze at whatever was released that day,
+# security fixes included. Dependabot proposes the bump; the SHA keeps the
+# change reviewable.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
