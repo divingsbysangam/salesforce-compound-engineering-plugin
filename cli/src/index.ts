@@ -204,7 +204,8 @@ const lint = defineCommand({
 const main = defineCommand({
   meta: {
     name: "sf-compound-plugin",
-    version: "1.0.0",
+    // Kept in step with package.json by tests/version.test.ts.
+    version: "1.0.1",
     description: "Multi-tool installer for SF Compound Engineering Plugin",
   },
   subCommands: {
