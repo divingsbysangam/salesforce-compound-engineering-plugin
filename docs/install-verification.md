@@ -159,14 +159,24 @@ Checks specific to this round:
 - **The 1.0.1 destination fix is in the published binary**, not just the repository. `--to openclaw` prints the real `~/.openclaw/extensions/…` destination and leaves the requested project empty, which is the corrected behaviour rather than the 1.0.0 defect.
 - **The deprecation fires.** Installing the old name emits `npm warn deprecated @divings/sf-compound-plugin@1.0.1: renamed to salesforce-compound-engineering-plugin`.
 
-### The recurring gap this round closes
+### The recurring gap, and what now closes it
 
 Three times in this issue a merge did not reach users: the package was never
 published, the destination fix was published-before-merge, and the rename landed
 in the repository while npm still 404'd the new name. Merging changes what the
-docs say; publishing changes what the docs describe. Nothing enforces the two
-happening together — worth a release check in CI that compares `cli/package.json`
-name and version against `npm view` on pushes to `main`.
+docs say; publishing changes what the docs describe, and nothing enforced the two
+happening together.
+
+`scripts/check-npm-release.mjs` now does, via the **Release check** workflow. It
+fails when the registry does not serve the name and version `cli/package.json`
+declares — missing, not tagged `latest`, or deprecated — or when the install
+commands in the READMEs name a different package than the manifest. It blocks on
+pushes to `main`, stays advisory on pull requests where a version bump correctly
+precedes its publish, and runs daily to catch drift no commit causes. Run it
+locally with `node scripts/check-npm-release.mjs`.
+
+An unreachable registry is reported as a failure after three retries rather than
+a quiet pass: a check that cannot run has not passed.
 
 ## Known caveats
 
