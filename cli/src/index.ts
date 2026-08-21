@@ -5,6 +5,7 @@ import { readPlugin } from "./parser/plugin.js";
 import { lint as lintPlugin } from "./lint/index.js";
 import { detectInstalledTools, isValidTarget } from "./utils/detect.js";
 import { resolvePluginSource } from "./utils/source.js";
+import { CLI_VERSION } from "./version.js";
 import { CopilotConverter } from "./converters/copilot.js";
 import { WindsurfConverter } from "./converters/windsurf.js";
 import { GeminiConverter } from "./converters/gemini.js";
@@ -204,7 +205,7 @@ const lint = defineCommand({
 const main = defineCommand({
   meta: {
     name: "sf-compound-plugin",
-    version: "1.0.0",
+    version: CLI_VERSION,
     description: "Multi-tool installer for SF Compound Engineering Plugin",
   },
   subCommands: {

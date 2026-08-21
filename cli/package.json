@@ -1,6 +1,6 @@
 {
   "name": "@divings/sf-compound-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Multi-tool installer for SF Compound Engineering Plugin — converts Claude Code plugins to Copilot, Windsurf, Gemini, Kiro, OpenCode, Codex",
   "type": "module",
   "bin": {

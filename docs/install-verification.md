@@ -173,6 +173,7 @@ install until `install` is re-run. Consider a `--copy` flag if this bites.
 
 ## Still outstanding
 
+- **Republish after every CLI change.** `1.0.0` was published mid-review and did not contain the destination-reporting fix, so for a window the registry served a binary that misreported where OpenClaw and Qwen install. Verify with `npm view @divings/sf-compound-plugin version` against `cli/package.json` before trusting a matrix row.
 - **Five converters are unverified in a clean environment**: OpenCode, Kiro, Pi, OpenClaw and Qwen. They have unit tests but no install run. Windsurf, Gemini and Droid were exercised through `--to all` in Round 1.
 - **Claude Code has had no fresh-user install run.** Manifests are valid and reachable; the install itself is unconfirmed, because `/plugin` cannot be driven from a shell.
 - **Tool-load is unconfirmed everywhere.** Every verified row proves files land in the right place, not that the tool reads them.

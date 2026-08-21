@@ -8,6 +8,8 @@
 
 ### Fixed
 
+* **CLI `1.0.1`.** `@divings/sf-compound-plugin@1.0.0` was published before the destination-reporting fix landed, so the released binary still warned only about Windsurf and let OpenClaw and Qwen report a project directory they never wrote to. 1.0.1 ships `installRoot()`. A test now pins the version literal in `src/index.ts` to `package.json` so a published binary cannot report a version it is not.
+
 * **Installation paths (DIV-58).** `install` now writes into the directory you run it from instead of back into the plugin, via a new `--output <dir>` flag. Passing a plugin *name* downloads the plugin from GitHub into `$XDG_CACHE_HOME/sfce/plugins` rather than resolving against the working directory, so the advertised one-line install works from any project. Tool auto-detection (`--to all`) now inspects the output directory.
 * **npm publish readiness.** `prepublishOnly` build, `publishConfig.access: public`, `engines`, repository `directory`, and a package README added to `cli/package.json` so the first publish succeeds.
 * **Package renamed to `@divings/sf-compound-plugin`.** The previously advertised `@divingsbysangam` scope does not exist on npm — scopes must match an npm username or an org you own — so publishing it returned `404 Scope not found`. The package now ships under the `@divings` org.
