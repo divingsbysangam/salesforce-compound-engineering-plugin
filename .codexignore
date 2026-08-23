@@ -1,0 +1,11 @@
+node_modules/
+.git/
+.env
+.env.*
+*.log
+.sfce/
+cli/node_modules/
+cli/dist/
+coverage/
+__pycache__/
+.DS_Store

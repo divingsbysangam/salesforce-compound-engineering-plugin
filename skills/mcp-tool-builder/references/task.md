@@ -1,8 +1,8 @@
-# Your Task (instructions here — reference "data above")
+# Your Task
 
 Read with `mcp-tool-builder/SKILL.md`. Procedure lives here.
 
-## Your Task (instructions here — reference "data above")
+## Your Task
 Using the data above, create a resolution briefing...
 ```
 
