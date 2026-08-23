@@ -63,8 +63,7 @@ req.setMethod('GET');
 ```apex
 public class SecureCredentialService {
     
-    // NEVER do this:
-    // private static final String API_KEY = 'hardcoded-key'; // BAD!
+    // NEVER store credentials as string literals in Apex.
     
     // Use Custom Metadata or Protected Custom Settings
     public static String getApiKey() {

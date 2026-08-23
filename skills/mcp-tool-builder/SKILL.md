@@ -31,7 +31,7 @@ Procedure lives in sibling files, not only in this orchestrator:
 - **Similar Resolved Cases** — read `references/similar-resolved-cases.md` before acting on this section.
 - **Confidence: High** — read `references/confidence-high.md` before acting on this section.
 - **Retrieved Data (merge fields here)** — read `references/retrieved-data-merge-fields-here.md` before acting on this section.
-- **Your Task (instructions here — reference "data above")** — read `references/your-task-instructions-here-reference-data-above.md` before acting on this section.
+- **Your Task** — read `references/task.md` before acting on this section.
 - **Custom Server Registration** — read `references/custom-server-registration.md` before acting on this section.
 - **Testing MCP Tools** — read `references/testing-mcp-tools.md` before acting on this section.
 - **Tool Description Best Practices** — read `references/tool-description-best-practices.md` before acting on this section.

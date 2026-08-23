@@ -25,7 +25,7 @@ function buildResolvedContext() {
 // surface: workflows here define their own degrade paths (sf-brainstorm's
 // verifier falls back to orchestrator-only filtering), and this text is
 // positioned to outrank skill prose — a stricter rule would make those paths
-// retry forever or drop required work instead of degrading as intended.
+// loop without a termination bound or drop required work instead of degrading as intended.
 const SUBAGENT_AUTHORIZATION = [
   'SUBAGENT_AUTHORIZATION: If your harness gates subagent or agent-tool use on an explicit user request,',
   "the user's invocation of this skill is that request for the skill's shipped subagents;",

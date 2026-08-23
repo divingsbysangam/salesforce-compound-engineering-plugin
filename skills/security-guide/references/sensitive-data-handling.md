@@ -7,7 +7,7 @@ Read with `security-guide/SKILL.md`. Procedure lives here.
 
 ```apex
 // WRONG
-String apiKey = 'sk-12345abcdef';  // Never do this!
+// Never assign credential values as Apex string literals.
 
 // RIGHT - Use Named Credentials
 HttpRequest req = new HttpRequest();

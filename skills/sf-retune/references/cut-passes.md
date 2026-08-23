@@ -52,7 +52,8 @@ Some corpora hold byte-identical copies of a file inside several units, delibera
 Discover them before dispatch. Shape (POSIX shell; hash every candidate file, key by basename, report pairs appearing in more than one path):
 
 ```
-find . -type f \( -name '*.md' -o -name '*.py' -o -name '*.sh' \) -exec shasum {} + \
+find . -type f \( -name '*.md' -o -name '*.py' -o -name '*.sh' \) -print0 \
+  | xargs -0 shasum \
   | awk '{ n = $2; sub(/.*\//, "", n); print $1, n }' \
   | sort | uniq -c | awk '$1 > 1'
 ```
