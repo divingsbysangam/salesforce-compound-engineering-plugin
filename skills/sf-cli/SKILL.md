@@ -1,12 +1,35 @@
 ---
 name: sf-cli
-description: "Reference for common Salesforce CLI (sf) commands: deploy, retrieve, test, org auth, and metadata operations. Use when looking up sf CLI syntax during Salesforce development workflows."
+description: "Reference for common Salesforce CLI (sf) commands: deploy, retrieve, test, org auth, and metadata operations. Use when looking up sf CLI syntax during Salesforce development workflows, running a dry-run or deploy, retrieving source, or querying org data from the CLI. Trigger phrases: 'deploy this', 'dry-run deploy', 'retrieve from org', 'sf project deploy', 'run tests with sf', 'what's the retrieve command'. Do NOT trigger for generating Apex, Flow, objects, permission sets, or FlexiPages (use the matching generate skill first), plugin onboarding (`sf-setup`), or Agentforce authoring (`agentforce-develop`)."
 argument-hint: "[optional command topic: deploy|retrieve|test|org]"
 ---
 
 # Salesforce CLI Skill
 
-Reference for common `sf` CLI commands used in Salesforce development workflows.
+Reference for common `sf` CLI commands used in Salesforce development workflows. This skill does not generate metadata — it runs CLI against metadata that already exists.
+
+## Cross-skill integration
+
+| Need | Delegate to | Reason |
+| --- | --- | --- |
+| New Apex / tests | `apex-generate` | Author before deploy |
+| New Flow XML | `flow-generate` | Pipeline before deploy |
+| New object / field / tab / app | `metadata-generate` | Schema before deploy |
+| New FlexiPage / LEX app | `lightning-page-generate` | Page orchestration |
+| New permission set | `permission-set-generate` | Least privilege |
+| CLI / project / MCP missing | `sf-setup` | Prerequisites |
+| Agentforce publish | `agentforce-develop` | Agent CLI, not `sf project deploy` |
+
+## Fail-closed deploy
+
+Every deploy-shaped request follows this contract. Do not report a deploy as successful because a command was skipped.
+
+1. **Preferred — validate:** `sf project deploy start --dry-run --json` with an explicit `--source-dir`, `--metadata`, or `--manifest`. Paste the JSON (or a tight error extract) on the Compile line.
+2. **Fallback** if dry-run is unrecognized: `sf project deploy validate --json` with the same scope.
+3. If both fail to run (CLI missing, not logged in, timeout, empty/uncertain output): `compile=unavailable: <reason>`. That is not a pass.
+4. **Production:** do not run a non-dry-run deploy to a production org without explicit user confirmation of the org alias. Prefer validate-then-quick-deploy when the org supports it.
+5. **Destructive / delete:** confirm with the user before `sf project delete` or a destructive manifest.
+6. Always pass `--json` when parsing results. Always name `--target-org` when the default org is not the intended target.
 
 ## Deploy
 

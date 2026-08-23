@@ -1,6 +1,6 @@
 ---
 name: apex-generate
-description: "Generate Apex classes and tests with bulkification, CRUD/FLS, and the project's trigger framework wired in. Covers services, selectors, domain classes, batch / queueable / schedulable, invocable methods, REST resources, and the matching test classes with TestDataFactory + 251+ record bulk tests. Trigger phrases: 'create an Apex class', 'generate a service class', 'write a queueable for', 'scaffold a batch class', 'build an @InvocableMethod', 'add a REST resource', 'generate Apex tests for', 'cover this class with tests'. Pairs with `apex-patterns` (reference) and `test-factory` (TDF reference). Do NOT trigger for triggers themselves — use `apex-trigger-refactor` for trigger work."
+description: "Generate Apex classes and tests with bulkification, CRUD/FLS, and the project's trigger framework wired in. Covers services, selectors, domain classes, batch / queueable / schedulable, invocable methods, REST resources, and the matching test classes with TestDataFactory + 251+ record bulk tests. Trigger phrases: 'create an Apex class', 'generate a service class', 'write a queueable for', 'scaffold a batch class', 'build an @InvocableMethod', 'add a REST resource', 'generate Apex tests for', 'cover this class with tests'. Do NOT trigger for trigger bodies or handler extraction (use `apex-trigger-refactor`), Flow XML (`flow-generate`), LWC (`lwc-patterns` / `sf-work`), permission sets (`permission-set-generate`), validation rules (`validation-rule-generate`), or deploy/retrieve syntax lookup (`sf-cli`). Pair with `apex-patterns` and `test-factory` as reference, not as the generator."
 argument-hint: "[class type, target object, business intent, or 'test for <ClassName>']"
 ---
 
@@ -30,6 +30,19 @@ Generate production-grade Apex (class + .cls-meta.xml) AND its test class (Test.
 and DML out of loops. Enforce CRUD/FLS via Schema.* checks or USER_MODE. Declare an explicit
 sharing keyword on every class. Test with 251+ records to cross the 200-trigger boundary.
 Use TestDataFactory — never inline record creation in @TestSetup. Use Assert.* class only —
-never legacy System.assertEquals. After generation, run sf code-analyzer and sf apex run
-test; remediate sev0/sev1/sev2 violations and capture pass/fail + coverage in the report.
+never legacy System.assertEquals. After generation, fail-closed validate: compile dry-run,
+then sf code-analyzer, then sf apex run test. Remediate sev0/sev1/sev2. Paste actual tool
+output on the Compile / Analyzer / Testing report lines, or `<check>=unavailable: <reason>`
+after attempting the fallback. Never treat a skipped or empty tool result as a pass.
 ```
+
+## Cross-skill integration
+
+| Need | Delegate to | Reason |
+| --- | --- | --- |
+| Trigger body / handler extraction | `apex-trigger-refactor` | This skill does not own `.trigger` files |
+| Pattern lookup (selector/service/domain) | `apex-patterns` | Reference, not generation |
+| TestDataFactory shape | `test-factory` | Reference for TDF helpers |
+| Flow instead of Apex | `flow-generate` | Declarative automation |
+| Deploy / retrieve / org CLI | `sf-cli` | Syntax and fail-closed deploy |
+| Capture a non-obvious pattern | `sf-compound` | Institutional memory |

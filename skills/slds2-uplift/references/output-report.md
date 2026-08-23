@@ -1,8 +1,9 @@
-# Output report
+# <span data-proof="authored" data-by="ai:claude">Output report</span>
 
-Read with `slds2-uplift/SKILL.md`. Procedure lives here.
+<span data-proof="authored" data-by="ai:claude">Read with</span> <span data-proof="authored" data-by="ai:claude">`slds2-uplift/SKILL.md`. Procedure lives here.</span>
 
 ## <span data-proof="authored" data-by="ai:claude">Output report</span>
+
 ```
 SLDS 2 uplift: <component or directory>
 
@@ -17,16 +18,10 @@ Manual fixes by rule:
 
 Skipped (layout values): {count}
 
-Linter final:      0 errors
-
-Files changed:
-- .css files: {list}
-- .html / .cmp files: {list}
-
-Tests:             {pass=N, fail=0}
+Linter final:      0 errors  or "unavailable: <reason>"
+Tests:             {pass=N, fail=0} or "unavailable: <reason>"
 ```
 
 <span data-proof="authored" data-by="ai:claude">Zero errors is the gate (Principle 1). If errors remain after fixes, do not declare done.</span>
 
 ***
-
