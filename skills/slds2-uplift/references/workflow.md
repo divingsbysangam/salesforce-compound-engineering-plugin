@@ -3,6 +3,7 @@
 Read with `slds2-uplift/SKILL.md`. Procedure lives here.
 
 ## <span data-proof="authored" data-by="ai:claude">Workflow</span>
+
 ### <span data-proof="authored" data-by="ai:claude">Step 0: Research (Principle 7)</span>
 
 * <span data-proof="authored" data-by="ai:claude">Task</span> <span data-proof="authored" data-by="ai:claude">`sf-learnings-researcher("SLDS 2 uplift")`</span> <span data-proof="authored" data-by="ai:claude">— has someone migrated similar components?</span>
@@ -111,5 +112,15 @@ npx @salesforce-ux/slds-linter@latest lint .
 npm test --prefix force-app/main/default/lwc
 ```
 
-***
+### Fail-closed contract
 
+Each named check requires a tool invocation. Do not report the check as passing because the tool was skipped, timed out, returned empty/uncertain output, or is not installed. Attempt preferred, then fallback, then record `<check>=unavailable: <reason>`. An empty success payload is not a pass.
+
+| Check  | Preferred                                      | Fallback                                              | Report line                                          |
+| ------ | ---------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------- |
+| Linter | `npx @salesforce-ux/slds-linter@latest lint .` | `npx @salesforce-ux/slds-linter lint <component-dir>` | `Linter: 0 errors` or `linter=unavailable: <reason>` |
+| Tests  | `npm test --prefix force-app/main/default/lwc` | `npm test` at repo root if LWC prefix missing         | `Tests: ...` or `tests=unavailable: <reason>`        |
+
+Zero linter errors is the gate. Missing Jest is `tests=unavailable`, not a visual pass.
+
+***

@@ -1,8 +1,9 @@
-# Step 6: Report
+# <span data-proof="authored" data-by="ai:claude">Step 6: Report</span>
 
-Read with `apex-trigger-refactor/SKILL.md`. Procedure lives here.
+<span data-proof="authored" data-by="ai:claude">Read with</span> <span data-proof="authored" data-by="ai:claude">`apex-trigger-refactor/SKILL.md`. Procedure lives here.</span>
 
 ## <span data-proof="authored" data-by="ai:claude">Step 6: Report</span>
+
 ```
 Refactor: <TriggerName>
 
@@ -27,12 +28,12 @@ Files changed:
 - classes/<HandlerClassName>.cls-meta.xml (new)
 - classes/<HandlerClassName>Test.cls (new or extended)
 
-Analyzer: {sev0=0, sev1=0, sev2=0}
-Testing:  {pass=N, fail=0, coverage=NN%}
+Compile:  {dry-run deploy JSON summary} or "unavailable: <reason>"
+Analyzer: {sev0=0, sev1=0, sev2=0} or "unavailable: <reason>"
+Testing:  {pass=N, fail=0, coverage=NN%} or "unavailable: <reason>"
 Review:   apex-trigger-architect — {findings count}
 
 Before/After diff: {one paragraph summary of the most important behavioral guarantees preserved}
 ```
 
 ***
-

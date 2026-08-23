@@ -1,6 +1,6 @@
 ---
 name: sf-setup
-description: "Set up the sf-compound-engineering-plugin environment for a new Salesforce developer. Validates Salesforce CLI, sfdx-project.json, MCP servers, and Claude Code plugin install. Use when onboarding to the plugin or troubleshooting install. Trigger phrases: 'set up the plugin', 'check plugin prerequisites', 'verify my Salesforce environment'."
+description: "Set up the sf-compound-engineering-plugin environment for a new Salesforce developer. Validates Salesforce CLI, sfdx-project.json, MCP servers, and Claude Code plugin install. Use when onboarding to the plugin or troubleshooting install. Trigger phrases: 'set up the plugin', 'check plugin prerequisites', 'verify my Salesforce environment'. Do NOT trigger for deploy/retrieve (`sf-cli`), generating Apex/Flow/metadata (matching generate skills), or Agentforce authoring (`agentforce-develop`)."
 argument-hint: "[no arguments]"
 ---
 
@@ -26,13 +26,27 @@ When asking the user a question, use the platform's blocking question tool (`Ask
 
 ## Procedure
 
-This skill follows the standard sf-compound-engineering execution discipline:
+1. Read the `<feature_description>` block and any referenced files.
+2. Run the fail-closed checks below. Do not report a check as passing because it was skipped.
+3. If a command errors, times out, or is missing, record `<check>=unavailable: <reason>` and tell the user how to install or fix it.
+4. Ask with the blocking question tool when a choice affects scope or risk.
 
-1. **Understand the input** — read the `<feature_description>` block above and any referenced files, plans, or issues.
-2. **Plan a small set of phases** — break the work into 2-5 ordered steps that an implementer (or another skill) can verify.
-3. **Apply the Salesforce Angle notes above** — these encode the platform-specific considerations (governor limits, sharing context, deploy ordering, FLS, metadata semantics) that distinguish this skill from generic counterparts.
-4. **Use Salesforce-aware contexts and commands** — file paths under `force-app/main/default/...`, test commands like `sf apex run test`, deploy commands like `sf project deploy validate` and `sf project deploy start`, query the org with `sf data query` when state inspection is needed.
-5. **Surface decisions back to the user** — when a step requires a choice that materially affects scope or risk, ask using the platform's blocking question tool rather than guessing.
+## Fail-closed checks
+
+| Check | Preferred | Fallback | Report |
+| --- | --- | --- | --- |
+| CLI | `sf --version` | `which sf` | version string or `cli=unavailable` |
+| Project | read `sfdx-project.json` walking ancestors | none | path or `project=unavailable: no sfdx-project.json` |
+| MCP | read `.mcp.json` | none | servers listed or `mcp=unavailable` |
+| Plugin | `claude /plugin list` | none | plugin present or `plugin=unavailable` |
+
+## Cross-skill integration
+
+| Need | Delegate to | Reason |
+| --- | --- | --- |
+| Deploy / retrieve / test / org CLI | `sf-cli` | This skill only verifies install |
+| Generate Apex / Flow / metadata | matching `*-generate` skill | Authoring is not setup |
+| Agentforce authoring | `agentforce-develop` | Different toolchain |
 
 ## Related
 

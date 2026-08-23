@@ -3,6 +3,7 @@
 Read with `permission-set-generate/SKILL.md`. Procedure lives here.
 
 ## <span data-proof="authored" data-by="ai:claude">Output report</span>
+
 ```
 Generated:
 - force-app/main/default/permissionsets/<Name>.permissionset-meta.xml
@@ -25,11 +26,11 @@ Broad-grant flags (audit these explicitly):
 - ViewAllData:        {true|false}
 - ModifyAllData:      {true|false}
 
-Analyzer:    {sev0=0, sev1=0, sev2=0}
+Analyzer:    {sev0=0, sev1=0, sev2=0} or "unavailable: <reason>"
+Compile:     {dry-run deploy JSON summary} or "unavailable: <reason>"
 Review:      metadata-consistency-checker — {findings count}
 
 Cross-references verified: every object, field, tab, app, class, page exists.
 ```
 
 ***
-

@@ -1,14 +1,16 @@
-# Phase 4: Report
+# <span data-proof="authored" data-by="ai:claude">Phase 4: Report</span>
 
-Read with `apex-generate/SKILL.md`. Procedure lives here.
+<span data-proof="authored" data-by="ai:claude">Read with</span> <span data-proof="authored" data-by="ai:claude">`apex-generate/SKILL.md`. Procedure lives here.</span>
 
 ## <span data-proof="authored" data-by="ai:claude">Phase 4: Report</span>
+
 ```
 Generated:
 - {ClassName}.cls + .cls-meta.xml
 - {ClassName}Test.cls + .cls-meta.xml
 - TestDataFactory.cls + .cls-meta.xml      (if not previously present)
 
+Compile:     {dry-run deploy JSON summary}       or "unavailable: <reason>"
 Analyzer:    {sev0=0, sev1=0, sev2=0, sev3=N}    or "unavailable: <reason>"
 Testing:     {pass=N, fail=0, coverage=NN%}      or "unavailable: <reason>"
 Patterns:    {layer=Service|Selector|Domain|Async|Invocable|REST}
@@ -20,4 +22,3 @@ CRUD/FLS:    {Schema.* checks | USER_MODE | both}
 <span data-proof="authored" data-by="ai:claude">A report missing analyzer or testing lines is incomplete. Always invoke the tools before claiming</span> <span data-proof="authored" data-by="ai:claude">`unavailable`.</span>
 
 ***
-
