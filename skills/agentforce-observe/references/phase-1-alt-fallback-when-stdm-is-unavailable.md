@@ -42,13 +42,37 @@ sf agent preview end --json --session-id "$SESSION_ID" --authoring-bundle <Bundl
 
 ### <span data-proof="authored" data-by="ai:claude">1-ALT.4 Local trace diagnosis</span>
 
-| <br />                                                                       | <br />                                                                 | <span data-proof="authored" data-by="ai:claude">Issue type</span>                          | <span data-proof="authored" data-by="ai:claude">Trace command</span>                                    |
-| :--------------------------------------------------------------------------- | :--------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| <span data-proof="authored" data-by="ai:claude">Subagent misroute</span>     | <span data-proof="authored" data-by="ai:claude">`jq -r '.plan[]</span> | <span data-proof="authored" data-by="ai:claude">select(.type=="NodeEntryStateStep")</span> | <span data-proof="authored" data-by="ai:claude">.data.agent_name' "$TRACE"`</span></span>               |
-| <span data-proof="authored" data-by="ai:claude">Action not called</span>     | <span data-proof="authored" data-by="ai:claude">`jq -r '.plan[]</span> | <span data-proof="authored" data-by="ai:claude">select(.type=="EnabledToolsStep")</span>   | <span data-proof="authored" data-by="ai:claude">.data.enabled_tools[]' "$TRACE"`</span></span>          |
-| <span data-proof="authored" data-by="ai:claude">LOW adherence</span>         | <span data-proof="authored" data-by="ai:claude">`jq -r '.plan[]</span> | <span data-proof="authored" data-by="ai:claude">select(.type=="ReasoningStep")</span>      | <span data-proof="authored" data-by="ai:claude">{category, reason}' "$TRACE"`</span></span>             |
-| <span data-proof="authored" data-by="ai:claude">Variable capture fail</span> | <span data-proof="authored" data-by="ai:claude">`jq -r '.plan[]</span> | <span data-proof="authored" data-by="ai:claude">select(.type=="VariableUpdateStep")</span> | <span data-proof="authored" data-by="ai:claude">.data.variable_updates[]' "$TRACE"`</span></span>       |
-| <span data-proof="authored" data-by="ai:claude">Vague instructions</span>    | <span data-proof="authored" data-by="ai:claude">`jq -r '.plan[]</span> | <span data-proof="authored" data-by="ai:claude">select(.type=="LLMStep")</span>            | <span data-proof="authored" data-by="ai:claude">.data.messages_sent[0].content' "$TRACE"`</span></span> |
+Do not put these `jq` pipelines in a Markdown table — `|` is a column delimiter and splits the command.
+
+**Subagent misroute**
+
+```bash
+jq -r '.plan[] | select(.type=="NodeEntryStateStep") | .data.agent_name' "$TRACE"
+```
+
+**Action not called**
+
+```bash
+jq -r '.plan[] | select(.type=="EnabledToolsStep") | .data.enabled_tools[]' "$TRACE"
+```
+
+**LOW adherence**
+
+```bash
+jq -r '.plan[] | select(.type=="ReasoningStep") | {category, reason}' "$TRACE"
+```
+
+**Variable capture fail**
+
+```bash
+jq -r '.plan[] | select(.type=="VariableUpdateStep") | .data.variable_updates[]' "$TRACE"
+```
+
+**Vague instructions**
+
+```bash
+jq -r '.plan[] | select(.type=="LLMStep") | .data.messages_sent[0].content' "$TRACE"
+```
 
 > **<span data-proof="authored" data-by="ai:claude">DefaultTopic trace quirk.</span>** <span data-proof="authored" data-by="ai:claude">With</span> <span data-proof="authored" data-by="ai:claude">`--authoring-bundle`, the root</span> <span data-proof="authored" data-by="ai:claude">`.topic`</span> <span data-proof="authored" data-by="ai:claude">field often shows</span> <span data-proof="authored" data-by="ai:claude">`"DefaultTopic"`</span> <span data-proof="authored" data-by="ai:claude">even when routing works. Always use</span> <span data-proof="authored" data-by="ai:claude">`NodeEntryStateStep.data.agent_name`</span> <span data-proof="authored" data-by="ai:claude">for the real subagent chain.</span>
 

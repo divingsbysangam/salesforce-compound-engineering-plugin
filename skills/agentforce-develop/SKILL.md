@@ -49,9 +49,9 @@ Build, modify, or deploy an Agentforce agent written in Agent Script. Always go 
 Agent Spec gate before writing code — the spec is the artifact (Principle 4). For backing
 logic, scan sfdx-project.json package directories for existing @InvocableMethod classes,
 AutoLaunchedFlows, and PromptTemplates before creating stubs (Principle 7). Validate compilation
-with sf agent validate, preview behavior with sf agent preview --use-live-actions, then
+with `sf agent validate authoring-bundle`, preview behavior with sf agent preview --use-live-actions, then
 publish + activate. Never proceed past spec creation without explicit user approval.
-Always pass --json on every sf CLI command. Fail-closed: `sf agent validate` must run
+Always pass --json on every sf CLI command. Fail-closed: `sf agent validate authoring-bundle` must run
 before backing logic or publish. Paste actual output, or `validate=unavailable: <reason>`
 after the fallback. Empty or skipped validation is not a pass.
 ```
