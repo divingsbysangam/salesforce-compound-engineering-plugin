@@ -144,10 +144,14 @@ is_benign_tool() {
 # Emit one "<tool-name>\t<skill-identity>" row per tool_use event, in order.
 # Assertion A needs the skill identity of the FIRST Skill event, not merely the
 # presence of a string somewhere in the file, so name and skill must stay paired.
+# Returns non-zero when the stream could not be parsed in full. A partial parse
+# is not a usable result: a fixture holding a valid Skill event followed by
+# truncated JSON would otherwise yield the valid prefix and satisfy both
+# assertions, which is the documented-failure case passing.
 extract_tool_rows() {
   local stream_file="$1"
   if have jq; then
-    jq -r "$JQ_TOOL_USE | (.name // \"\") + \"\\t\" + (.input.skill // \"\")" "$stream_file" 2>/dev/null
+    jq -r "$JQ_TOOL_USE | (.name // \"\") + \"\\t\" + (.input.skill // \"\")" "$stream_file" 2>/dev/null || return 1
   elif have python3; then
     python3 -I -c '
 import json, sys
@@ -158,7 +162,9 @@ for raw in open(sys.argv[1], encoding="utf-8", errors="replace"):
     try:
         obj = json.loads(raw)
     except ValueError:
-        continue
+        # Do not skip. A malformed line means the recording is incomplete, and
+        # continuing would assert against a prefix of the intended stream.
+        sys.exit(1)
     msg = obj.get("message")
     if not isinstance(msg, dict):
         msg = obj
@@ -249,17 +255,27 @@ for raw in sys.stdin:
 # Args: <expected-skill> <stream-file>. Returns EXIT_PASS / EXIT_FAIL.
 assert_case() {
   local expected="$1" stream_file="$2"
-  local rows tool skill i first_skill=""
+  local rows rows_blob tool skill i first_skill=""
+
+  # Command substitution rather than process substitution: the parser's exit
+  # status is the signal that the stream was readable end to end, and a
+  # `while read < <(...)` loop discards it.
+  if ! rows_blob="$(extract_tool_rows "$stream_file")"; then
+    fail "could not parse $stream_file end to end — truncated, malformed, or no structured parser available"
+    return "$EXIT_FAIL"
+  fi
 
   # Ordered "<tool>\t<skill>" rows. (Portable read loop instead of `mapfile` so
   # the harness runs on macOS's default bash 3.2, not only bash 4+.)
   rows=()
   while IFS= read -r _row; do
-    rows+=("$_row")
-  done < <(extract_tool_rows "$stream_file")
+    [[ -n "$_row" ]] && rows+=("$_row")
+  done <<EOF
+$rows_blob
+EOF
 
   if [[ "${#rows[@]}" -eq 0 ]]; then
-    fail "no tool_use events could be read from $stream_file (unparseable, or no structured parser available)"
+    fail "no tool_use events found in $stream_file"
     return "$EXIT_FAIL"
   fi
 
@@ -344,13 +360,8 @@ replay_case() {
     fail "$case_id: fixture is empty: $fixture"
     return "$EXIT_FAIL"
   fi
-  # A fixture with no recoverable tool_use event proves nothing; treat a
-  # truncated or malformed recording as a failure rather than a vacuous pass.
-  if [[ -z "$(extract_tool_names "$fixture")" ]]; then
-    fail "$case_id: fixture has no readable tool_use events (truncated or malformed): $fixture"
-    return "$EXIT_FAIL"
-  fi
-
+  # Parse failure and empty-stream handling live in assert_case, which owns the
+  # single parse of the fixture.
   assert_case "$expected" "$fixture"
 }
 
@@ -402,9 +413,18 @@ record_case() {
     rm -f "$raw_file"
     rm -rf "$work_root"
   }
-  # RETURN alone leaks everything on Ctrl-C or a cancelled CI job, which is
-  # exactly when a half-finished recording is most likely.
-  trap _record_cleanup RETURN INT TERM
+  # Cleaning up on a signal is not enough on its own: a handler that returns
+  # lets the shell resume, so an interrupted recording is reported as an
+  # ordinary case failure and the battery walks into the next multi-minute
+  # case. Clear the trap and re-raise so the run dies with the signal.
+  _record_interrupt() {
+    _record_cleanup
+    trap - INT TERM
+    log "    interrupted — stopping the run"
+    kill -s INT $$ 2>/dev/null || exit 130
+  }
+  trap _record_cleanup RETURN
+  trap _record_interrupt INT TERM
 
   if ! git clone --quiet --no-hardlinks --local "$REPO_ROOT" "$work_dir" 2>/dev/null; then
     fail "$case_id: could not create a disposable clone; refusing to record in the live checkout"
