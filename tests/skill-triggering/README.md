@@ -12,7 +12,7 @@ The harness is intentionally usable standalone.
 
 | Mode | How to run | Needs the CLI? | What it is for |
 | --- | --- | --- | --- |
-| **replay** (default) | `run-test.sh` | no | Deterministic offline check against recorded fixtures. This is the mode CI runs. |
+| **replay** (default) | `run-test.sh` | no | Deterministic offline check against recorded fixtures. Intended as the CI mode; the CI step is switched off until fixtures are committed (U13). |
 | **live** | `run-test.sh --live` | yes | Re-records fixtures against the real CLI, then asserts against what it recorded. |
 
 Replay reads a recorded tool-use stream from `fixtures/<case>.jsonl` and runs the
@@ -29,8 +29,10 @@ fixtures is a deliberate act that produces a reviewable diff.
 For each case (`<expected-skill>` + `<prompt-file>`), the harness checks two
 assertions against the stream — identical in both modes:
 
-* **A — triggered:** a `Skill` tool-use event for the expected skill appears in the
- stream (the skill actually got invoked).
+* **A — triggered:** the **first** `Skill` tool-use event in the stream carries the
+ expected skill identity. First, not anywhere: a stream that routes somewhere else
+ and reaches the expected skill afterwards is a routing failure, and an earlier
+ whole-file match passed exactly that.
 
 * **B — no premature action:** no non-`Skill`, non-todo `tool_use` event appears
  **before** the first `Skill` tool-use event. `TodoWrite`/todo bookkeeping is
@@ -67,10 +69,13 @@ session's memory directory. Budget for that before re-recording.
 
 Practical notes:
 
-* **It runs in a throwaway git worktree, not your checkout.** The recorder creates
- a detached worktree of `HEAD`, runs the CLI there, and removes it afterwards, so
- anything written to the working tree is discarded. Writes outside the worktree —
- state directories, caches, memory — are *not* isolated.
+* **It runs in a disposable clone with its remote removed, not your checkout, and
+ not a worktree.** A worktree would share the real repository's object store,
+ refs, config and remotes — a session running with permission checks disabled
+ could commit, move a branch, or push against your actual repo. The recorder
+ clones instead and drops the remote, then redirects `HOME` and `XDG_STATE_HOME`
+ into the same temp directory so feed state and caches are disposable too.
+ Everything is removed on exit, interrupt, or termination.
 * **An empty scratch directory is not a substitute.** An earlier version recorded
  from a bare temp dir; the router behaved differently because the prompts assume a
  real Salesforce repository, and the model went looking around with shell commands.
@@ -132,15 +137,32 @@ other is the intended route, change the expected skill in both `SEED_BATTERY`
 
 * **bash 3.2+.** The harness deliberately avoids `mapfile`, associative arrays, and
  case-modification expansions so it runs on macOS's system bash.
-* **jq** preferred for parsing the JSON event stream. If `jq` is absent the harness
- falls back to a `grep`/`sed` extractor, consistent with the repo's policy of
- avoiding hard `jq` dependencies. Replay works with neither `jq` nor `python3`.
-* **jq or python3** additionally required to *record* (`--live`), for scrubbing.
+* **jq or python3** — required for both modes. Assertion A has to pair a tool name
+ with its skill identity, and the `grep`/`sed` fallback can recover names but not
+ that pairing. Rather than degrade to a check that cannot tell the right skill from
+ the wrong one, the harness fails loudly when neither is present. `jq` is preferred;
+ `python3` is the fallback and ships with macOS.
 
 ## Scope and what's deferred
 
 * **Single-turn only.** Each case is one `claude -p` turn. The harness inspects the
  first turn's tool-use ordering; it does not carry a conversation across turns.
+
+* **A fixture is a single sample, not a distribution.** Recording invokes the CLI
+ once per case and commits whatever came back. Routing is stochastic — during
+ development the same `review-this-pr` prompt produced twelve shell calls and no
+ skill invocation on one run. So a fixture can freeze a bad run into a permanent
+ false failure, or launder a lucky one into permanent false confidence. Nothing
+ re-samples or votes.
+
+* **Slash-command entry (`/sf-<name>`) is untested.** Assertion A observes a `Skill`
+ tool-use event, and direct slash invocation is documented as not producing one.
+ All ten seed prompts are natural language. Adding a case needs a different
+ assertion, not another prompt.
+
+* **The battery covers four skills, not the catalogue.** Ten prompts exercising
+ `sf-work`, `sf-brainstorm`, `sf-review`, and `sf-tend` — out of roughly 69 skills.
+ Treat a green battery as evidence about those four routes only.
 
 * **Fixture staleness is not yet detected.** A fixture records routing as it was on
  the day it was captured. If routing legitimately changes, replay keeps asserting

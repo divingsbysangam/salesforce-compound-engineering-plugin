@@ -65,6 +65,10 @@ FIXTURE_DIR="$SCRIPT_DIR/fixtures"
 # Mode: "replay" (default) or "live".
 MODE="replay"
 
+# Upper bound on a single live recording. Generous: a real routing turn can take
+# minutes. Override for a slow machine or a deliberately long case.
+RECORD_TIMEOUT_SECS="${SFCE_RECORD_TIMEOUT_SECS:-600}"
+
 # Seed battery: "<expected-skill> <prompt-file>" per line.
 # Prompt files are resolved relative to SCRIPT_DIR.
 SEED_BATTERY=(
@@ -137,6 +141,43 @@ is_benign_tool() {
 # This reads the same shape in both modes: a recorded fixture is minimal
 # stream-json, so the assertion path is identical whether the stream came
 # from the CLI or from disk.
+# Emit one "<tool-name>\t<skill-identity>" row per tool_use event, in order.
+# Assertion A needs the skill identity of the FIRST Skill event, not merely the
+# presence of a string somewhere in the file, so name and skill must stay paired.
+extract_tool_rows() {
+  local stream_file="$1"
+  if have jq; then
+    jq -r "$JQ_TOOL_USE | (.name // \"\") + \"\\t\" + (.input.skill // \"\")" "$stream_file" 2>/dev/null
+  elif have python3; then
+    python3 -I -c '
+import json, sys
+for raw in open(sys.argv[1], encoding="utf-8", errors="replace"):
+    raw = raw.strip()
+    if not raw:
+        continue
+    try:
+        obj = json.loads(raw)
+    except ValueError:
+        continue
+    msg = obj.get("message")
+    if not isinstance(msg, dict):
+        msg = obj
+    content = msg.get("content")
+    if not isinstance(content, list):
+        continue
+    for block in content:
+        if isinstance(block, dict) and block.get("type") == "tool_use":
+            inp = block.get("input")
+            skill = inp.get("skill") if isinstance(inp, dict) else None
+            sys.stdout.write("%s\t%s\n" % (block.get("name") or "", skill or ""))
+' "$stream_file" 2>/dev/null
+  else
+    # No structured parser. Names alone are recoverable, skill identity is not,
+    # so assertion A cannot be evaluated soundly — say so rather than guess.
+    return 1
+  fi
+}
+
 extract_tool_names() {
   local stream_file="$1"
   if have jq; then
@@ -179,7 +220,9 @@ for raw in sys.stdin:
     try:
         obj = json.loads(raw)
     except ValueError:
-        continue
+        # jq aborts the whole file on malformed input. Match that rather than
+        # silently recording a shorter stream than the CLI produced.
+        sys.exit(1)
     msg = obj.get("message") or obj
     content = msg.get("content") if isinstance(msg, dict) else None
     if not isinstance(content, list):
@@ -202,56 +245,59 @@ for raw in sys.stdin:
   fi
 }
 
-# Run the two assertions against a stream file. Args: <expected-skill> <stream-file>
-# Returns EXIT_PASS / EXIT_FAIL.
-# Args: <expected-skill> <stream-file> <names-blob>
-# names-blob is the newline-delimited ordered tool names already extracted from
-# the stream, so a caller that needed them for its own checks does not pay for a
-# second parse.
+# Run the two assertions against a stream file.
+# Args: <expected-skill> <stream-file>. Returns EXIT_PASS / EXIT_FAIL.
 assert_case() {
-  local expected="$1" stream_file="$2" names_blob="$3"
-  local names i
+  local expected="$1" stream_file="$2"
+  local rows tool skill i first_skill=""
 
-  # Ordered tool names. (Portable read loop instead of `mapfile` so the
-  # harness runs on macOS's default bash 3.2, not only bash 4+.)
-  names=()
-  while IFS= read -r _name; do
-    names+=("$_name")
-  done <<EOF
-$names_blob
-EOF
+  # Ordered "<tool>\t<skill>" rows. (Portable read loop instead of `mapfile` so
+  # the harness runs on macOS's default bash 3.2, not only bash 4+.)
+  rows=()
+  while IFS= read -r _row; do
+    rows+=("$_row")
+  done < <(extract_tool_rows "$stream_file")
 
-  # Assertion A: the expected skill appears as the skill identity of a Skill
-  # tool_use. The match is anchored to a complete field value on purpose.
-  #
-  # An earlier form also passed when *any* Skill fired and the expected string
-  # appeared anywhere in the stream. That is a vacuous pass waiting to happen:
-  # a fixture recording `sf-work-log` would satisfy an expectation of `sf-work`
-  # by substring alone, and the gate would go green on the wrong skill. Today's
-  # skill names do not collide, but the check must not depend on that.
-  local triggered=1
-  if grep -Eq "\"(skill|name)\"[[:space:]]*:[[:space:]]*\"${expected}\"" "$stream_file"; then
-    triggered=0
+  if [[ "${#rows[@]}" -eq 0 ]]; then
+    fail "no tool_use events could be read from $stream_file (unparseable, or no structured parser available)"
+    return "$EXIT_FAIL"
   fi
 
-  # Assertion B: no non-Skill, non-benign tool_use before the first Skill.
-  local premature=""
-  for i in "${!names[@]}"; do
-    if is_skill_tool "${names[$i]}"; then
+  # Assertion A: the FIRST Skill event's skill identity equals the expected
+  # skill. Two earlier forms were vacuous and both were demonstrated:
+  #   - an unanchored substring match passed `sf-work-log` for `sf-work`;
+  #   - a whole-file match passed a stream that routed to the wrong skill first
+  #     and reached the expected one second.
+  # Routing is about which skill the model reaches FIRST, so that is what this
+  # asserts. A case that legitimately expects an orchestration chain needs an
+  # explicit opt-out, not a looser default.
+  #
+  # Assertion B: no non-Skill, non-benign tool_use before that first Skill.
+  local triggered=1 premature=""
+  for i in "${!rows[@]}"; do
+    tool="${rows[$i]%%	*}"
+    skill="${rows[$i]#*	}"
+    if is_skill_tool "$tool"; then
+      first_skill="$skill"
+      [[ "$skill" == "$expected" ]] && triggered=0
       break
     fi
-    if is_benign_tool "${names[$i]}"; then
+    if is_benign_tool "$tool"; then
       continue
     fi
-    premature="${names[$i]}"
-    break
+    if [[ -z "$premature" ]]; then
+      premature="$tool"
+    fi
   done
 
   local result="$EXIT_PASS"
   if [[ "$triggered" -eq 0 ]]; then
-    pass "A triggered: '$expected' skill invoked"
+    pass "A triggered: '$expected' skill invoked first"
+  elif [[ -n "$first_skill" ]]; then
+    fail "A triggered: first skill entered was '$first_skill', expected '$expected'"
+    result="$EXIT_FAIL"
   else
-    fail "A triggered: '$expected' skill NOT found in stream"
+    fail "A triggered: no Skill invocation found; expected '$expected'"
     result="$EXIT_FAIL"
   fi
 
@@ -269,11 +315,20 @@ EOF
 # Args: <expected-skill> <prompt-file-abs>. Returns EXIT_PASS / EXIT_FAIL.
 replay_case() {
   local expected="$1" prompt_file="$2"
-  local case_id fixture names_blob
+  local case_id fixture
   case_id="$(case_name_for "$prompt_file")"
-  fixture="$FIXTURE_DIR/$case_id.jsonl"
+  fixture="$(fixture_path_for "$prompt_file")"
 
   log "--- case: expect '$expected' <= $case_id (replay)"
+
+  # The fixture name is derived from the prompt path, so replay would otherwise
+  # pass for a case whose seed prompt was deleted or renamed — the fixture would
+  # still be found and asserted while nothing tied it to a live prompt. record
+  # guards the same argument; the asymmetry was the bug.
+  if [[ ! -s "$prompt_file" ]]; then
+    fail "$case_id: prompt file missing or empty: $prompt_file"
+    return "$EXIT_FAIL"
+  fi
 
   # A missing or unusable fixture is a FAILURE, never a skip. Skipping here is
   # exactly the hole this mode exists to close.
@@ -291,13 +346,12 @@ replay_case() {
   fi
   # A fixture with no recoverable tool_use event proves nothing; treat a
   # truncated or malformed recording as a failure rather than a vacuous pass.
-  names_blob="$(extract_tool_names "$fixture")"
-  if [[ -z "$names_blob" ]]; then
+  if [[ -z "$(extract_tool_names "$fixture")" ]]; then
     fail "$case_id: fixture has no readable tool_use events (truncated or malformed): $fixture"
     return "$EXIT_FAIL"
   fi
 
-  assert_case "$expected" "$fixture" "$names_blob"
+  assert_case "$expected" "$fixture"
 }
 
 # Record one case against the live CLI, then assert against what was recorded.
@@ -307,7 +361,7 @@ record_case() {
   local prompt case_id fixture raw_file work_dir rc
 
   case_id="$(case_name_for "$prompt_file")"
-  fixture="$FIXTURE_DIR/$case_id.jsonl"
+  fixture="$(fixture_path_for "$prompt_file")"
 
   if [[ ! -s "$prompt_file" ]]; then
     fail "$case_id: prompt file missing or empty: $prompt_file"
@@ -317,36 +371,65 @@ record_case() {
 
   raw_file="$(mktemp -t skilltrigger.XXXXXX)"
 
-  # Record from a throwaway git worktree of HEAD, never the live checkout.
+  # Record into a disposable shallow CLONE of the repo, never the live checkout
+  # and never a worktree.
   #
-  # Two requirements pull against each other here. Anything the model writes
-  # must not land in the user's working tree; but the seed prompts assume a real
-  # Salesforce repository, and running them in an empty directory changes what
-  # the model does — an early attempt used a bare temp dir and the router went
-  # looking around with shell commands instead of reaching a skill, which is a
-  # property of the empty directory rather than of the routing. A detached
-  # worktree gives real repo content and real git context while keeping every
-  # write disposable.
-  work_dir="$(mktemp -d -t skilltrigger-wt.XXXXXX)/wt"
-  if ! git -C "$REPO_ROOT" worktree add --detach --quiet "$work_dir" HEAD 2>/dev/null; then
-    fail "$case_id: could not create a throwaway worktree; refusing to record in the live checkout"
+  # Two requirements pull against each other. Anything the model writes must not
+  # reach the user's work; but the seed prompts assume a real Salesforce
+  # repository, and running them in an empty directory changes what the model
+  # does — an early attempt used a bare temp dir and the router went looking
+  # around with shell commands instead of reaching a skill, which is a property
+  # of the empty directory rather than of the routing.
+  #
+  # A worktree satisfies the fidelity half but NOT the isolation half: it shares
+  # the origin repository's object store, refs, config and remotes, so a session
+  # running with permission checks disabled could commit, move a branch, or push
+  # against the user's actual repository. A clone with its remote removed keeps
+  # the real content and git context while severing every path back.
+  work_root="$(mktemp -d -t skilltrigger-wt.XXXXXX)" || {
+    fail "$case_id: could not create a temp directory for recording"
     rm -f "$raw_file"
     return "$EXIT_FAIL"
+  }
+  work_dir="$work_root/wt"
+
+  # State the CLI would otherwise write into the user's home — feed state,
+  # caches, session memory — is redirected here. The clone only isolates files.
+  state_home="$work_root/state"
+  mkdir -p "$state_home"
+
+  _record_cleanup() {
+    rm -f "$raw_file"
+    rm -rf "$work_root"
+  }
+  # RETURN alone leaks everything on Ctrl-C or a cancelled CI job, which is
+  # exactly when a half-finished recording is most likely.
+  trap _record_cleanup RETURN INT TERM
+
+  if ! git clone --quiet --no-hardlinks --local "$REPO_ROOT" "$work_dir" 2>/dev/null; then
+    fail "$case_id: could not create a disposable clone; refusing to record in the live checkout"
+    return "$EXIT_FAIL"
   fi
-  # shellcheck disable=SC2064
-  # Remove the worktree, drop its parent temp dir, then prune. The prune is the
-  # backstop: if removal failed, deleting the directory would otherwise leave a
-  # dangling worktree registration behind in .git/worktrees.
-  trap "rm -f '$raw_file'; git -C '$REPO_ROOT' worktree remove --force '$work_dir' >/dev/null 2>&1; rm -rf '$(dirname "$work_dir")'; git -C '$REPO_ROOT' worktree prune >/dev/null 2>&1" RETURN
+  git -C "$work_dir" remote remove origin >/dev/null 2>&1 || true
 
   log "--- case: expect '$expected' <= $case_id (live record)"
 
-  ( cd "$work_dir" && claude -p \
-      --plugin-dir "$REPO_ROOT" \
-      --dangerously-skip-permissions \
-      --output-format stream-json \
-      --verbose \
-      "$prompt" ) >"$raw_file" 2>/dev/null
+  # An unbounded CLI call hangs the whole battery. Use a timeout when the
+  # platform has one; without it, say so rather than pretending there is a bound.
+  local timeout_bin=""
+  if have timeout; then timeout_bin="timeout"
+  elif have gtimeout; then timeout_bin="gtimeout"
+  else log "    (no timeout command available; this recording is unbounded)"
+  fi
+
+  ( cd "$work_dir" \
+    && XDG_STATE_HOME="$state_home" HOME="$state_home" \
+       ${timeout_bin:+$timeout_bin "$RECORD_TIMEOUT_SECS"} claude -p \
+         --plugin-dir "$REPO_ROOT" \
+         --dangerously-skip-permissions \
+         --output-format stream-json \
+         --verbose \
+         "$prompt" ) >"$raw_file" 2>/dev/null
   rc=$?
   if [[ $rc -ne 0 ]]; then
     log "(warning: claude exited $rc; recording whatever stream was captured)"
@@ -356,6 +439,14 @@ record_case() {
   # result event flagged is_error. Surface that instead of writing an empty
   # fixture and reporting a confusing "no tool_use events" — the cause is the
   # environment, not the recording path.
+  # A stream that never reached a terminal result event means the CLI died,
+  # was killed, or timed out. That is an environment failure, not an empty
+  # recording, and it must not be allowed to overwrite a good fixture.
+  if ! grep -q '"type"[[:space:]]*:[[:space:]]*"result"' "$raw_file" 2>/dev/null; then
+    fail "$case_id: the CLI exited ($rc) without completing a run; fixture left unchanged"
+    return "$EXIT_FAIL"
+  fi
+
   # Only the terminal result event decides this. An unanchored search matches
   # `is_error` inside nested tool results and misreports a healthy run as failed.
   if grep '"type"[[:space:]]*:[[:space:]]*"result"' "$raw_file" 2>/dev/null \
@@ -375,15 +466,23 @@ record_case() {
     fail "$case_id: cannot scrub the recorded stream (neither jq nor python3 is usable, or the stream was malformed)"
     return "$EXIT_FAIL"
   fi
-  mv "$fixture.tmp" "$fixture"
-  log "    recorded $(wc -l <"$fixture" | tr -d ' ') tool-use events -> ${fixture#"$REPO_ROOT"/}"
 
-  if [[ ! -s "$fixture" ]]; then
-    fail "$case_id: recording produced an empty fixture; the CLI returned no tool_use events"
+  # Validate BEFORE publishing. Moving first and checking after would truncate a
+  # previously-good committed fixture to zero bytes on any failed recording —
+  # while the failure message claimed the fixture was left unchanged.
+  if [[ ! -s "$fixture.tmp" ]]; then
+    rm -f "$fixture.tmp"
+    fail "$case_id: recording produced no tool_use events; fixture left unchanged"
     return "$EXIT_FAIL"
   fi
+  if ! mv "$fixture.tmp" "$fixture"; then
+    rm -f "$fixture.tmp"
+    fail "$case_id: could not publish the recorded fixture; previous fixture left unchanged"
+    return "$EXIT_FAIL"
+  fi
+  log "    recorded $(wc -l <"$fixture" | tr -d ' ') tool-use events -> ${fixture#"$REPO_ROOT"/}"
 
-  assert_case "$expected" "$fixture" "$(extract_tool_names "$fixture")"
+  assert_case "$expected" "$fixture"
 }
 
 # Dispatch one case by mode.
@@ -410,6 +509,16 @@ if [[ $# -gt 0 && "$1" == "--live" ]]; then
   shift
 fi
 
+# Assertion A must pair a tool name with its skill identity, which needs a real
+# JSON parser. The grep fallback can recover names but not that pairing, so
+# without jq or python3 the harness cannot judge routing — fail loudly rather
+# than degrade to a check that cannot tell the right skill from the wrong one.
+if ! have jq && ! have python3; then
+  fail "neither jq nor python3 is available; the routing assertions cannot be evaluated"
+  fail "install either one — a degraded check here would pass the wrong skill"
+  exit "$EXIT_FAIL"
+fi
+
 # Live mode is the only path that needs the CLI. Replay never reaches this.
 if [[ "$MODE" == "live" ]] && ! have claude; then
   skip "claude CLI not found on PATH — cannot record fixtures."
@@ -433,6 +542,19 @@ if [[ $# -eq 0 ]]; then
       failed_cases+=("$skill <= $rel")
     fi
   done
+  # Three lists are maintained by hand — the battery array, prompts/, and the
+  # README table. A prompt that no case names is silently untested, which looks
+  # identical to coverage.
+  for pf in "$SCRIPT_DIR"/prompts/*.txt; do
+    [[ -e "$pf" ]] || continue
+    case " ${SEED_BATTERY[*]} " in
+      *"prompts/$(basename "$pf")"*) ;;
+      *) fail "orphan prompt with no battery entry: prompts/$(basename "$pf")"
+         failed=$((failed + 1))
+         failed_cases+=("(orphan) prompts/$(basename "$pf")") ;;
+    esac
+  done
+
   log ""
   log "===== skill-triggering battery summary ($MODE) ====="
   log "  total:  $total"

@@ -31,7 +31,7 @@ jobs:
         run: |
           python -m py_compile sfce.py
           python sfce.py --help
-      - name: Verify skill trigger fixtures
+      - name: Skill trigger fixtures (not wired in yet -- U13)
         # NOT EXECUTED YET, deliberately. The harness now replays recorded
         # fixtures from tests/skill-triggering/fixtures/ instead of skipping
         # when the claude CLI is absent, and no fixtures are committed yet, so
