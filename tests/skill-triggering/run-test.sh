@@ -89,15 +89,29 @@ skip() { printf 'SKIP: %s\n' "$*" >&2; }
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
-# Case name for a prompt file: basename without the .txt suffix.
+# The one place that knows how to find a tool_use block in a stream-json
+# document. Both the extractor and the scrubber splice this in, so a change to
+# the stream shape is made once instead of drifting between two copies.
+JQ_TOOL_USE='( .message?.content // .content // [] )
+  | if type=="array" then .[] else empty end
+  | select(type=="object" and .type=="tool_use")'
+
+# Case name for a prompt file: filename without directory or .txt suffix.
+# Parameter expansion rather than basename: every caller passes a plain path,
+# and this runs once per case.
 case_name_for() {
-  local base
-  base="$(basename "$1")"
+  local base="${1##*/}"
   printf '%s' "${base%.txt}"
 }
 
 fixture_path_for() {
   printf '%s/%s.jsonl' "$FIXTURE_DIR" "$(case_name_for "$1")"
+}
+
+# Path of a prompt file relative to this script, so an error message can print a
+# command the reader can paste verbatim.
+prompt_rel_path() {
+  printf '%s' "${1#"$SCRIPT_DIR"/}"
 }
 
 # Does this tool name count as a "Skill" invocation?
@@ -130,12 +144,7 @@ extract_tool_names() {
     # content array; tool_use blocks have {"type":"tool_use","name":"..."}.
     # We walk every object, dig into any content array, and print names of
     # tool_use blocks in order.
-    jq -r '
-      ( .message?.content // .content // [] )
-      | if type=="array" then .[] else empty end
-      | select(type=="object" and .type=="tool_use")
-      | .name // empty
-    ' "$stream_file" 2>/dev/null
+    jq -r "$JQ_TOOL_USE | .name // empty" "$stream_file" 2>/dev/null
   else
     # Fallback: find "type":"tool_use" ... "name":"X" pairs. Imperfect for
     # exotic ordering but adequate as a backstop when jq is missing.
@@ -152,20 +161,14 @@ extract_tool_names() {
 # Reads the raw stream on stdin, writes the scrubbed fixture on stdout.
 scrub_stream() {
   if have jq; then
-    jq -c -n '
-      [ inputs
-        | ( .message?.content // .content // [] )
-        | if type=="array" then .[] else empty end
-        | select(type=="object" and .type=="tool_use")
-        | { type: "tool_use",
-            name: (.name // ""),
-            input: ( if (.input? and (.input | type=="object") and (.input.skill? != null))
+    jq -c -n "[ inputs | $JQ_TOOL_USE
+        | { type: \"tool_use\",
+            name: (.name // \"\"),
+            input: ( if (.input? and (.input | type==\"object\") and (.input.skill? != null))
                      then { skill: .input.skill }
-                     else {} end ) }
-      ]
+                     else {} end ) } ]
       | .[]
-      | { type: "assistant", message: { content: [ . ] } }
-    ' 2>/dev/null
+      | { type: \"assistant\", message: { content: [ . ] } }" 2>/dev/null
   elif have python3; then
     python3 -I -c '
 import json, sys
@@ -201,37 +204,33 @@ for raw in sys.stdin:
 
 # Run the two assertions against a stream file. Args: <expected-skill> <stream-file>
 # Returns EXIT_PASS / EXIT_FAIL.
+# Args: <expected-skill> <stream-file> <names-blob>
+# names-blob is the newline-delimited ordered tool names already extracted from
+# the stream, so a caller that needed them for its own checks does not pay for a
+# second parse.
 assert_case() {
-  local expected="$1" stream_file="$2"
-  local names first_skill_line i
+  local expected="$1" stream_file="$2" names_blob="$3"
+  local names i
 
   # Ordered tool names. (Portable read loop instead of `mapfile` so the
   # harness runs on macOS's default bash 3.2, not only bash 4+.)
   names=()
   while IFS= read -r _name; do
     names+=("$_name")
-  done < <(extract_tool_names "$stream_file")
+  done <<EOF
+$names_blob
+EOF
 
-  # Assertion A: expected skill appears as a Skill tool_use.
-  # A Skill tool_use records the skill name in its input, not the tool name
-  # ("Skill"), so we match either the tool name or the expected skill string
-  # anywhere in the stream as a Skill invocation signal.
+  # Assertion A: the expected skill appears as the skill identity of a Skill
+  # tool_use. The match is anchored to a complete field value on purpose.
+  #
+  # An earlier form also passed when *any* Skill fired and the expected string
+  # appeared anywhere in the stream. That is a vacuous pass waiting to happen:
+  # a fixture recording `sf-work-log` would satisfy an expectation of `sf-work`
+  # by substring alone, and the gate would go green on the wrong skill. Today's
+  # skill names do not collide, but the check must not depend on that.
   local triggered=1
-  first_skill_line=-1
-  for i in "${!names[@]}"; do
-    if is_skill_tool "${names[$i]}"; then
-      first_skill_line="$i"
-      break
-    fi
-  done
-
-  # Confirm the expected skill actually shows up in a Skill event's input.
   if grep -Eq "\"(skill|name)\"[[:space:]]*:[[:space:]]*\"${expected}\"" "$stream_file"; then
-    triggered=0
-  fi
-  # If we found a generic Skill tool_use AND the expected skill string is in
-  # the stream, treat as triggered even if the strict grep above missed it.
-  if [[ "$first_skill_line" -ge 0 ]] && grep -q "$expected" "$stream_file"; then
     triggered=0
   fi
 
@@ -270,16 +269,16 @@ assert_case() {
 # Args: <expected-skill> <prompt-file-abs>. Returns EXIT_PASS / EXIT_FAIL.
 replay_case() {
   local expected="$1" prompt_file="$2"
-  local case_id fixture
+  local case_id fixture names_blob
   case_id="$(case_name_for "$prompt_file")"
-  fixture="$(fixture_path_for "$prompt_file")"
+  fixture="$FIXTURE_DIR/$case_id.jsonl"
 
   log "--- case: expect '$expected' <= $case_id (replay)"
 
   # A missing or unusable fixture is a FAILURE, never a skip. Skipping here is
   # exactly the hole this mode exists to close.
   if [[ ! -f "$fixture" ]]; then
-    fail "$case_id: no fixture at $fixture — record it with: run-test.sh --live $expected $(basename "$prompt_file")"
+    fail "$case_id: no fixture at $fixture — record it with: run-test.sh --live $expected $(prompt_rel_path "$prompt_file")"
     return "$EXIT_FAIL"
   fi
   if [[ ! -r "$fixture" ]]; then
@@ -292,12 +291,13 @@ replay_case() {
   fi
   # A fixture with no recoverable tool_use event proves nothing; treat a
   # truncated or malformed recording as a failure rather than a vacuous pass.
-  if [[ -z "$(extract_tool_names "$fixture")" ]]; then
+  names_blob="$(extract_tool_names "$fixture")"
+  if [[ -z "$names_blob" ]]; then
     fail "$case_id: fixture has no readable tool_use events (truncated or malformed): $fixture"
     return "$EXIT_FAIL"
   fi
 
-  assert_case "$expected" "$fixture"
+  assert_case "$expected" "$fixture" "$names_blob"
 }
 
 # Record one case against the live CLI, then assert against what was recorded.
@@ -307,7 +307,7 @@ record_case() {
   local prompt case_id fixture raw_file work_dir rc
 
   case_id="$(case_name_for "$prompt_file")"
-  fixture="$(fixture_path_for "$prompt_file")"
+  fixture="$FIXTURE_DIR/$case_id.jsonl"
 
   if [[ ! -s "$prompt_file" ]]; then
     fail "$case_id: prompt file missing or empty: $prompt_file"
@@ -334,7 +334,10 @@ record_case() {
     return "$EXIT_FAIL"
   fi
   # shellcheck disable=SC2064
-  trap "rm -f '$raw_file'; git -C '$REPO_ROOT' worktree remove --force '$work_dir' >/dev/null 2>&1; rm -rf '$(dirname "$work_dir")'" RETURN
+  # Remove the worktree, drop its parent temp dir, then prune. The prune is the
+  # backstop: if removal failed, deleting the directory would otherwise leave a
+  # dangling worktree registration behind in .git/worktrees.
+  trap "rm -f '$raw_file'; git -C '$REPO_ROOT' worktree remove --force '$work_dir' >/dev/null 2>&1; rm -rf '$(dirname "$work_dir")'; git -C '$REPO_ROOT' worktree prune >/dev/null 2>&1" RETURN
 
   log "--- case: expect '$expected' <= $case_id (live record)"
 
@@ -369,7 +372,7 @@ record_case() {
   mkdir -p "$FIXTURE_DIR"
   if ! scrub_stream <"$raw_file" >"$fixture.tmp"; then
     rm -f "$fixture.tmp"
-    fail "$case_id: cannot scrub the recorded stream — install jq or python3 to record"
+    fail "$case_id: cannot scrub the recorded stream (neither jq nor python3 is usable, or the stream was malformed)"
     return "$EXIT_FAIL"
   fi
   mv "$fixture.tmp" "$fixture"
@@ -380,7 +383,7 @@ record_case() {
     return "$EXIT_FAIL"
   fi
 
-  assert_case "$expected" "$fixture"
+  assert_case "$expected" "$fixture" "$(extract_tool_names "$fixture")"
 }
 
 # Dispatch one case by mode.
