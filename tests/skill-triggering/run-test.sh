@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Skill-triggering eval harness (single-turn) for the SF compound-engineering plugin.
+# Skill-triggering eval harness for the SF compound-engineering plugin.
 #
 # Mechanical regression backstop that asserts a seed prompt routes to the correct
 # plugin skill and that no premature non-Skill action fires before the Skill
@@ -8,28 +8,46 @@
 # This is the prerequisite for Protocol G: no gate-wording edit ships without an
 # eval run. It is intentionally usable standalone.
 #
+# TWO MODES
+#
+#   replay (default)  Reads a recorded tool-use stream from fixtures/<case>.jsonl
+#                     and runs the assertions against it. Needs no `claude` CLI
+#                     and no network, so CI gets a real pass or fail rather than
+#                     a skip. A missing or unusable fixture is a FAILURE.
+#
+#   live (--live)     Invokes the real `claude` CLI, records a scrubbed stream to
+#                     fixtures/<case>.jsonl, then runs the same assertions
+#                     against it. This is the only mode that needs the CLI, and
+#                     it is opt-in so an ordinary run never silently re-records.
+#                     Refreshing fixtures is a deliberate act with a reviewable
+#                     diff.
+#
 # Usage:
-#   run-test.sh <expected-skill> <prompt-file>   # run one case
-#   run-test.sh                                   # run the whole seed battery
+#   run-test.sh                                   # replay the whole seed battery
+#   run-test.sh <expected-skill> <prompt-file>    # replay one case
+#   run-test.sh --live                            # re-record + assert the battery
+#   run-test.sh --live <expected-skill> <prompt>  # re-record + assert one case
 #
-# Example:
-#   run-test.sh sf-review prompts/review-this-pr.txt
-#
-# Assertions per case:
-#   A (triggered)        A Skill tool_use for <expected-skill> appears in the stream.
+# Assertions per case (identical in both modes):
+#   A (triggered)         A Skill tool_use for <expected-skill> appears in the stream.
 #   B (no premature act)  No non-Skill, non-todo tool_use event appears BEFORE the
 #                         first Skill tool_use event.
 #
 # Exit codes:
 #   0   pass
-#   1   fail (assertion A or B failed, or bad usage)
-#   77  skip (claude CLI not found) — automake "skip" convention; NOT a pass.
+#   1   fail (assertion failed, missing/unusable fixture, or bad usage)
+#   77  skip (LIVE MODE ONLY, `claude` CLI not found) — automake "skip" convention.
+#       Replay mode NEVER exits 77: that is the whole point of recording fixtures.
 #
-# OFFLINE-SAFE: if the `claude` CLI is not on PATH the harness prints a clear
-# SKIP message and exits 77 rather than reporting a false pass or a hard fail.
+# FIXTURE CONTENT: a fixture holds only what the two assertions read — the ordered
+# tool_use events and, for Skill events, the skill identity. Prompt text, file
+# contents, absolute paths, org data, and credentials are stripped at record time
+# and never committed. The seed prompts already live beside this script, so a
+# fixture has no reason to restate them.
 #
 # Parsing prefers `jq`; a grep-based fallback is used when jq is absent (the
-# repo's other scripts avoid a hard jq dependency).
+# repo's other scripts avoid a hard jq dependency). Recording additionally
+# accepts `python3` when jq is missing.
 
 set -uo pipefail
 
@@ -40,8 +58,12 @@ EXIT_SKIP=77
 
 # Directory this script lives in, so it can be run from anywhere.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Repo root is three levels up: tests/skill-triggering -> tests -> <root>.
+# Repo root is two levels up: tests/skill-triggering -> tests -> <root>.
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+FIXTURE_DIR="$SCRIPT_DIR/fixtures"
+
+# Mode: "replay" (default) or "live".
+MODE="replay"
 
 # Seed battery: "<expected-skill> <prompt-file>" per line.
 # Prompt files are resolved relative to SCRIPT_DIR.
@@ -67,6 +89,17 @@ skip() { printf 'SKIP: %s\n' "$*" >&2; }
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
+# Case name for a prompt file: basename without the .txt suffix.
+case_name_for() {
+  local base
+  base="$(basename "$1")"
+  printf '%s' "${base%.txt}"
+}
+
+fixture_path_for() {
+  printf '%s/%s.jsonl' "$FIXTURE_DIR" "$(case_name_for "$1")"
+}
+
 # Does this tool name count as a "Skill" invocation?
 is_skill_tool() {
   case "$1" in
@@ -86,6 +119,10 @@ is_benign_tool() {
 # Extract, in stream order, the tool names from tool_use events in a
 # stream-json transcript. One tool name per line on stdout.
 # Uses jq when available; otherwise a best-effort grep/sed fallback.
+#
+# This reads the same shape in both modes: a recorded fixture is minimal
+# stream-json, so the assertion path is identical whether the stream came
+# from the CLI or from disk.
 extract_tool_names() {
   local stream_file="$1"
   if have jq; then
@@ -107,35 +144,66 @@ extract_tool_names() {
   fi
 }
 
-# Run a single case. Args: <expected-skill> <prompt-file-abs>
-# Returns EXIT_PASS / EXIT_FAIL. Assumes claude is on PATH (checked by caller).
-run_case() {
-  local expected="$1" prompt_file="$2"
-  local prompt stream_file names first_skill_line rc
-
-  if [[ ! -s "$prompt_file" ]]; then
-    fail "$expected: prompt file missing or empty: $prompt_file"
-    return "$EXIT_FAIL"
+# Reduce a raw CLI stream to the minimal shape the assertions read: one
+# stream-json line per tool_use event, carrying the tool name and, for Skill
+# events, the skill identity. Everything else — prompt text, file contents,
+# tool results, paths, usage metadata — is dropped.
+#
+# Reads the raw stream on stdin, writes the scrubbed fixture on stdout.
+scrub_stream() {
+  if have jq; then
+    jq -c -n '
+      [ inputs
+        | ( .message?.content // .content // [] )
+        | if type=="array" then .[] else empty end
+        | select(type=="object" and .type=="tool_use")
+        | { type: "tool_use",
+            name: (.name // ""),
+            input: ( if (.input? and (.input | type=="object") and (.input.skill? != null))
+                     then { skill: .input.skill }
+                     else {} end ) }
+      ]
+      | .[]
+      | { type: "assistant", message: { content: [ . ] } }
+    ' 2>/dev/null
+  elif have python3; then
+    python3 -I -c '
+import json, sys
+for raw in sys.stdin:
+    raw = raw.strip()
+    if not raw:
+        continue
+    try:
+        obj = json.loads(raw)
+    except ValueError:
+        continue
+    msg = obj.get("message") or obj
+    content = msg.get("content") if isinstance(msg, dict) else None
+    if not isinstance(content, list):
+        continue
+    for block in content:
+        if not isinstance(block, dict) or block.get("type") != "tool_use":
+            continue
+        inp = block.get("input")
+        keep = {}
+        if isinstance(inp, dict) and inp.get("skill") is not None:
+            keep = {"skill": inp["skill"]}
+        out = {"type": "assistant",
+               "message": {"content": [{"type": "tool_use",
+                                        "name": block.get("name") or "",
+                                        "input": keep}]}}
+        sys.stdout.write(json.dumps(out, separators=(",", ":")) + "\n")
+'
+  else
+    return 1
   fi
-  prompt="$(cat "$prompt_file")"
+}
 
-  stream_file="$(mktemp -t skilltrigger.XXXXXX)"
-  # shellcheck disable=SC2064
-  trap "rm -f '$stream_file'" RETURN
-
-  log "--- case: expect '$expected' <= $(basename "$prompt_file")"
-  # Invoke claude headless with a JSON event stream of the turn.
-  # --plugin-dir loads this repo's plugin so its skills are routable.
-  claude -p \
-    --plugin-dir "$REPO_ROOT" \
-    --dangerously-skip-permissions \
-    --output-format stream-json \
-    --verbose \
-    "$prompt" >"$stream_file" 2>/dev/null
-  rc=$?
-  if [[ $rc -ne 0 ]]; then
-    log "(warning: claude exited $rc; evaluating whatever stream was captured)"
-  fi
+# Run the two assertions against a stream file. Args: <expected-skill> <stream-file>
+# Returns EXIT_PASS / EXIT_FAIL.
+assert_case() {
+  local expected="$1" stream_file="$2"
+  local names first_skill_line i
 
   # Ordered tool names. (Portable read loop instead of `mapfile` so the
   # harness runs on macOS's default bash 3.2, not only bash 4+.)
@@ -149,7 +217,6 @@ run_case() {
   # ("Skill"), so we match either the tool name or the expected skill string
   # anywhere in the stream as a Skill invocation signal.
   local triggered=1
-  local i
   first_skill_line=-1
   for i in "${!names[@]}"; do
     if is_skill_tool "${names[$i]}"; then
@@ -158,7 +225,7 @@ run_case() {
     fi
   done
 
-  # Confirm the expected skill name actually shows up in a Skill event's input.
+  # Confirm the expected skill actually shows up in a Skill event's input.
   if grep -Eq "\"(skill|name)\"[[:space:]]*:[[:space:]]*\"${expected}\"" "$stream_file"; then
     triggered=0
   fi
@@ -199,16 +266,156 @@ run_case() {
   return "$result"
 }
 
+# Replay one case from its recorded fixture.
+# Args: <expected-skill> <prompt-file-abs>. Returns EXIT_PASS / EXIT_FAIL.
+replay_case() {
+  local expected="$1" prompt_file="$2"
+  local case_id fixture
+  case_id="$(case_name_for "$prompt_file")"
+  fixture="$(fixture_path_for "$prompt_file")"
+
+  log "--- case: expect '$expected' <= $case_id (replay)"
+
+  # A missing or unusable fixture is a FAILURE, never a skip. Skipping here is
+  # exactly the hole this mode exists to close.
+  if [[ ! -f "$fixture" ]]; then
+    fail "$case_id: no fixture at $fixture — record it with: run-test.sh --live $expected $(basename "$prompt_file")"
+    return "$EXIT_FAIL"
+  fi
+  if [[ ! -r "$fixture" ]]; then
+    fail "$case_id: fixture not readable: $fixture"
+    return "$EXIT_FAIL"
+  fi
+  if [[ ! -s "$fixture" ]]; then
+    fail "$case_id: fixture is empty: $fixture"
+    return "$EXIT_FAIL"
+  fi
+  # A fixture with no recoverable tool_use event proves nothing; treat a
+  # truncated or malformed recording as a failure rather than a vacuous pass.
+  if [[ -z "$(extract_tool_names "$fixture")" ]]; then
+    fail "$case_id: fixture has no readable tool_use events (truncated or malformed): $fixture"
+    return "$EXIT_FAIL"
+  fi
+
+  assert_case "$expected" "$fixture"
+}
+
+# Record one case against the live CLI, then assert against what was recorded.
+# Args: <expected-skill> <prompt-file-abs>. Returns EXIT_PASS / EXIT_FAIL.
+record_case() {
+  local expected="$1" prompt_file="$2"
+  local prompt case_id fixture raw_file work_dir rc
+
+  case_id="$(case_name_for "$prompt_file")"
+  fixture="$(fixture_path_for "$prompt_file")"
+
+  if [[ ! -s "$prompt_file" ]]; then
+    fail "$case_id: prompt file missing or empty: $prompt_file"
+    return "$EXIT_FAIL"
+  fi
+  prompt="$(cat "$prompt_file")"
+
+  raw_file="$(mktemp -t skilltrigger.XXXXXX)"
+
+  # Record from a throwaway git worktree of HEAD, never the live checkout.
+  #
+  # Two requirements pull against each other here. Anything the model writes
+  # must not land in the user's working tree; but the seed prompts assume a real
+  # Salesforce repository, and running them in an empty directory changes what
+  # the model does — an early attempt used a bare temp dir and the router went
+  # looking around with shell commands instead of reaching a skill, which is a
+  # property of the empty directory rather than of the routing. A detached
+  # worktree gives real repo content and real git context while keeping every
+  # write disposable.
+  work_dir="$(mktemp -d -t skilltrigger-wt.XXXXXX)/wt"
+  if ! git -C "$REPO_ROOT" worktree add --detach --quiet "$work_dir" HEAD 2>/dev/null; then
+    fail "$case_id: could not create a throwaway worktree; refusing to record in the live checkout"
+    rm -f "$raw_file"
+    return "$EXIT_FAIL"
+  fi
+  # shellcheck disable=SC2064
+  trap "rm -f '$raw_file'; git -C '$REPO_ROOT' worktree remove --force '$work_dir' >/dev/null 2>&1; rm -rf '$(dirname "$work_dir")'" RETURN
+
+  log "--- case: expect '$expected' <= $case_id (live record)"
+
+  ( cd "$work_dir" && claude -p \
+      --plugin-dir "$REPO_ROOT" \
+      --dangerously-skip-permissions \
+      --output-format stream-json \
+      --verbose \
+      "$prompt" ) >"$raw_file" 2>/dev/null
+  rc=$?
+  if [[ $rc -ne 0 ]]; then
+    log "(warning: claude exited $rc; recording whatever stream was captured)"
+  fi
+
+  # A run that reached the model but errored (auth, quota, rate limit) produces a
+  # result event flagged is_error. Surface that instead of writing an empty
+  # fixture and reporting a confusing "no tool_use events" — the cause is the
+  # environment, not the recording path.
+  # Only the terminal result event decides this. An unanchored search matches
+  # `is_error` inside nested tool results and misreports a healthy run as failed.
+  if grep '"type"[[:space:]]*:[[:space:]]*"result"' "$raw_file" 2>/dev/null \
+     | grep -q '"is_error"[[:space:]]*:[[:space:]]*true'; then
+    local err
+    err="$(grep '"type"[[:space:]]*:[[:space:]]*"result"' "$raw_file" \
+           | grep -o '"result"[[:space:]]*:[[:space:]]*"[^"]*"' | tail -1 \
+           | sed -E 's/.*"result"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/' | cut -c1-200)"
+    fail "$case_id: the CLI returned an error, so nothing was recorded: ${err:-unknown error}"
+    log "    fixture left unchanged; fix the CLI environment and re-run with --live"
+    return "$EXIT_FAIL"
+  fi
+
+  mkdir -p "$FIXTURE_DIR"
+  if ! scrub_stream <"$raw_file" >"$fixture.tmp"; then
+    rm -f "$fixture.tmp"
+    fail "$case_id: cannot scrub the recorded stream — install jq or python3 to record"
+    return "$EXIT_FAIL"
+  fi
+  mv "$fixture.tmp" "$fixture"
+  log "    recorded $(wc -l <"$fixture" | tr -d ' ') tool-use events -> ${fixture#"$REPO_ROOT"/}"
+
+  if [[ ! -s "$fixture" ]]; then
+    fail "$case_id: recording produced an empty fixture; the CLI returned no tool_use events"
+    return "$EXIT_FAIL"
+  fi
+
+  assert_case "$expected" "$fixture"
+}
+
+# Dispatch one case by mode.
+run_case() {
+  if [[ "$MODE" == "live" ]]; then
+    record_case "$1" "$2"
+  else
+    replay_case "$1" "$2"
+  fi
+}
+
+usage() {
+  log "usage: $(basename "$0") [--live] [<expected-skill> <prompt-file>]"
+  log "   replay the battery:  $(basename "$0")"
+  log "   replay one case:     $(basename "$0") sf-review prompts/review-this-pr.txt"
+  log "   re-record battery:   $(basename "$0") --live"
+}
+
 # --- main ------------------------------------------------------------------
 
-# Offline-safe guard: bail out as SKIP (not fail, not pass) with no claude CLI.
-if ! have claude; then
-  skip "claude CLI not found on PATH — cannot run the skill-triggering eval."
+# Mode flag must come first when present.
+if [[ $# -gt 0 && "$1" == "--live" ]]; then
+  MODE="live"
+  shift
+fi
+
+# Live mode is the only path that needs the CLI. Replay never reaches this.
+if [[ "$MODE" == "live" ]] && ! have claude; then
+  skip "claude CLI not found on PATH — cannot record fixtures."
   skip "This is a SKIP (exit $EXIT_SKIP), not a pass and not a failure."
+  skip "Replay mode needs no CLI: run without --live to check the recorded fixtures."
   exit "$EXIT_SKIP"
 fi
 
-# No args => run the whole seed battery.
+# No case args => run the whole seed battery.
 if [[ $# -eq 0 ]]; then
   total=0; passed=0; failed=0
   declare -a failed_cases=()
@@ -224,7 +431,7 @@ if [[ $# -eq 0 ]]; then
     fi
   done
   log ""
-  log "===== skill-triggering battery summary ====="
+  log "===== skill-triggering battery summary ($MODE) ====="
   log "  total:  $total"
   log "  passed: $passed"
   log "  failed: $failed"
@@ -237,8 +444,7 @@ fi
 
 # Two-arg single-case mode.
 if [[ $# -ne 2 ]]; then
-  log "usage: $(basename "$0") <expected-skill> <prompt-file>"
-  log "   or: $(basename "$0")   # run the whole seed battery"
+  usage
   exit "$EXIT_FAIL"
 fi
 
