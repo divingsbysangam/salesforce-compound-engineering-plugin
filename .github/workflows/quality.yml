@@ -31,12 +31,22 @@ jobs:
         run: |
           python -m py_compile sfce.py
           python sfce.py --help
-      - name: Verify skill trigger fixtures
+      - name: Skill trigger fixtures (not wired in yet -- U13)
+        # NOT EXECUTED YET, deliberately. The harness now replays recorded
+        # fixtures from tests/skill-triggering/fixtures/ instead of skipping
+        # when the claude CLI is absent, and no fixtures are committed yet, so
+        # running it here would fail the build for a missing recording rather
+        # than for a routing regression.
+        #
+        # The previous form wrapped the harness in an exit-77 tolerance, which
+        # meant this step passed without ever running the eval. That tolerance
+        # is not being restored: a check that cannot fail is worse than one
+        # that is visibly switched off.
+        #
+        # Re-enabling this as a blocking check is U13 in
+        # docs/plans/2026-09-12-2142-feat-metadata-gate-and-skill-telemetry-plan.md
         run: |
-          set +e
-          bash tests/skill-triggering/run-test.sh
-          status=$?
-          if [ "$status" -ne 0 ] && [ "$status" -ne 77 ]; then exit "$status"; fi
+          echo "skill-triggering replay is not wired into CI yet (see U13)" >&2
       - name: Type-check, test, and lint
         working-directory: cli
         run: |
