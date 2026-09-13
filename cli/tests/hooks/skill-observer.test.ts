@@ -106,11 +106,14 @@ const grantFile = (sid: string, stateDir: string = state) =>
 // ===========================================================================
 describe("leak: nothing but the skill name reaches a sink", () => {
   test("the Skill tool's args field never appears in any sink", async () => {
-    const secret = "SUPER-SECRET-PROMPT-TEXT-9f3a";
+    // Named for what it is -- prompt text -- not "secret". The args field holds
+    // the user's verbatim prompt, which is sensitive but is not a credential,
+    // and a `const secret = "..."` shape trips repository secret scanners.
+    const promptText = "verbatim-user-prompt-that-must-never-be-logged-9f3a";
     await run(
       "PostToolUse",
       modelPayload({
-        tool_input: { skill: "sf-compound-engineering:sf-work", args: secret },
+        tool_input: { skill: "sf-compound-engineering:sf-work", args: promptText },
       }),
       BOTH,
     );
@@ -127,8 +130,8 @@ describe("leak: nothing but the skill name reaches a sink", () => {
     const everything = walk(state).join("\n");
 
     expect(everything.length).toBeGreaterThan(0);
-    expect(everything).not.toContain(secret);
-    expect(everything).not.toContain("SUPER-SECRET");
+    expect(everything).not.toContain(promptText);
+    expect(everything).not.toContain("verbatim-user-prompt");
     expect(everything).toContain("sf-work");
   });
 
