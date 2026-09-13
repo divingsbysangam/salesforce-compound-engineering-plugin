@@ -142,6 +142,11 @@ import hashlib, hmac, json, os, secrets, sys, time
 
 event = sys.argv[1]
 salt_path = sys.argv[2]
+# The salt exists only to key telemetry references. With the log sink off it is
+# never used, so it is never created and its failure is never reported: a
+# gate-only install should not be told about a telemetry subsystem it disabled,
+# nor have a salt file appear for one.
+log_enabled = len(sys.argv) > 3 and sys.argv[3] == "1"
 
 try:
     payload = json.load(sys.stdin)
@@ -203,7 +208,7 @@ def load_or_create_salt(path):
     return None
 
 
-salt = load_or_create_salt(salt_path)
+salt = load_or_create_salt(salt_path) if log_enabled else None
 
 
 def ref(value):
@@ -250,7 +255,7 @@ out.append("AGENT\t%s" % ("" if agent_id in (None, "") else str(agent_id)))
 out.append("SKILL\t%s" % skill)
 out.append("ENTRY\t%s" % entry)
 
-if skill and entry and not salt:
+if skill and entry and log_enabled and not salt:
     # The log store fails CLOSED (KTD10): a dropped row costs measurement, an
     # unsalted reference costs the privacy guarantee. The grant sink below is
     # unaffected -- it never needs the salt -- so enforcement keeps working.
@@ -282,7 +287,7 @@ PY
 # makes "rows dropped" indistinguishable from "no skill activity", which is the
 # same silent-failure shape the gate had. The parser catches its own errors and
 # emits single-line messages, so what surfaces here is signal.
-PARSED="$(printf '%s' "$PAYLOAD" | "$PY" -I -c "$OBSERVER_PY" "$EVENT" "$SALT_FILE")"
+PARSED="$(printf '%s' "$PAYLOAD" | "$PY" -I -c "$OBSERVER_PY" "$EVENT" "$SALT_FILE" "${LOG_ON:-}")"
 
 if [ -z "$PARSED" ]; then
   exit 0

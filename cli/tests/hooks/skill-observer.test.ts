@@ -226,6 +226,22 @@ describe("failure domains: a log-sink failure can never cost a grant", () => {
     expect(res.stderr).toMatch(/salt|dropped/i); // but said so
   });
 
+  test("gate-only mode says nothing about telemetry, and creates no salt", async () => {
+    // A gate-only install must not be told about a subsystem it disabled, nor
+    // have a salt file appear for one. The salt exists solely to key telemetry
+    // references, so with the log sink off it is never established at all.
+    mkdirSync(join(state, "observer-salt"), { recursive: true }); // unusable salt
+
+    const res = await run("PostToolUse", modelPayload(), {
+      SFCE_GATE_ENABLED: "1",
+    });
+
+    expect(res.code).toBe(0);
+    expect(res.stderr).not.toMatch(/telemetry|row dropped/i);
+    // The gate half keeps working regardless.
+    expect(existsSync(grantFile("session-aaa"))).toBe(true);
+  });
+
   test("an unwritable state root warns on stderr and still exits 0", async () => {
     const locked = join(tmpdir(), `sfce-locked-${randomUUID()}`);
     mkdirSync(locked, { recursive: true });
