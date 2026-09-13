@@ -221,17 +221,17 @@ The third gap is that the repository's own routing protocol is unenforced. CONTR
 
 ### Outstanding Questions
 
-All are deferred, not blocking. U1 answers the first five; each carries a default that lets the plan proceed if U1 cannot.
+**Q1–Q5 were measured by U1 on 2026-09-13** against Claude Code 2.1.270. Evidence: `docs/solutions/patterns/claude-code-skill-entry-events.md` and `cli/tests/hooks/fixtures/*.json`. Q6 and Q7 remain deferred.
 
-* Q1. Does a description-matched skill entry produce any hook event? *Default:* assume it does not. The reporter then says "explicitly invoked", never "unused" — and the gate stops with the reporter, because authorisation minted only by typed slash commands and explicit model tool calls would deny the plugin's primary entry path. This is a stop condition, not a narrowing.
+* Q1. Does a description-matched skill entry produce any hook event? **ANSWERED — YES.** A bare phrase that never names the skill produces `PreToolUse`/`PostToolUse` with `tool_name: Skill` and `tool_input.skill`, and the `Skill` event is the **first** tool event. **The stop condition is lifted; the gate half proceeds.** Identity is plugin-qualified (`sf-compound-engineering:sf-plan`), never bare — which also means `tests/skill-triggering/run-test.sh` assertion A, comparing against bare `SEED_BATTERY` names, would false-FAIL every case once fixtures are recorded.
 
-* Q2. Does `sf-lfg` Stage 3 dispatch implementation into a subagent? If it does, a main-thread-only grant rule blocks the pipeline even after `sf-lfg` is allowlisted. *Default:* allowlist `sf-lfg` and verify one full run before shipping.
+* Q2. Does `sf-lfg` Stage 3 dispatch implementation into a subagent? **PARTIALLY ANSWERED — default stands.** A four-minute bounded run did not reach Stage 3. A stronger constraint was measured instead: **`/sf-lfg` performed `Write` and `Edit` while emitting zero `Skill` tool events**, because a slash-invoked skill is expanded into the prompt rather than called as a tool. A gate minting authorisation only from a `Skill` event would block the pipeline's own edits. Authorisation must also be mintable from `UserPromptExpansion.command_name`. Still: allowlist `sf-lfg` and verify one full run before shipping.
 
-* Q3. Does a `userConfig` change take effect mid-session or need a restart? *Default:* assume a restart is needed, print the flag value as observed by a hook process, and say so in the opt-in copy.
+* Q3. Does a `userConfig` change take effect mid-session or need a restart? **PARTIALLY ANSWERED — default stands.** A declared `userConfig` **default never reaches the hook process at all**: `CLAUDE_PLUGIN_OPTION_*` was absent in every run under `--plugin-dir`, including with `default: true`. Values are delivered only once set via `/plugin configure`, so the hook cannot distinguish "off" from "never configured" — **absent must mean off**. Whether a *set* value propagates mid-session is untested, as setting one requires writing the user's real plugin config. **Trap found:** a `userConfig` option declared without `title` makes the entire plugin fail to load silently — every skill becomes `Unknown command`, with no validation error.
 
-* Q4. Is there a stdin field that distinguishes a `-p` or CI session from an interactive one? *Default:* ship the documented environment override.
+* Q4. Is there a stdin field that distinguishes a `-p` or CI session from an interactive one? **ANSWERED — no stdin field, but the environment does.** No payload field discriminates (`permission_mode` reads `default` in both). The hook process environment carries `CLAUDE_CODE_SESSION_ATTENDED` (`1` interactive / `0` headless) and `CLAUDE_CODE_ENTRYPOINT` (`cli` / `sdk-cli`), both overwritten per session rather than inherited. Prefer these; keep the documented override as a manual escape hatch.
 
-* Q5. Does `SessionStart source=fork` carry the parent session id? *Default:* a fork starts unauthorised.
+* Q5. Does `SessionStart source=fork` carry the parent session id? **ANSWERED — NO.** A fork gets `source: "fork"`, a new `session_id`, and no parent-linking field of any kind. **Default confirmed: a fork starts unauthorised.** Note the fork payload carries four keys the `startup` payload does not, so no consumer may assume a fixed key set.
 
 * Q6. Is `sfce-gap-prompts.md`, cited as the full spec by both source tasks, recoverable? It is not in this repository. *Default:* this plan is the spec.
 
