@@ -277,7 +277,12 @@ sys.stdout.write("\n".join(out) + "\n")
 PY
 )"
 
-PARSED="$(printf '%s' "$PAYLOAD" | "$PY" -I -c "$OBSERVER_PY" "$EVENT" "$SALT_FILE" 2>/dev/null)"
+# The parser's stderr is deliberately NOT discarded. It carries the one case
+# where telemetry is dropped on purpose -- no usable salt -- and suppressing it
+# makes "rows dropped" indistinguishable from "no skill activity", which is the
+# same silent-failure shape the gate had. The parser catches its own errors and
+# emits single-line messages, so what surfaces here is signal.
+PARSED="$(printf '%s' "$PAYLOAD" | "$PY" -I -c "$OBSERVER_PY" "$EVENT" "$SALT_FILE")"
 
 if [ -z "$PARSED" ]; then
   exit 0
@@ -318,6 +323,15 @@ fi
 # Not a skill entry.
 if [ -z "$SKILL" ] || [ -z "$ENTRY" ]; then
   exit 0
+fi
+
+# A skill entry WAS observed but the parser produced no row. The only way that
+# happens is a missing salt, where the log store fails closed on purpose. Warn
+# at the shell level too rather than relying on the parser's stderr reaching the
+# user: an operator who cannot tell "dropped" from "no activity" will read an
+# empty telemetry file as a working install with nothing to report.
+if [ -n "$LOG_ON" ] && [ -z "$ROW" ]; then
+  warn "skill entry observed but no telemetry row produced (no usable salt); row dropped"
 fi
 
 # ============================================================================

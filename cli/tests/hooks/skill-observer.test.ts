@@ -208,6 +208,24 @@ describe("failure domains: a log-sink failure can never cost a grant", () => {
     chmodSync(join(state, "telemetry"), 0o700);
   });
 
+  test("a dropped row is never silent: no salt warns loudly in log-only mode", async () => {
+    // "Rows dropped" must be distinguishable from "no skill activity". An
+    // operator reading an empty telemetry file otherwise concludes the install
+    // works and has nothing to report.
+    //
+    // Make the salt impossible to establish while leaving telemetry writable:
+    // a DIRECTORY where the salt file belongs makes open() fail with OSError.
+    mkdirSync(join(state, "observer-salt"), { recursive: true });
+
+    const res = await run("PostToolUse", modelPayload(), {
+      SFCE_SKILL_LOG_ENABLED: "1",
+    });
+
+    expect(res.code).toBe(0);
+    expect(logRows().length).toBe(0); // failed closed, as intended
+    expect(res.stderr).toMatch(/salt|dropped/i); // but said so
+  });
+
   test("an unwritable state root warns on stderr and still exits 0", async () => {
     const locked = join(tmpdir(), `sfce-locked-${randomUUID()}`);
     mkdirSync(locked, { recursive: true });
