@@ -1,0 +1,377 @@
+#!/usr/bin/env bash
+# Metadata gate for the SF compound-engineering plugin.
+#
+# Denies a file-mutating tool call that targets Salesforce metadata when the
+# session holds no authorisation grant, and points the model at the authoring
+# skill that owns that path class. Everything else is allowed.
+#
+# SHIPS OBSERVE-ONLY. Without SFCE_GATE_ENFORCE=1 every step below still runs --
+# predicate, grant read, decision recording -- and the outcome is always allow,
+# with the would-be decision recorded as "would_deny". Enforcement is switched
+# on only after the recorded would-be-deny rate shows the deny prevents
+# something. A first release that strands people teaches them to disable it.
+#
+# TWO MODES, one script:
+#   PreToolUse   decide   Edit / Write / NotebookEdit only (KTD7)
+#   PostToolUse  record   never denies, never reads grant state; writes a
+#                         path-class-only "metadata edit landed" event
+#
+# The PostToolUse half is not decoration. It is the independent denominator the
+# inert-gate detector joins against: without it the gate is the only witness to
+# its own absence, and a gate that never ran produces no row on either side of
+# the comparison (KTD15, R26).
+#
+# WHY Bash IS NOT IN THE DENY MATCHER (KTD7): `sf project retrieve start`
+# legitimately writes hundreds of force-app files. Denying Bash would block
+# routine retrieval. The bypass observer for Bash is U6, on PostToolUse.
+#
+# FAIL-OPEN, LOUDLY (KTD10): a full disk or an unreadable home directory must
+# never brick metadata editing. Every unexpected failure allows the call, warns
+# on stderr, and records an error decision. An uncaught non-zero exit would also
+# let the tool through -- but silently, and indistinguishably from an authorised
+# edit -- so control flow never relies on shell error-exit.
+#
+# Env:
+#   SFCE_GATE_ENABLED=1    run at all (absent = off; see U1 on userConfig)
+#   SFCE_GATE_ENFORCE=1    actually deny; absent = observe-only
+#   SFCE_GATE_OVERRIDE=1   allow this call and record an override event
+#   SFCE_STATE_HOME        state root (SFCE_TEND_HOME is a deprecated alias)
+#
+# Usage: sfce-metadata-gate <PreToolUse|PostToolUse>   (payload on stdin)
+
+set -u
+
+EVENT="${1:-}"
+
+# --- tier 1: flag test before stdin is read ---------------------------------
+case "${SFCE_GATE_ENABLED:-}" in
+  1|true|yes|on) ;;
+  *) exit 0 ;;
+esac
+
+warn() { printf 'sfce-metadata-gate: %s\n' "$1" >&2; }
+
+# Every exit from here on must be an explicit decision. `allow_and_exit` is the
+# single terminator for the non-deny paths so no branch can fall off the end.
+allow_and_exit() { exit 0; }
+
+# An unexpected error must still terminate in an explicit allow, not in a bare
+# non-zero exit that the harness would read as "no opinion" while the edit goes
+# through unrecorded.
+trap 'warn "unexpected failure; allowing the call"; exit 0' ERR
+
+if [ -n "${SFCE_STATE_HOME:-}" ]; then
+  STATE_ROOT="$SFCE_STATE_HOME"
+elif [ -n "${SFCE_TEND_HOME:-}" ]; then
+  STATE_ROOT="$SFCE_TEND_HOME"
+elif [ -n "${XDG_STATE_HOME:-}" ]; then
+  STATE_ROOT="$XDG_STATE_HOME"
+else
+  STATE_ROOT="$HOME/.sfce"
+fi
+GATE_DIR="$STATE_ROOT/gate"
+GRANT_DIR="$GATE_DIR/grants"
+AUDIT="$GATE_DIR/audit.jsonl"
+
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)}"
+ROUTING="$PLUGIN_ROOT/hooks/metadata-path-routing.txt"
+
+PY=""
+for candidate in python3 python; do
+  if command -v "$candidate" >/dev/null 2>&1; then PY="$candidate"; break; fi
+done
+if [ -z "$PY" ]; then
+  warn "no python3 on PATH; allowing the call"
+  allow_and_exit
+fi
+
+PAYLOAD="$(cat)"
+
+# --- tier 2: pre-filter, a STRICT SUPERSET of the real predicate ------------
+# A false negative here is a silent allow, so the test is deliberately loose.
+# JSON permits \uXXXX and \/ escapes, so a metadata path spelled with escapes
+# decodes to a match the raw bytes do not contain -- therefore any payload
+# carrying a backslash falls through to the parser unconditionally (KTD11).
+case "$PAYLOAD" in
+  *\\*) ;;
+  *force-app*|*.cls*|*.trigger*|*-meta.xml*) ;;
+  *) allow_and_exit ;;
+esac
+
+# --- tier 3: authoritative parse and decision -------------------------------
+# ALL output JSON is serialised here, never assembled by shell concatenation.
+# A file_path containing a quote or a newline would otherwise produce malformed
+# JSON -- which fails open, and hands the model a deny-suppression primitive.
+GATE_PY="$(cat <<'PY'
+import fnmatch, json, os, posixpath, sys, time
+
+event = sys.argv[1]
+routing_path = sys.argv[2]
+grant_dir = sys.argv[3]
+enforce = sys.argv[4] == "1"
+override = sys.argv[5] == "1"
+
+MUTATING = ("Edit", "Write", "NotebookEdit")  # MultiEdit no longer exists (2.1.x)
+
+
+def emit(obj):
+    sys.stdout.write(json.dumps(obj))
+    sys.stdout.flush()
+
+
+def decision(kind, extra=None):
+    """A decision row on EVERY matched call, not only denies (KTD15).
+
+    A timed-out or failed-open gate is otherwise byte-indistinguishable from an
+    allow. With a row per matched call, an edit that landed with no matching
+    row is detectable.
+    """
+    row = {"v": 1, "event": "gate_decision", "decision": kind}
+    if extra:
+        row.update(extra)
+    return row
+
+
+try:
+    payload = json.load(sys.stdin)
+    if not isinstance(payload, dict):
+        raise ValueError("payload is not an object")
+except Exception:
+    # Malformed stdin: allow, warn, record nothing we cannot substantiate.
+    sys.stderr.write("sfce-metadata-gate: unparseable payload; allowing\n")
+    sys.exit(0)
+
+tool = payload.get("tool_name") or ""
+tool_input = payload.get("tool_input") or {}
+if not isinstance(tool_input, dict):
+    tool_input = {}
+raw_path = tool_input.get("file_path") or tool_input.get("notebook_path") or ""
+if not isinstance(raw_path, str):
+    raw_path = ""
+
+# --- the predicate: lexically-normalised SHAPE only (KTD6) ------------------
+# No CLAUDE_PROJECT_DIR anchor. That variable pins to the original root while
+# cwd and file_path follow a worktree, so an anchored predicate stops matching
+# in every worktree and fails open with no signal.
+#
+# Normalisation is lexical and happens BEFORE matching, so a `..`-bearing path
+# cannot slip through. Symlinks stay residual and are named in the threat model.
+norm = posixpath.normpath(raw_path.replace("\\", "/")) if raw_path else ""
+segments = [s for s in norm.split("/") if s and s != "."]
+base = segments[-1] if segments else ""
+
+METADATA_SUFFIXES = (
+    ".cls", ".trigger", ".cls-meta.xml", ".trigger-meta.xml",
+    ".flow-meta.xml", ".object-meta.xml", ".field-meta.xml",
+    ".permissionset-meta.xml", ".validationRule-meta.xml",
+    ".flexipage-meta.xml", ".layout-meta.xml", ".tab-meta.xml",
+    ".aiEvaluationDefinition-meta.xml", ".genAiPlugin-meta.xml",
+    ".genAiFunction-meta.xml",
+)
+
+in_force_app = "force-app" in segments
+suffix_match = any(base.endswith(s) for s in METADATA_SUFFIXES)
+matched_rule = ""
+if in_force_app:
+    matched_rule = "**/force-app/**"
+elif suffix_match:
+    for s in METADATA_SUFFIXES:
+        if base.endswith(s):
+            matched_rule = "**/*" + s
+            break
+
+# A bare `lwc/` or `aura/` directory only counts inside force-app. A repository
+# that merely has a directory called lwc is not a Salesforce source tree, and
+# denying there would be a false positive in someone else's project.
+matched = bool(matched_rule)
+
+# ---------------------------------------------------------------------------
+# PostToolUse: record-only. Never denies, never reads grant state.
+# ---------------------------------------------------------------------------
+if event == "PostToolUse":
+    if matched and tool in MUTATING:
+        # Path CLASS only -- never the path itself. This row exists to be
+        # counted against gate decisions, not to describe the user's files.
+        emit({"__audit": decision("edit_landed", {"rule": matched_rule, "tool": tool})})
+    sys.exit(0)
+
+# ---------------------------------------------------------------------------
+# PreToolUse
+# ---------------------------------------------------------------------------
+if tool not in MUTATING or not matched:
+    sys.exit(0)
+
+# --- owning skill, so the deny names the right next step (R2) ---------------
+owner = ""
+try:
+    with open(routing_path, "r", encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split()
+            if len(parts) != 2:
+                continue
+            glob, skill = parts
+            # First match wins, so specific patterns precede general ones.
+            candidate = norm if norm.startswith("/") else "/" + norm
+            if fnmatch.fnmatch(candidate, "*" + glob) or fnmatch.fnmatch(norm, glob):
+                owner = skill
+                break
+except Exception:
+    owner = ""
+if not owner:
+    owner = "sf-work"
+
+session_id = str(payload.get("session_id") or "")
+agent_id = payload.get("agent_id")
+is_subagent = agent_id not in (None, "")
+
+# --- grant read. READS ignore agent_id (KTD3) ------------------------------
+# The four file-writing personas run as subagents and must inherit the parent's
+# grant; only grant WRITES require agent_id to be null, and that is U4's job.
+grant_state = "absent"
+try:
+    with open(os.path.join(grant_dir, session_id), "r", encoding="utf-8") as fh:
+        body = fh.read()
+    expires = 0
+    for line in body.splitlines():
+        if line.startswith("expires="):
+            try:
+                expires = int(line.split("=", 1)[1])
+            except ValueError:
+                expires = 0
+    grant_state = "live" if expires > time.time() else "expired"
+except FileNotFoundError:
+    grant_state = "absent"
+except OSError:
+    # Unreadable state: fail open with a warning and record an error decision.
+    sys.stderr.write("sfce-metadata-gate: cannot read gate state; allowing\n")
+    emit({"__audit": decision("error", {"rule": matched_rule, "reason": "state_unreadable"})})
+    sys.exit(0)
+
+# --- override ---------------------------------------------------------------
+if override:
+    # Do not claim the override is audited when the sink may be unwritable; the
+    # shell decides whether the record actually landed and adjusts the wording.
+    emit({"__audit": decision("override", {"rule": matched_rule, "tool": tool}),
+          "__override": True})
+    sys.exit(0)
+
+if grant_state == "live":
+    emit({"__audit": decision("allow", {"rule": matched_rule, "tool": tool})})
+    sys.exit(0)
+
+# --- deny (or would-deny under observe-only) -------------------------------
+# The reason is short and BYTE-STABLE across repeated denials: hook output is
+# capped at 10,000 characters and a varying reason invites a retry loop. It
+# points at skills/index.md rather than enumerating the allowlist, and never
+# enumerates which paths are unguarded.
+display = norm
+if len(display) > 120:
+    display = "..." + display[-117:]   # truncated, never broken
+
+if is_subagent:
+    # A subagent cannot mint a grant. Telling it to enter a skill would have it
+    # retry against a byte-identical impossible instruction.
+    guidance = (
+        "This subagent cannot authorise metadata edits. "
+        "Return this change to the parent thread, which must enter /%s first."
+    ) % owner
+elif grant_state == "expired":
+    guidance = (
+        "Authorisation for this session has lapsed. "
+        "Re-enter /%s to continue, then retry this edit." % owner
+    )
+else:
+    guidance = (
+        "Enter /%s first, then retry this edit. "
+        "See skills/index.md for which skill owns which metadata." % owner
+    )
+
+reason = "Blocked %s on %s (rule %s). %s" % (tool, display, matched_rule, guidance)
+
+if enforce:
+    emit({
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        },
+        "__audit": decision("deny", {"rule": matched_rule, "tool": tool,
+                                     "grant": grant_state,
+                                     "subagent": bool(is_subagent)}),
+    })
+else:
+    # Observe-only: the decision is recorded, the call is allowed.
+    emit({"__audit": decision("would_deny", {"rule": matched_rule, "tool": tool,
+                                             "grant": grant_state,
+                                             "subagent": bool(is_subagent)})})
+sys.exit(0)
+PY
+)"
+
+ENFORCE=0
+case "${SFCE_GATE_ENFORCE:-}" in 1|true|yes|on) ENFORCE=1 ;; esac
+OVERRIDE=0
+case "${SFCE_GATE_OVERRIDE:-}" in 1|true|yes|on) OVERRIDE=1 ;; esac
+
+# The parser's stderr is deliberately NOT discarded. KTD10 requires the gate to
+# fail open *with a visible warning*; routing the parser's warnings to /dev/null
+# turns every fail-open into a silent allow, which is the failure mode this
+# design exists to avoid. The parser never raises to stderr on its own -- it
+# catches and prints a one-line message -- so what surfaces here is signal.
+RESULT="$(printf '%s' "$PAYLOAD" | "$PY" -I -c "$GATE_PY" \
+  "$EVENT" "$ROUTING" "$GRANT_DIR" "$ENFORCE" "$OVERRIDE")" || {
+  warn "gate evaluation failed; allowing the call"
+  allow_and_exit
+}
+
+if [ -z "$RESULT" ]; then
+  allow_and_exit
+fi
+
+# Split the parser's output: the audit row is ours to persist, the decision
+# object (if any) is what Claude Code reads from stdout.
+AUDIT_ROW="$(printf '%s' "$RESULT" | "$PY" -I -c '
+import json,sys
+try: d=json.load(sys.stdin)
+except Exception: sys.exit(0)
+row=d.get("__audit")
+if row is not None:
+    sys.stdout.write(json.dumps(row,separators=(",",":"),sort_keys=True))
+' 2>/dev/null)"
+
+AUDIT_OK=1
+if [ -n "$AUDIT_ROW" ]; then
+  if mkdir -p "$GATE_DIR" 2>/dev/null; then
+    chmod 700 "$GATE_DIR" 2>/dev/null || true
+    printf '%s\n' "$AUDIT_ROW" >> "$AUDIT" 2>/dev/null || AUDIT_OK=0
+    chmod 600 "$AUDIT" 2>/dev/null || true
+  else
+    AUDIT_OK=0
+  fi
+fi
+
+if [ "$OVERRIDE" = "1" ]; then
+  # Say where it was recorded -- but only when it actually was. Claiming an
+  # audited override that was never written is worse than saying nothing.
+  if [ "$AUDIT_OK" = "1" ]; then
+    warn "override active; recorded to $AUDIT"
+  else
+    warn "override active; the audit record could NOT be written"
+  fi
+  allow_and_exit
+fi
+
+# Emit only the harness-facing decision, with the private audit key removed.
+printf '%s' "$RESULT" | "$PY" -I -c '
+import json,sys
+try: d=json.load(sys.stdin)
+except Exception: sys.exit(0)
+d.pop("__audit",None); d.pop("__override",None)
+if d:
+    sys.stdout.write(json.dumps(d))
+' 2>/dev/null
+
+exit 0
