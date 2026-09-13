@@ -148,6 +148,36 @@ describe("leak: nothing but the skill name reaches a sink", () => {
     expect((record.session_ref as string).length).toBeGreaterThan(8);
   });
 
+  test("concurrent cold starts converge on one salt (no empty-key HMAC)", async () => {
+    // Regression for the salt-initialisation race. O_CREAT|O_EXCL makes
+    // creation atomic but not population: the file exists and is EMPTY between
+    // open() and write(). A reader in that window would HMAC with an empty key,
+    // which does not merely split the counter -- it destroys the property the
+    // hashing exists for, since an empty-key HMAC over a working directory has
+    // a small enough pre-image space to reverse by candidate list.
+    const N = 24;
+    await Promise.all(
+      Array.from({ length: N }, () =>
+        run("PostToolUse", modelPayload({ session_id: "same-session" }), BOTH),
+      ),
+    );
+
+    const rows = logRows();
+    expect(rows.length).toBe(N);
+
+    const refs = new Set(rows.map((r) => JSON.parse(r).session_ref));
+    expect(refs.size, "every concurrent writer must agree on one salt").toBe(1);
+    expect([...refs][0]).toBeTruthy();
+
+    // And the published salt itself must never be empty.
+    const saltPath = join(state, "observer-salt");
+    expect(existsSync(saltPath)).toBe(true);
+    expect(readFileSync(saltPath, "utf-8").trim().length).toBeGreaterThan(32);
+
+    // No temp files left behind by the losing writers.
+    expect(readdirSync(state).filter((f) => f.endsWith(".tmp"))).toEqual([]);
+  }, 120_000);
+
   test("the same session id hashes stably, so counting still works", async () => {
     await run("PostToolUse", modelPayload({ session_id: "stable" }), BOTH);
     await run("PostToolUse", modelPayload({ session_id: "stable" }), BOTH);

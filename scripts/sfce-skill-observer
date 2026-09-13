@@ -153,31 +153,65 @@ if not isinstance(payload, dict):
 # Per-install salt. Created 0600 on first use; readable only by its owner.
 # Without a salt the "hash" would be a plain digest of a low-entropy value and
 # reversible by candidate list, which is the whole reason KTD17 exists.
-salt = b""
-try:
-    with open(salt_path, "rb") as fh:
-        salt = fh.read().strip()
-except Exception:
-    pass
-if not salt:
-    salt = secrets.token_hex(32).encode()
-    try:
-        os.makedirs(os.path.dirname(salt_path), mode=0o700, exist_ok=True)
-        fd = os.open(salt_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(fd, "wb") as fh:
-            fh.write(salt)
-    except FileExistsError:
+def load_or_create_salt(path):
+    """Return the per-install salt, or None if one cannot be established.
+
+    O_CREAT|O_EXCL makes CREATION atomic but not POPULATION: the file exists and
+    is empty between open() and write(). A concurrent observer reading in that
+    window sees b"" and would HMAC with an empty key -- which does not merely
+    split the counter, it destroys the property KTD17 exists for, since an
+    empty-key HMAC over a working directory has a small enough pre-image space
+    to reverse by candidate list.
+
+    So the salt is written to a temp file FIRST and published with os.link,
+    which is atomic and refuses to overwrite. Once the path exists it is always
+    complete, and every process converges on whichever one published first.
+    """
+    for _ in range(5):
         try:
-            with open(salt_path, "rb") as fh:
-                salt = fh.read().strip()
-        except Exception:
+            with open(path, "rb") as fh:
+                existing = fh.read().strip()
+            if existing:
+                return existing
+        except FileNotFoundError:
             pass
-    except Exception:
-        pass
+        except OSError:
+            return None
+
+        candidate = secrets.token_hex(32).encode()
+        tmp = "%s.%d.tmp" % (path, os.getpid())
+        try:
+            os.makedirs(os.path.dirname(path), mode=0o700, exist_ok=True)
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "wb") as fh:
+                fh.write(candidate)
+                fh.flush()
+                os.fsync(fh.fileno())
+            try:
+                os.link(tmp, path)
+                return candidate
+            except FileExistsError:
+                # Someone published first. Adopt theirs on the next loop pass.
+                pass
+        except OSError:
+            return None
+        finally:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+    return None
+
+
+salt = load_or_create_salt(salt_path)
 
 
 def ref(value):
     if value is None or value == "":
+        return None
+    # Never called without a salt: the caller drops the row instead. Guarded
+    # anyway, because a weakly-keyed reference is worse than no telemetry.
+    if not salt:
         return None
     return hmac.new(salt, str(value).encode(), hashlib.sha256).hexdigest()[:16]
 
@@ -216,7 +250,14 @@ out.append("AGENT\t%s" % ("" if agent_id in (None, "") else str(agent_id)))
 out.append("SKILL\t%s" % skill)
 out.append("ENTRY\t%s" % entry)
 
-if skill and entry:
+if skill and entry and not salt:
+    # The log store fails CLOSED (KTD10): a dropped row costs measurement, an
+    # unsalted reference costs the privacy guarantee. The grant sink below is
+    # unaffected -- it never needs the salt -- so enforcement keeps working.
+    sys.stderr.write(
+        "sfce-skill-observer: no usable telemetry salt; row dropped\n")
+
+if skill and entry and salt:
     now = time.time()
     record = {
         "v": 1,
