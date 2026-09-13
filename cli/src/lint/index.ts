@@ -7,6 +7,10 @@
  *                              description (auto-routing frontmatter).
  *   - `rubric-resolvable`    — confidence-rubric / subagent-template references
  *                              that do not resolve to a real file (Gap-11).
+ *   - `authoring-allowlist`  — `hooks/authoring-skills.txt` names a skill that
+ *                              does not exist, or `hooks/metadata-path-routing.txt`
+ *                              routes to a skill absent from the allowlist.
+ *                              The first check that reads outside `skills/`.
  */
 
 import { readdirSync, readFileSync, existsSync } from "fs";
@@ -15,15 +19,29 @@ import { parseMarkdown } from "../parser/markdown.js";
 import { lintDescription, type DescriptionLintResult } from "./description-sdo.js";
 import { lintRubricReferences, type RubricLintResult } from "./rubric-resolvable.js";
 import { lintConsistency, type ConsistencyLintResult } from "./consistency.js";
+import {
+  lintAuthoringAllowlist,
+  type AuthoringAllowlistLintResult,
+} from "./authoring-allowlist.js";
 
-export { lintDescription, lintRubricReferences, lintConsistency };
-export type { DescriptionLintResult, RubricLintResult, ConsistencyLintResult };
+export { lintDescription, lintRubricReferences, lintConsistency, lintAuthoringAllowlist };
+export type {
+  DescriptionLintResult,
+  RubricLintResult,
+  ConsistencyLintResult,
+  AuthoringAllowlistLintResult,
+};
 
 export interface LintReport {
   descriptions: DescriptionLintResult[];
   rubrics: RubricLintResult[];
   consistency: ConsistencyLintResult;
-  /** Flattened, human-readable violation strings across both checks. */
+  /**
+   * Authoring allowlist + metadata path routing (`hooks/*.txt`). The first
+   * check whose remit reaches outside `skills/`.
+   */
+  authoringAllowlist: AuthoringAllowlistLintResult;
+  /** Flattened, human-readable violation strings across every check. */
   violations: string[];
   ok: boolean;
 }
@@ -71,11 +89,20 @@ export function lint(pluginDir: string): LintReport {
   }
 
   const consistency = lintConsistency(pluginDir);
+  const authoringAllowlist = lintAuthoringAllowlist(pluginDir);
   const violations = [
     ...descriptions.flatMap((d) => d.violations),
     ...rubrics.flatMap((r) => r.violations),
     ...consistency.violations,
+    ...authoringAllowlist.violations,
   ];
 
-  return { descriptions, rubrics, consistency, violations, ok: violations.length === 0 };
+  return {
+    descriptions,
+    rubrics,
+    consistency,
+    authoringAllowlist,
+    violations,
+    ok: violations.length === 0,
+  };
 }
