@@ -169,7 +169,33 @@ bun run src/index.ts feed bind sf-platform-delivery --thread delivery-thread
 bun run src/index.ts feed health sf-platform-delivery
 ```
 
-State is stored under `$XDG_STATE_HOME/sfce/tend` (or `~/.sfce/tend`) and scoped to the current worktree by default. Override `--state-dir` and `--scope` in tests or isolated worktrees. The runtime stores feed metadata, cards, evidence, approvals, receipts, and learning proposals only; org credentials and MCP tokens remain owned by the host tool.
+State is stored under `$XDG_STATE_HOME/tend` (or `~/.sfce/tend`) and scoped to the current worktree by default. Override `--state-dir` and `--scope` in tests or isolated worktrees. The runtime stores feed metadata, cards, evidence, approvals, receipts, and learning proposals only; org credentials and MCP tokens remain owned by the host tool. State directories are created `0700` and state files `0600`.
+
+#### State root resolution
+
+`SFCE_STATE_HOME` names the root for every subsystem. `SFCE_TEND_HOME` is a deprecated alias, still honoured, consulted only when `SFCE_STATE_HOME` is unset. Precedence, highest first:
+
+| # | Source | Tend root |
+| --- | --- | --- |
+| 1 | `--state-dir` | the path itself, bare |
+| 2 | `SFCE_STATE_HOME` (or `SFCE_TEND_HOME`) | the path itself, bare |
+| 3 | `XDG_STATE_HOME` | `$XDG_STATE_HOME/tend` |
+| 4 | default | `~/.sfce/tend` |
+
+Subsystems other than Tend (the metadata gate, skill telemetry) take two shapes, so that **no existing Tend path moves**:
+
+* On **1–2** the caller named the root, so Tend keeps it bare and the others nest beneath it: `<root>/gate`, `<root>/telemetry`.
+* On **3–4** the root is shared, so each takes its own segment beside Tend: `<base>/gate`, `<base>/telemetry`.
+
+#### Scope hash
+
+The worktree scope is the first 12 hex characters of the SHA-256 of the resolved working directory. Shell implementations must reproduce it exactly:
+
+```sh
+printf '%s' "$PWD" | shasum -a 256 | cut -c1-12
+```
+
+`printf '%s'` is required. `echo "$PWD"` appends a newline and produces a different digest, which would split one repository's state across two scope directories.
 
 ### Tend command reference
 

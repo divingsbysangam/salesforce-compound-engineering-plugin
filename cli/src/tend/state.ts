@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "crypto";
 import {
+  chmodSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -36,19 +37,77 @@ function nowFor(options: StateOptions): string {
   return (options.now ?? (() => new Date().toISOString()))();
 }
 
+/**
+ * Scope segment: the repository/worktree identity.
+ *
+ * SHELL CONTRACT — the hooks must reproduce this byte for byte:
+ *
+ *     printf '%s' "$PWD" | shasum -a 256 | cut -c1-12
+ *
+ * `printf '%s'` is load-bearing. `echo "$PWD"` appends a newline and yields a
+ * completely different digest, which would silently split one repository's
+ * state across two scope directories. Verified equal to this function's output
+ * on the same working directory.
+ */
 function scopeFor(options: StateOptions): string {
   if (options.scope) return options.scope.replace(/[^a-zA-Z0-9._-]/g, "_");
   const cwd = resolve(process.cwd());
   return `${createHash("sha256").update(cwd).digest("hex").slice(0, 12)}`;
 }
 
+/**
+ * Resolve Tend's state root. Four branches, in precedence order.
+ *
+ * SUBSYSTEM LAYOUT CONTRACT (what the shell hooks must implement for the gate
+ * and telemetry state roots). The two shapes exist so that NO EXISTING TEND
+ * PATH MOVES — an "add a segment on every branch" rule would relocate the state
+ * of anyone who sets an explicit state directory.
+ *
+ *   Branches 1-2 (explicit stateDir, SFCE_STATE_HOME / SFCE_TEND_HOME):
+ *     the caller named the root, so Tend keeps it BARE and the other
+ *     subsystems nest beneath it as siblings.
+ *         tend      -> <root>
+ *         gate      -> <root>/gate
+ *         telemetry -> <root>/telemetry
+ *
+ *   Branches 3-4 (XDG_STATE_HOME, ~/.sfce):
+ *     the root is shared, so every subsystem takes its own segment.
+ *         tend      -> <base>/tend
+ *         gate      -> <base>/gate
+ *         telemetry -> <base>/telemetry
+ *
+ * No subsystem parameter is added here on purpose: nothing in TypeScript reads
+ * gate or telemetry state yet, and shipping an unused API would leave the
+ * layout with two implementations to keep in sync. The shell owns it until a
+ * real TypeScript caller exists.
+ */
 export function resolveStateDir(options: StateOptions = {}): string {
   if (options.stateDir) return resolve(options.stateDir);
+  // SFCE_STATE_HOME is the current name: this root governs gate and telemetry
+  // state too, so a Tend-branded variable no longer describes it.
+  // SFCE_TEND_HOME stays as a deprecated alias and is still honoured, so no
+  // existing setup breaks; it is only consulted when the new name is unset.
+  if (process.env.SFCE_STATE_HOME) return resolve(process.env.SFCE_STATE_HOME);
   if (process.env.SFCE_TEND_HOME) return resolve(process.env.SFCE_TEND_HOME);
   const base = process.env.XDG_STATE_HOME
     ? resolve(process.env.XDG_STATE_HOME)
     : join(homedir(), ".sfce");
   return join(base, "tend");
+}
+
+/**
+ * Create a state directory that only its owner can read.
+ *
+ * State carries feed bindings, receipts and (for the gate) authorisation
+ * markers, so a world-readable directory is a real leak. Only directories this
+ * call creates are tightened: an existing directory keeps whatever permissions
+ * its owner chose, because silently re-chmod-ing a path the user pointed us at
+ * is not ours to do. `mode` on mkdir is masked by umask, so chmod follows it.
+ */
+function ensureStateDir(directory: string): void {
+  const existed = existsSync(directory);
+  mkdirSync(directory, { recursive: true, mode: 0o700 });
+  if (!existed) chmodSync(directory, 0o700);
 }
 
 export function stateFile(options: StateOptions = {}): string {
@@ -77,7 +136,7 @@ function seedFeeds(state: TendState, now: string): void {
 export function loadState(options: StateOptions = {}): TendState {
   const file = stateFile(options);
   const now = nowFor(options);
-  mkdirSync(join(resolveStateDir(options), scopeFor(options)), { recursive: true });
+  ensureStateDir(join(resolveStateDir(options), scopeFor(options)));
 
   let state = emptyState(now);
   if (existsSync(file)) {
@@ -94,10 +153,13 @@ export function loadState(options: StateOptions = {}): TendState {
 export function saveState(state: TendState, options: StateOptions = {}): string {
   const file = stateFile(options);
   const directory = join(resolveStateDir(options), scopeFor(options));
-  mkdirSync(directory, { recursive: true });
+  ensureStateDir(directory);
   state.updatedAt = nowFor(options);
   const temporary = join(directory, `.state.${process.pid}.${randomUUID()}.tmp`);
   writeFileSync(temporary, `${JSON.stringify(state, null, 2)}\n`, { mode: 0o600 });
+  // `mode` on writeFileSync is masked by umask and only applies at creation, so
+  // chmod the temp file before it becomes state.json. rename preserves the mode.
+  chmodSync(temporary, 0o600);
   renameSync(temporary, file);
   return file;
 }
