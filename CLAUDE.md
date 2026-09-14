@@ -60,7 +60,7 @@ bun run typecheck   # tsc --noEmit
 
 There's also a Python entry point (`sfce.py`, declared in `pyproject.toml` as `sfce` script). It predates the Bun CLI and is separate; the Bun CLI under `cli/` is the actively maintained installer and Tend runtime.
 
-The Bun CLI also exposes the local Tend runtime through `feed`, `card`, `work`, `action`, and `learning` commands. Feed state defaults to `$XDG_STATE_HOME/sfce/tend` or `~/.sfce/tend`; use `--state-dir` to isolate tests and worktrees.
+The Bun CLI also exposes the local Tend runtime through `feed`, `card`, `work`, `action`, and `learning` commands. Feed state defaults to `$XDG_STATE_HOME/tend` or `~/.sfce/tend`; use `--state-dir` to isolate tests and worktrees. `SFCE_STATE_HOME` overrides the root for every subsystem (`SFCE_TEND_HOME` is a deprecated alias). See README's "State root resolution" for the full precedence, the gate/telemetry layout, and the scope-hash recipe shell hooks must reproduce.
 
 ## MCP servers
 

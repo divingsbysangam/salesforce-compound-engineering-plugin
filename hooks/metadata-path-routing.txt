@@ -1,0 +1,43 @@
+# Metadata path class -> owning skill.
+#
+# The gate uses this for ONE purpose: when it denies an edit, it names the skill
+# the author should have gone through. A deny that says only "not authorised" is
+# a dead end; a deny that says "use /apex-generate or /sf-work" is a next step.
+#
+# Format:  <glob><whitespace><owning-skill>
+# Blank lines and # comments are ignored. First match wins, so order matters —
+# specific patterns must precede general ones.
+#
+# INVARIANT: every owning skill here must also appear in authoring-skills.txt,
+# or the gate would route an author toward a skill that cannot authorise the
+# edit. `cli/src/lint/authoring-allowlist.ts` enforces exactly that.
+#
+# Where no dedicated generator exists (LWC, Aura), the owner is sf-work — the
+# general implementation skill. That is a real routing answer, not a fallback:
+# there is no lwc-generate skill in this plugin, and inventing a target that
+# does not exist would strand the author.
+
+# --- Apex -------------------------------------------------------------------
+force-app/**/*.trigger                       apex-trigger-refactor
+force-app/**/*.cls                           apex-generate
+
+# --- UI: no dedicated generator, so the implementation skill owns these ------
+force-app/**/lwc/**/*.js                     sf-work
+force-app/**/lwc/**/*.html                   sf-work
+force-app/**/lwc/**/*.css                    sf-work
+force-app/**/aura/**                         sf-work
+
+# --- declarative metadata ---------------------------------------------------
+**/*.flow-meta.xml                           flow-generate
+**/*.validationRule-meta.xml                 validation-rule-generate
+**/*.permissionset-meta.xml                  permission-set-generate
+**/*.flexipage-meta.xml                      lightning-page-generate
+
+# --- Agentforce -------------------------------------------------------------
+**/*.aiEvaluationDefinition-meta.xml         agentforce-test
+**/*.genAiPlugin-meta.xml                    agentforce-develop
+**/*.genAiFunction-meta.xml                  agentforce-develop
+
+# --- catch-all for remaining source-format metadata -------------------------
+# Last, so every more specific class above wins first.
+force-app/**/*-meta.xml                      metadata-generate

@@ -1,0 +1,451 @@
+#!/usr/bin/env bash
+# Skill-entry observer for the SF compound-engineering plugin.
+#
+# Skill entry is ONE event that arrives on TWO disjoint paths (KTD1). U1 measured
+# both against Claude Code 2.1.270 and neither alone sees every entry:
+#
+#   model-initiated / description-matched -> PostToolUse, tool_name "Skill",
+#                                            skill in tool_input.skill
+#   typed slash command                   -> UserPromptExpansion,
+#                                            skill in command_name
+#
+# A typed slash command emits NO Skill tool event at all -- it is expanded into
+# the prompt rather than called as a tool -- so an observer watching only the
+# tool path would miss every slash entry, and one watching only expansion would
+# miss every auto-routed entry. This handler normalises both into one fact.
+#
+# THE RECORD (a consumer should read this contract, not this script):
+#
+#   {"v":1,                    schema version; bump on any field change
+#    "ts":"...Z",              ISO-8601 UTC, second resolution
+#    "session_ref":"<hex>",    HMAC of the session id under a per-install salt
+#    "agent_ref":"<hex>|null", HMAC of the agent id; null on the main thread
+#    "skill":"sf-plan",        BARE skill name, qualifier stripped
+#    "entry":"model|slash",    which path this arrived on
+#    "repo_ref":"<hex>"}       HMAC of the working directory
+#
+#   session_ref is an HMAC, never the raw id (KTD17): the raw session id is a
+#   join key into ~/.claude/projects/**/<session_id>.jsonl, which holds full
+#   prompts and file contents. Hashing preserves distinct-session counting and
+#   destroys the join. The raw id survives only as a grant filename, which is
+#   local, ephemeral and never printed.
+#
+# THREE SINKS IN TWO FAILURE DOMAINS (KTD14):
+#
+#   grant      gate flag   MUST run first and to completion
+#   gate-audit gate flag   append-only
+#   log        log  flag   append-only
+#
+#   The grant sink is the gate's only authorisation source. An audit- or
+#   log-sink failure can NEVER affect grant state: otherwise a full disk in the
+#   telemetry directory would produce a permanent, silent deny on every
+#   metadata edit with no visible cause.
+#
+# Every failure warns on stderr and exits 0. A hook that exits non-zero on
+# PreToolUse can block a tool call; this observer must never be the reason an
+# edit fails.
+#
+# Env:
+#   SFCE_GATE_ENABLED=1       enable the grant + gate-audit sinks
+#   SFCE_SKILL_LOG_ENABLED=1  enable the telemetry log sink
+#   SFCE_STATE_HOME           state root (SFCE_TEND_HOME is a deprecated alias)
+#   SFCE_GATE_TTL_SECONDS     grant idle TTL, default 14400 (4h)
+#
+# Both flags are off unless explicitly set. U1 proved CLAUDE_PLUGIN_OPTION_* does
+# not reach a hook process from a manifest default, so "absent" must mean off --
+# the hook cannot distinguish "off" from "never configured".
+#
+# Usage: sfce-skill-observer <HookEventName>   (payload on stdin)
+
+# No `set -e`: a failing sink must warn and continue, not abort the handler.
+set -u
+
+EVENT="${1:-}"
+
+# --- tier 1: flag test, before stdin is read (~2ms) --------------------------
+# Default-substitution reads only, no subprocess. If neither sink is enabled
+# there is nothing to do and the payload is never read.
+GATE_ON="${SFCE_GATE_ENABLED:-}"
+LOG_ON="${SFCE_SKILL_LOG_ENABLED:-}"
+case "$GATE_ON" in 1|true|yes|on) GATE_ON=1 ;; *) GATE_ON="" ;; esac
+case "$LOG_ON"  in 1|true|yes|on) LOG_ON=1  ;; *) LOG_ON=""  ;; esac
+if [ -z "$GATE_ON" ] && [ -z "$LOG_ON" ]; then
+  exit 0
+fi
+
+warn() { printf 'sfce-skill-observer: %s\n' "$1" >&2; }
+
+# --- state root: the U3 contract, reproduced in shell ------------------------
+# Branch 1 (--state-dir) does not exist for a hook. Of the rest:
+#   SFCE_STATE_HOME / SFCE_TEND_HOME -> bare root, subsystems nest beneath
+#   XDG_STATE_HOME / ~/.sfce         -> each subsystem gets its own segment
+# Either way gate and telemetry end up as siblings and no Tend path moves.
+if [ -n "${SFCE_STATE_HOME:-}" ]; then
+  STATE_ROOT="$SFCE_STATE_HOME"
+elif [ -n "${SFCE_TEND_HOME:-}" ]; then
+  STATE_ROOT="$SFCE_TEND_HOME"
+elif [ -n "${XDG_STATE_HOME:-}" ]; then
+  STATE_ROOT="$XDG_STATE_HOME"
+else
+  STATE_ROOT="$HOME/.sfce"
+fi
+GATE_DIR="$STATE_ROOT/gate"
+TELEMETRY_DIR="$STATE_ROOT/telemetry"
+GRANT_DIR="$GATE_DIR/grants"
+SALT_FILE="$STATE_ROOT/observer-salt"
+
+# The state root is resolved from the environment and HOME only. It is never
+# derived from the working directory, so no fallback can place a file inside
+# the user's repository.
+
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)}"
+ALLOWLIST="$PLUGIN_ROOT/hooks/authoring-skills.txt"
+TTL="${SFCE_GATE_TTL_SECONDS:-14400}"
+
+# --- resolve the interpreter -------------------------------------------------
+PY=""
+for candidate in python3 python; do
+  if command -v "$candidate" >/dev/null 2>&1; then PY="$candidate"; break; fi
+done
+if [ -z "$PY" ]; then
+  warn "no python3 on PATH; skill entry not observed"
+  exit 0
+fi
+
+# --- read stdin once ---------------------------------------------------------
+PAYLOAD="$(cat)"
+
+# --- tier 2: raw-payload pre-filter (~3.8ms) ---------------------------------
+# Must be a strict SUPERSET of the authoritative predicate: a false negative
+# here is a silently unobserved entry. JSON permits \uXXXX and \/ escapes, so a
+# name spelled with escapes would not appear in the raw bytes -- therefore any
+# payload containing a backslash falls through to the parser unconditionally.
+case "$PAYLOAD" in
+  *\\*) ;;                                   # escapes present: cannot pre-filter
+  *'"Skill"'*|*command_name*|*SessionStart*|*SessionEnd*) ;;
+  *) exit 0 ;;
+esac
+
+# --- tier 3: authoritative parse (~20ms), spawned at most once ---------------
+# Isolated mode (-I) is required, not merely -S. Hooks run with the working
+# directory set to the project, and without -I that directory stays on the
+# module search path: a `json.py` committed to a repository the developer did
+# not author would be imported and executed with full user permissions on every
+# matched call. -I closes the working directory, PYTHON* env vars and user
+# site-packages together.
+#
+# The program is passed with -c, not on stdin. `python3 -I - ` would read the
+# program FROM stdin, and stdin is where the payload has to arrive; a heredoc
+# would win over the pipe and the parser would see an empty payload.
+OBSERVER_PY="$(cat <<'PY'
+import hashlib, hmac, json, os, secrets, sys, time
+
+event = sys.argv[1]
+salt_path = sys.argv[2]
+# The salt exists only to key telemetry references. With the log sink off it is
+# never used, so it is never created and its failure is never reported: a
+# gate-only install should not be told about a telemetry subsystem it disabled,
+# nor have a salt file appear for one.
+log_enabled = len(sys.argv) > 3 and sys.argv[3] == "1"
+
+try:
+    payload = json.load(sys.stdin)
+except Exception:
+    sys.exit(0)
+if not isinstance(payload, dict):
+    sys.exit(0)
+
+# Per-install salt. Created 0600 on first use; readable only by its owner.
+# Without a salt the "hash" would be a plain digest of a low-entropy value and
+# reversible by candidate list, which is the whole reason KTD17 exists.
+def load_or_create_salt(path):
+    """Return the per-install salt, or None if one cannot be established.
+
+    O_CREAT|O_EXCL makes CREATION atomic but not POPULATION: the file exists and
+    is empty between open() and write(). A concurrent observer reading in that
+    window sees b"" and would HMAC with an empty key -- which does not merely
+    split the counter, it destroys the property KTD17 exists for, since an
+    empty-key HMAC over a working directory has a small enough pre-image space
+    to reverse by candidate list.
+
+    So the salt is written to a temp file FIRST and published with os.link,
+    which is atomic and refuses to overwrite. Once the path exists it is always
+    complete, and every process converges on whichever one published first.
+    """
+    for _ in range(5):
+        try:
+            with open(path, "rb") as fh:
+                existing = fh.read().strip()
+            if existing:
+                return existing
+        except FileNotFoundError:
+            pass
+        except OSError:
+            return None
+
+        candidate = secrets.token_hex(32).encode()
+        tmp = "%s.%d.tmp" % (path, os.getpid())
+        try:
+            os.makedirs(os.path.dirname(path), mode=0o700, exist_ok=True)
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "wb") as fh:
+                fh.write(candidate)
+                fh.flush()
+                os.fsync(fh.fileno())
+            try:
+                os.link(tmp, path)
+                return candidate
+            except FileExistsError:
+                # Someone published first. Adopt theirs on the next loop pass.
+                pass
+        except OSError:
+            return None
+        finally:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+    return None
+
+
+salt = load_or_create_salt(salt_path) if log_enabled else None
+
+
+def ref(value):
+    if value is None or value == "":
+        return None
+    # Never called without a salt: the caller drops the row instead. Guarded
+    # anyway, because a weakly-keyed reference is worse than no telemetry.
+    if not salt:
+        return None
+    return hmac.new(salt, str(value).encode(), hashlib.sha256).hexdigest()[:16]
+
+
+def bare(name):
+    """Skill identity is plugin-qualified on BOTH paths (U1).
+
+    `sf-compound-engineering:sf-plan`, never `sf-plan`. The allowlist and the
+    telemetry rows use bare names, so strip the qualifier exactly once here.
+    """
+    if not name:
+        return ""
+    return name.split(":")[-1].strip()
+
+
+hook = payload.get("hook_event_name") or event
+skill, entry = "", ""
+
+if hook == "PostToolUse" and payload.get("tool_name") == "Skill":
+    ti = payload.get("tool_input") or {}
+    if isinstance(ti, dict):
+        # tool_input.args carries the verbatim user prompt. It is read here only
+        # to be ignored; it must never reach a sink.
+        skill, entry = bare(ti.get("skill")), "model"
+elif hook == "UserPromptExpansion" and payload.get("expansion_type") == "slash_command":
+    skill, entry = bare(payload.get("command_name")), "slash"
+
+session_id = str(payload.get("session_id") or "")
+agent_id = payload.get("agent_id")
+
+out = []
+out.append("HOOK\t%s" % hook)
+out.append("SOURCE\t%s" % (payload.get("source") or ""))
+out.append("SID\t%s" % session_id)
+out.append("AGENT\t%s" % ("" if agent_id in (None, "") else str(agent_id)))
+out.append("SKILL\t%s" % skill)
+out.append("ENTRY\t%s" % entry)
+
+if skill and entry and log_enabled and not salt:
+    # The log store fails CLOSED (KTD10): a dropped row costs measurement, an
+    # unsalted reference costs the privacy guarantee. The grant sink below is
+    # unaffected -- it never needs the salt -- so enforcement keeps working.
+    sys.stderr.write(
+        "sfce-skill-observer: no usable telemetry salt; row dropped\n")
+
+if skill and entry and salt:
+    now = time.time()
+    record = {
+        "v": 1,
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
+        "session_ref": ref(session_id),
+        "agent_ref": ref(agent_id),
+        "skill": skill,
+        "entry": entry,
+        "repo_ref": ref(payload.get("cwd") or os.getcwd()),
+    }
+    row = json.dumps(record, separators=(",", ":"), sort_keys=True)
+    # Date partition computed here rather than by spawning `date`.
+    out.append("DATE\t%s" % time.strftime("%Y-%m-%d", time.gmtime(now)))
+    out.append("ROW\t%s" % row)
+
+sys.stdout.write("\n".join(out) + "\n")
+PY
+)"
+
+# The parser's stderr is deliberately NOT discarded. It carries the one case
+# where telemetry is dropped on purpose -- no usable salt -- and suppressing it
+# makes "rows dropped" indistinguishable from "no skill activity", which is the
+# same silent-failure shape the gate had. The parser catches its own errors and
+# emits single-line messages, so what surfaces here is signal.
+PARSED="$(printf '%s' "$PAYLOAD" | "$PY" -I -c "$OBSERVER_PY" "$EVENT" "$SALT_FILE" "${LOG_ON:-}")"
+
+if [ -z "$PARSED" ]; then
+  exit 0
+fi
+
+HOOK="" SOURCE="" SID="" AGENT="" SKILL="" ENTRY="" DATE="" ROW=""
+while IFS="$(printf '\t')" read -r key value; do
+  case "$key" in
+    HOOK)   HOOK="$value" ;;
+    SOURCE) SOURCE="$value" ;;
+    SID)    SID="$value" ;;
+    AGENT)  AGENT="$value" ;;
+    SKILL)  SKILL="$value" ;;
+    ENTRY)  ENTRY="$value" ;;
+    DATE)   DATE="$value" ;;
+    ROW)    ROW="$value" ;;
+  esac
+done <<EOF
+$PARSED
+EOF
+
+# --- session lifecycle: revocation is an ALLOWLIST, not a denylist (KTD4) ----
+# "revoke on any source except startup" would catch `compact`, which is exactly
+# the long run this design exists to protect.
+if [ "$HOOK" = "SessionStart" ]; then
+  if [ -n "$GATE_ON" ] && [ -n "$SID" ]; then
+    case "$SOURCE" in
+      clear|resume) rm -f "$GRANT_DIR/$SID" 2>/dev/null || true ;;
+    esac
+  fi
+  exit 0
+fi
+if [ "$HOOK" = "SessionEnd" ]; then
+  [ -n "$GATE_ON" ] && [ -n "$SID" ] && rm -f "$GRANT_DIR/$SID" 2>/dev/null || true
+  exit 0
+fi
+
+# Not a skill entry.
+if [ -z "$SKILL" ] || [ -z "$ENTRY" ]; then
+  exit 0
+fi
+
+# A skill entry WAS observed but the parser produced no row. The only way that
+# happens is a missing salt, where the log store fails closed on purpose. Warn
+# at the shell level too rather than relying on the parser's stderr reaching the
+# user: an operator who cannot tell "dropped" from "no activity" will read an
+# empty telemetry file as a working install with nothing to report.
+if [ -n "$LOG_ON" ] && [ -z "$ROW" ]; then
+  warn "skill entry observed but no telemetry row produced (no usable salt); row dropped"
+fi
+
+# ============================================================================
+# SINK 1 — GRANT. Runs FIRST and to completion (KTD14 failure-domain contract).
+# ============================================================================
+if [ -n "$GATE_ON" ]; then
+  (
+    allowed=""
+    if [ -r "$ALLOWLIST" ]; then
+      while IFS= read -r entry_line || [ -n "$entry_line" ]; do
+        case "$entry_line" in ''|'#'*) continue ;; esac
+        # Trim surrounding whitespace without a subshell (bash 3.2 safe).
+        entry_line="${entry_line%%[[:space:]]*}"
+        [ "$entry_line" = "$SKILL" ] && { allowed=1; break; }
+      done < "$ALLOWLIST"
+    fi
+
+    # KTD3: grant WRITES require agent_id to be null. A read-only review persona
+    # that loads an authoring skill for reference must not unlock the main
+    # thread for the rest of the session. (Grant READS ignore agent_id, so the
+    # four file-writing personas still inherit the parent's grant -- that is the
+    # gate's concern, in U5, not this observer's.)
+    if [ -n "$allowed" ] && [ -z "$AGENT" ] && [ -n "$SID" ]; then
+      if ! mkdir -p "$GRANT_DIR" 2>/dev/null; then
+        warn "cannot create grant directory $GRANT_DIR; gate state not updated"
+        exit 0
+      fi
+      chmod 700 "$GATE_DIR" "$GRANT_DIR" 2>/dev/null || true
+
+      now="$(date +%s 2>/dev/null || echo 0)"
+      expiry=$((now + TTL))
+
+      # Atomic replace: write to a temp file in the SAME directory, then rename.
+      # Concurrent sessions are correct by construction -- each writes its own
+      # session-keyed file, and rename is atomic within a filesystem.
+      tmp="$GRANT_DIR/.grant.$$.tmp"
+      # The expiry lives INSIDE the file so a reader needs no stat() call.
+      if printf 'v=1\nexpires=%s\nskill=%s\n' "$expiry" "$SKILL" > "$tmp" 2>/dev/null; then
+        chmod 600 "$tmp" 2>/dev/null || true
+        mv -f "$tmp" "$GRANT_DIR/$SID" 2>/dev/null || rm -f "$tmp" 2>/dev/null
+      else
+        rm -f "$tmp" 2>/dev/null
+        warn "cannot write grant for this session; metadata edits may be denied"
+      fi
+
+      # Opportunistic sweep of expired grants. Bounded and best effort: a
+      # crashed session's grant is already unreachable (no future session
+      # presents its id), so this reclaims disk, it does not enforce anything.
+      for stale in "$GRANT_DIR"/*; do
+        [ -f "$stale" ] || continue
+        [ "$stale" = "$GRANT_DIR/$SID" ] && continue
+        stale_exp="$(sed -n 's/^expires=//p' "$stale" 2>/dev/null | head -1)"
+        case "$stale_exp" in
+          ''|*[!0-9]*) continue ;;
+        esac
+        [ "$stale_exp" -lt "$now" ] 2>/dev/null && rm -f "$stale" 2>/dev/null
+      done
+    fi
+  ) || warn "grant sink failed; continuing"
+
+  # ==========================================================================
+  # SINK 2 — GATE AUDIT. Same flag as the grant, deliberately: routing these
+  # through the log sink would leave them unrecorded in the gate-on/log-off
+  # configuration this plan blesses.
+  # ==========================================================================
+  (
+    if mkdir -p "$GATE_DIR" 2>/dev/null; then
+      chmod 700 "$GATE_DIR" 2>/dev/null || true
+      audit="$GATE_DIR/audit.jsonl"
+      printf '{"v":1,"event":"skill_entry","skill":"%s","entry":"%s","agent":%s}\n' \
+        "$SKILL" "$ENTRY" "$([ -n "$AGENT" ] && echo '"subagent"' || echo 'null')" \
+        >> "$audit" 2>/dev/null
+      chmod 600 "$audit" 2>/dev/null || true
+    fi
+  ) 2>/dev/null || warn "gate-audit sink failed; grant state is unaffected"
+fi
+
+# ============================================================================
+# SINK 3 — LOG. Runs last. Its failure cannot reach the grant sink above.
+# ============================================================================
+if [ -n "$LOG_ON" ] && [ -n "$ROW" ]; then
+  (
+    if ! mkdir -p "$TELEMETRY_DIR" 2>/dev/null; then
+      warn "cannot create telemetry directory; skill entry not logged"
+      exit 0
+    fi
+    chmod 700 "$TELEMETRY_DIR" 2>/dev/null || true
+    log_file="$TELEMETRY_DIR/skills-$DATE.jsonl"
+
+    # KTD16: hard cap at 1024 bytes INCLUDING the newline. Measured on APFS with
+    # 16 concurrent writers: zero tearing below 1024 bytes, 5-41% line
+    # destruction above it. An oversized row is DROPPED and counted, never
+    # truncated -- truncation produces invalid JSON, the exact failure being
+    # prevented.
+    size=${#ROW}
+    if [ "$((size + 1))" -gt 1024 ]; then
+      printf '%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null)" \
+        >> "$TELEMETRY_DIR/dropped-oversize.count" 2>/dev/null
+      exit 0
+    fi
+
+    # One printf, one write. No lock: a lock would serialise writers and add
+    # contention to solve a problem the size invariant already eliminates.
+    printf '%s\n' "$ROW" >> "$log_file" 2>/dev/null || {
+      warn "cannot append telemetry row"
+      exit 0
+    }
+    chmod 600 "$log_file" 2>/dev/null || true
+  ) || warn "log sink failed; grant state is unaffected"
+fi
+
+exit 0

@@ -1,0 +1,51 @@
+{
+  "_fixture": "session-fork",
+  "_captured_on": "Claude Code 2.1.270",
+  "_note": "Scrubbed capture from the U1 skill-entry observability spike. Ids are synthetic; paths are a fixture root; prompt text, tool inputs and tool responses are removed.",
+  "_events_total": 4,
+  "_events_recorded": 4,
+  "_truncated": false,
+  "event_sequence": [
+    "SessionStart",
+    "UserPromptSubmit",
+    "Stop",
+    "SessionEnd"
+  ],
+  "events": [
+    {
+      "session_id": "00000000-0000-0000-0000-000000000000",
+      "transcript_path": "/fixture-root/repo/.transcript.jsonl",
+      "cwd": "/fixture-root/repo",
+      "hook_event_name": "SessionStart",
+      "source": "fork",
+      "seconds_since_last_response": 0,
+      "context_tokens": 0,
+      "prompt_cache_likely_expired": false,
+      "estimated_cache_write_usd": 0
+    },
+    {
+      "session_id": "00000000-0000-0000-0000-000000000000",
+      "transcript_path": "/fixture-root/repo/.transcript.jsonl",
+      "cwd": "/fixture-root/repo",
+      "prompt_id": "11111111-1111-1111-1111-111111111111",
+      "permission_mode": "default",
+      "hook_event_name": "UserPromptSubmit"
+    },
+    {
+      "session_id": "00000000-0000-0000-0000-000000000000",
+      "transcript_path": "/fixture-root/repo/.transcript.jsonl",
+      "cwd": "/fixture-root/repo",
+      "prompt_id": "11111111-1111-1111-1111-111111111111",
+      "permission_mode": "default",
+      "hook_event_name": "Stop"
+    },
+    {
+      "session_id": "00000000-0000-0000-0000-000000000000",
+      "transcript_path": "/fixture-root/repo/.transcript.jsonl",
+      "cwd": "/fixture-root/repo",
+      "prompt_id": "11111111-1111-1111-1111-111111111111",
+      "hook_event_name": "SessionEnd",
+      "reason": "other"
+    }
+  ]
+}

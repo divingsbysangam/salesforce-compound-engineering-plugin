@@ -1,0 +1,55 @@
+# Authoring allowlist — skills that may grant authorisation to edit Salesforce
+# metadata. One skill name per line. Blank lines and # comments are ignored.
+#
+# DERIVATION RULE (this, not the list, is the thing to preserve):
+#   a skill belongs here when its subtree — INCLUDING the personas it dispatches
+#   as subagents — writes Salesforce metadata.
+#
+# "Including personas" is load-bearing. Four personas write files, and each is
+# owned by a skill that does not obviously author metadata by its own name:
+#   sf-bug-reproduction-validator    -> sf-debug
+#   sf-pr-comment-resolver           -> sf-resolve-pr-feedback
+#   sf-deployment-verification-agent -> sf-review
+#   sf-mcp-tool-builder-agent        -> mcp-tool-builder
+# Derive by "what does the subtree write", never by "does the name say generate".
+#
+# THE LIST IS HAND-MAINTAINED, AND THE LINT IS ONE-DIRECTIONAL.
+# `cli/src/lint/authoring-allowlist.ts` checks that every name here resolves to a
+# real skills/<name>/SKILL.md, and that every routing-table target appears here.
+# It CANNOT check the reverse — "a skill that writes metadata but is missing from
+# this file" — because nothing in a SKILL.md mechanically declares that it writes
+# metadata. Implementing that check needs a frontmatter marker on all 69 skills,
+# which is cross-cutting work deliberately not done here.
+# So: adding a skill that authors metadata means adding it here BY HAND. Nothing
+# will catch the omission for you.
+
+# --- workflow skills that implement -----------------------------------------
+sf-work
+sf-debug
+sf-lfg
+sf-review
+sf-resolve-pr-feedback
+sf-polish
+sf-simplify-code
+sf-retune
+sf-sweep
+
+# --- metadata generators ----------------------------------------------------
+apex-generate
+apex-trigger-refactor
+flow-generate
+metadata-generate
+permission-set-generate
+validation-rule-generate
+lightning-page-generate
+test-factory
+slds2-uplift
+
+# --- Agentforce and platform extension --------------------------------------
+agentforce-develop
+# agentforce-test writes AiEvaluationDefinition test specs, which are metadata.
+# It is absent from the plan's researched list — found by re-deriving against
+# skills/ rather than adopting that list verbatim.
+agentforce-test
+prompt-builder
+mcp-tool-builder

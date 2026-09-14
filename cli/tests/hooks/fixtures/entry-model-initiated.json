@@ -1,0 +1,105 @@
+{
+  "_fixture": "entry-model-initiated",
+  "_captured_on": "Claude Code 2.1.270",
+  "_note": "Scrubbed capture from the U1 skill-entry observability spike. Ids are synthetic; paths are a fixture root; prompt text, tool inputs and tool responses are removed.",
+  "_events_total": 30,
+  "_events_recorded": 8,
+  "_truncated": true,
+  "event_sequence": [
+    "SessionStart",
+    "UserPromptSubmit",
+    "PreToolUse",
+    "PostToolUse",
+    "PreToolUse",
+    "PostToolUse",
+    "PreToolUse",
+    "PreToolUse"
+  ],
+  "events": [
+    {
+      "session_id": "00000000-0000-0000-0000-000000000000",
+      "transcript_path": "/fixture-root/repo/.transcript.jsonl",
+      "cwd": "/fixture-root/repo",
+      "hook_event_name": "SessionStart",
+      "source": "startup"
+    },
+    {
+      "session_id": "00000000-0000-0000-0000-000000000000",
+      "transcript_path": "/fixture-root/repo/.transcript.jsonl",
+      "cwd": "/fixture-root/repo",
+      "prompt_id": "11111111-1111-1111-1111-111111111111",
+      "permission_mode": "default",
+      "hook_event_name": "UserPromptSubmit"
+    },
+    {
+      "session_id": "00000000-0000-0000-0000-000000000000",
+      "transcript_path": "/fixture-root/repo/.transcript.jsonl",
+      "cwd": "/fixture-root/repo",
+      "prompt_id": "11111111-1111-1111-1111-111111111111",
+      "permission_mode": "default",
+      "hook_event_name": "PreToolUse",
+      "tool_name": "Skill",
+      "tool_input": {
+        "skill": "sf-compound-engineering:sf-plan",
+        "_other_field_names": [
+          "args"
+        ]
+      }
+    },
+    {
+      "session_id": "00000000-0000-0000-0000-000000000000",
+      "transcript_path": "/fixture-root/repo/.transcript.jsonl",
+      "cwd": "/fixture-root/repo",
+      "prompt_id": "11111111-1111-1111-1111-111111111111",
+      "permission_mode": "default",
+      "hook_event_name": "PostToolUse",
+      "tool_name": "Skill",
+      "tool_input": {
+        "skill": "sf-compound-engineering:sf-plan",
+        "_other_field_names": [
+          "args"
+        ]
+      }
+    },
+    {
+      "session_id": "00000000-0000-0000-0000-000000000000",
+      "transcript_path": "/fixture-root/repo/.transcript.jsonl",
+      "cwd": "/fixture-root/repo",
+      "prompt_id": "11111111-1111-1111-1111-111111111111",
+      "permission_mode": "default",
+      "hook_event_name": "PreToolUse",
+      "tool_name": "Bash",
+      "tool_input": "<dropped>"
+    },
+    {
+      "session_id": "00000000-0000-0000-0000-000000000000",
+      "transcript_path": "/fixture-root/repo/.transcript.jsonl",
+      "cwd": "/fixture-root/repo",
+      "prompt_id": "11111111-1111-1111-1111-111111111111",
+      "permission_mode": "default",
+      "hook_event_name": "PostToolUse",
+      "tool_name": "Bash",
+      "tool_input": "<dropped>"
+    },
+    {
+      "session_id": "00000000-0000-0000-0000-000000000000",
+      "transcript_path": "/fixture-root/repo/.transcript.jsonl",
+      "cwd": "/fixture-root/repo",
+      "prompt_id": "11111111-1111-1111-1111-111111111111",
+      "permission_mode": "default",
+      "hook_event_name": "PreToolUse",
+      "tool_name": "Bash",
+      "tool_input": "<dropped>"
+    },
+    {
+      "session_id": "00000000-0000-0000-0000-000000000000",
+      "transcript_path": "/fixture-root/repo/.transcript.jsonl",
+      "cwd": "/fixture-root/repo",
+      "prompt_id": "11111111-1111-1111-1111-111111111111",
+      "permission_mode": "default",
+      "hook_event_name": "PreToolUse",
+      "tool_name": "Bash",
+      "tool_input": "<dropped>"
+    }
+  ]
+}
