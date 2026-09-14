@@ -243,9 +243,10 @@ describe("self-check", () => {
     writeFileSync(
       join(state, "gate", "audit.jsonl"),
       [
-        JSON.stringify({ v: 1, event: "gate_decision", decision: "override" }),
+        JSON.stringify({ v: 1, event: "gate_decision", decision: "override", call: "x1" }),
         JSON.stringify({ v: 1, event: "bash_bypass", class: "heredoc" }),
-        JSON.stringify({ v: 1, event: "gate_decision", decision: "edit_landed" }),
+        // Landed with no matching decision: a genuine inert-gate event.
+        JSON.stringify({ v: 1, event: "gate_decision", decision: "edit_landed", call: "x2" }),
       ].join("\n") + "\n",
     );
     const r = await runScript("sfce-gate-selfcheck", "SessionStart", "{}",
@@ -254,6 +255,23 @@ describe("self-check", () => {
     expect(r.stdout).toMatch(/overrides 1/);
     expect(r.stdout).toMatch(/shell bypasses 1/);
     expect(r.stdout).toMatch(/no decision row 1/);
+  });
+
+  test("an overridden edit is not reported as missing a decision", async () => {
+    // The mirror of the reporter bug: an override IS a decision, and excluding
+    // it raised a false alarm on the summary a human is meant to trust.
+    const root = sandboxPlugin();
+    mkdirSync(join(state, "gate"), { recursive: true });
+    writeFileSync(
+      join(state, "gate", "audit.jsonl"),
+      [
+        JSON.stringify({ v: 1, event: "gate_decision", decision: "override", call: "y1" }),
+        JSON.stringify({ v: 1, event: "gate_decision", decision: "edit_landed", call: "y1" }),
+      ].join("\n") + "\n",
+    );
+    const r = await runScript("sfce-gate-selfcheck", "SessionStart", "{}",
+      { SFCE_GATE_ENABLED: "1" }, root);
+    expect(r.stdout).toMatch(/no decision row 0/);
   });
 });
 

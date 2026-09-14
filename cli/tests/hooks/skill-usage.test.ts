@@ -226,20 +226,55 @@ describe("health warnings", () => {
     // and "no rows" is otherwise indistinguishable from "no edits happened".
     writeRows([{ skill: "sf-work" }]);
     writeAudit([
-      { v: 1, event: "gate_decision", decision: "edit_landed", rule: "**/force-app/**" },
-      { v: 1, event: "gate_decision", decision: "edit_landed", rule: "**/force-app/**" },
-      { v: 1, event: "gate_decision", decision: "allow", rule: "**/force-app/**" },
+      { v: 1, event: "gate_decision", decision: "edit_landed", call: "c1", rule: "**/force-app/**" },
+      { v: 1, event: "gate_decision", decision: "edit_landed", call: "c2", rule: "**/force-app/**" },
+      { v: 1, event: "gate_decision", decision: "allow", call: "c1", rule: "**/force-app/**" },
     ]);
     const r = await report();
     expect(r.out).toContain("gate health");
     expect(r.out).toContain("1 metadata edit(s) landed");
   });
 
+  test("totals cannot cancel: a deny plus an inert edit still warns", async () => {
+    // The regression Greptile caught. Comparing TOTALS cancels out — one denied
+    // edit contributes a decision with no landing, one inert edit contributes a
+    // landing with no decision, the counts match, and the warning that exists
+    // for exactly this stays silent. Rows are paired by correlation id instead.
+    writeRows([{ skill: "sf-work" }]);
+    writeAudit([
+      { v: 1, event: "gate_decision", decision: "deny", call: "callA" },
+      { v: 1, event: "gate_decision", decision: "edit_landed", call: "callB" },
+    ]);
+    const r = await report();
+    expect(r.out).toContain("gate health");
+    expect(r.out).toContain("1 metadata edit(s) landed");
+  });
+
+  test("an overridden edit is NOT reported as missing a decision", async () => {
+    // An override IS a decision. Excluding it raised a false alarm on the one
+    // signal a maintainer is meant to trust.
+    writeRows([{ skill: "sf-work" }]);
+    writeAudit([
+      { v: 1, event: "gate_decision", decision: "override", call: "callC" },
+      { v: 1, event: "gate_decision", decision: "edit_landed", call: "callC" },
+    ]);
+    const r = await report();
+    expect(r.out).not.toContain("gate health");
+  });
+
+  test("legacy rows with no correlation id are reported apart, not guessed at", async () => {
+    writeRows([{ skill: "sf-work" }]);
+    writeAudit([{ v: 1, event: "gate_decision", decision: "edit_landed" }]);
+    const r = await report();
+    expect(r.out).toContain("no correlation id");
+    expect(r.out).toContain("rather than guessed at");
+  });
+
   test("matched decisions for every landed edit produce no gate warning", async () => {
     writeRows([{ skill: "sf-work" }]);
     writeAudit([
-      { v: 1, event: "gate_decision", decision: "edit_landed" },
-      { v: 1, event: "gate_decision", decision: "allow" },
+      { v: 1, event: "gate_decision", decision: "edit_landed", call: "c9" },
+      { v: 1, event: "gate_decision", decision: "allow", call: "c9" },
     ]);
     const r = await report();
     expect(r.out).not.toContain("gate health");
@@ -309,6 +344,24 @@ describe("purge", () => {
     const after = readdirSync(join(state, "telemetry"));
     expect(after.length).toBe(1);
     expect(after[0]).toContain(day(ago(1)));
+  });
+
+  test("--older-than keeps the boundary partition", async () => {
+    // The cutoff carries the current time of day, so a naive datetime compare
+    // drops the whole boundary partition — deleting rows written later that day
+    // which are still inside the requested window.
+    writeRows([
+      { skill: "boundary", ts: ago(30) },
+      { skill: "inside", ts: ago(1) },
+      { skill: "outside", ts: ago(31) },
+    ]);
+    const r = await report(["purge", "--older-than", "30d"]);
+    expect(r.code).toBe(0);
+    const left = readdirSync(join(state, "telemetry"));
+    expect(left, "the 30-day-old partition must survive").toContain(
+      `skills-${day(ago(30))}.jsonl`,
+    );
+    expect(left).not.toContain(`skills-${day(ago(31))}.jsonl`);
   });
 
   test("purge on an empty store exits 0", async () => {

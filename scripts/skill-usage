@@ -177,16 +177,28 @@ def read_telemetry(tel_dir, cutoff):
 
 
 def read_audit(gate_dir):
-    """Second store, also one pass. Feeds the gate-health warnings."""
+    """Second store, also one pass.
+
+    Returns (counts, skipped, gap, uncorrelated) where `gap` is the number of
+    landed edits whose PreToolUse decision is MISSING, paired by correlation id.
+
+    Pairing matters: comparing totals cancels out. One denied edit contributes a
+    decision with no landing and one inert edit contributes a landing with no
+    decision, so the totals match and the warning this exists for stays silent.
+    """
     counts = defaultdict(int)
     skipped = 0
+    decided_refs = set()
+    landed_refs = set()
+    uncorrelated_landed = 0
+
     path = os.path.join(gate_dir, "audit.jsonl")
     if not os.path.isfile(path):
-        return counts, skipped
+        return counts, skipped, 0, 0
     try:
         handle = open(path, "r", encoding="utf-8", errors="replace")
     except OSError:
-        return counts, skipped + 1
+        return counts, skipped + 1, 0, 0
     with handle:
         for line in handle:
             line = line.strip()
@@ -200,11 +212,30 @@ def read_audit(gate_dir):
                 skipped += 1
                 continue
             event = row.get("event") or "?"
-            if event == "gate_decision":
-                counts["decision:" + str(row.get("decision") or "?")] += 1
-            else:
+            if event != "gate_decision":
                 counts[str(event)] += 1
-    return counts, skipped
+                continue
+
+            decision = str(row.get("decision") or "?")
+            counts["decision:" + decision] += 1
+            ref = row.get("call")
+            if decision == "edit_landed":
+                if ref:
+                    landed_refs.add(ref)
+                else:
+                    # Written before correlation ids existed. Counted apart
+                    # rather than guessed at, so an old store cannot produce a
+                    # confident-looking number the data does not support.
+                    uncorrelated_landed += 1
+            else:
+                # EVERY non-landing decision pairs, override included. Excluding
+                # overrides would report a legitimately overridden edit as
+                # having no decision row.
+                if ref:
+                    decided_refs.add(ref)
+
+    gap = len(landed_refs - decided_refs)
+    return counts, skipped, gap, uncorrelated_landed
 
 
 def known_skills(plugin_root):
@@ -232,7 +263,7 @@ def report(args):
         cutoff = datetime.now(timezone.utc) - args.since
 
     stats, skipped, collisions = read_telemetry(tel_dir, cutoff)
-    audit, audit_skipped = read_audit(gate_dir)
+    audit, audit_skipped, gate_gap, uncorrelated = read_audit(gate_dir)
     skipped += audit_skipped
 
     observed_first = min((s.first for s in stats.values() if s.first), default=None)
@@ -257,7 +288,7 @@ def report(args):
         print("  No entries recorded in this window.")
         print("")
         print_caveats(window_days, bool(stats))
-        print_health(audit, collisions, skipped)
+        print_health(audit, collisions, skipped, gate_gap, uncorrelated)
         return 0
 
     header = "  %-34s %7s %8s %8s %8s  %-10s %-10s" % (
@@ -293,7 +324,7 @@ def report(args):
 
     print("")
     print_caveats(window_days, True)
-    print_health(audit, collisions, skipped)
+    print_health(audit, collisions, skipped, gate_gap, uncorrelated)
     return 0
 
 
@@ -311,7 +342,7 @@ def print_caveats(window_days, have_data):
     print("   * A conditional skill can idle for weeks and still be load-bearing.")
 
 
-def print_health(audit, collisions, skipped):
+def print_health(audit, collisions, skipped, gate_gap=0, uncorrelated=0):
     warnings = []
 
     if collisions:
@@ -322,15 +353,17 @@ def print_health(audit, collisions, skipped):
             "the contract broke. Rows are NOT deduplicated, so counts above may "
             "be inflated." % (collisions, "y was" if collisions == 1 else "ies were"))
 
-    decisions = sum(v for k, v in audit.items() if k.startswith("decision:")
-                    and not k.endswith(":edit_landed"))
-    landed = audit.get("decision:edit_landed", 0) + audit.get("edit_landed", 0)
-    if landed > decisions:
+    if gate_gap:
         warnings.append(
             "gate health: %d metadata edit(s) landed with no matching gate "
-            "decision row. A gate that timed out or was never registered is "
-            "otherwise indistinguishable from one that allowed the edit."
-            % (landed - decisions))
+            "decision row, paired by correlation id. A gate that timed out or "
+            "was never registered is otherwise indistinguishable from one that "
+            "allowed the edit." % gate_gap)
+    if uncorrelated:
+        warnings.append(
+            "%d landed-edit row(s) carry no correlation id and could not be "
+            "paired. They predate correlation and are excluded from the gate "
+            "check above rather than guessed at." % uncorrelated)
 
     if skipped:
         warnings.append(
@@ -400,7 +433,10 @@ def purge(args):
                     tzinfo=timezone.utc)
             except ValueError:
                 continue
-            if day < cutoff:
+            # Compare DATES, not datetimes. A cutoff carrying the current
+            # time of day would drop the boundary partition whole, deleting
+            # rows written later that day which are still inside the window.
+            if day.date() < cutoff.date():
                 # Whole partitions only. Rewriting a file in place would race
                 # the appends this rotation exists to keep safe.
                 os.remove(os.path.join(tel_dir, name))

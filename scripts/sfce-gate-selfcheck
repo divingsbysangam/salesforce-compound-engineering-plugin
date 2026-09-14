@@ -161,7 +161,9 @@ if [ -n "$PY" ]; then
   SUMMARY="$("$PY" - "$STATE_ROOT/gate/audit.jsonl" <<'PY' 2>/dev/null
 import json, os, sys
 path = sys.argv[1]
-override = bypass = landed = decided = 0
+override = bypass = 0
+landed_refs, decided_refs = set(), set()
+uncorrelated = 0
 if os.path.isfile(path):
     try:
         with open(path, "r", encoding="utf-8", errors="replace") as fh:
@@ -178,20 +180,32 @@ if os.path.isfile(path):
                 event = row.get("event")
                 if event == "bash_bypass":
                     bypass += 1
-                elif event == "gate_decision":
-                    d = row.get("decision")
-                    if d == "override":
-                        override += 1
-                    elif d == "edit_landed":
-                        landed += 1
+                    continue
+                if event != "gate_decision":
+                    continue
+                d = row.get("decision")
+                ref = row.get("call")
+                if d == "override":
+                    override += 1
+                # An override IS a decision. Excluding it from the paired set
+                # reported a legitimately overridden edit as having no decision
+                # row -- a false alarm on the one signal meant to be trusted.
+                if d == "edit_landed":
+                    if ref:
+                        landed_refs.add(ref)
                     else:
-                        decided += 1
+                        uncorrelated += 1
+                elif ref:
+                    decided_refs.add(ref)
     except OSError:
         pass
-gap = landed - decided
-if override or bypass or gap > 0:
-    sys.stdout.write("overrides %d, shell bypasses %d, edits with no decision row %d"
-                     % (override, bypass, gap if gap > 0 else 0))
+# Paired by correlation id, not by comparing totals: a denied edit and an inert
+# edit would otherwise cancel each other out and the gap would read zero.
+gap = len(landed_refs - decided_refs)
+if override or bypass or gap or uncorrelated:
+    extra = (", %d unpaired legacy row(s)" % uncorrelated) if uncorrelated else ""
+    sys.stdout.write("overrides %d, shell bypasses %d, edits with no decision row %d%s"
+                     % (override, bypass, gap, extra))
 PY
 )"
   if [ -n "$SUMMARY" ]; then
