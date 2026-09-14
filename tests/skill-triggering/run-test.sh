@@ -71,6 +71,10 @@ RECORD_TIMEOUT_SECS="${SFCE_RECORD_TIMEOUT_SECS:-600}"
 
 # Seed battery: "<expected-skill> <prompt-file>" per line.
 # Prompt files are resolved relative to SCRIPT_DIR.
+# Claude Code reports skill identity plugin-qualified (U1, measured on 2.1.270).
+# SEED_BATTERY holds bare names; this is the qualifier they are compared under.
+PLUGIN_QUALIFIER="sf-compound-engineering"
+
 SEED_BATTERY=(
   "sf-work        prompts/quick-fix-trigger.txt"
   "sf-brainstorm  prompts/build-lead-autoassign.txt"
@@ -295,7 +299,22 @@ EOF
     skill="${rows[$i]#*	}"
     if is_skill_tool "$tool"; then
       first_skill="$skill"
-      [[ "$skill" == "$expected" ]] && triggered=0
+      # Claude Code reports skill identity PLUGIN-QUALIFIED, always:
+      # "sf-compound-engineering:sf-review", never a bare "sf-review".
+      # Measured on 2.1.270 in the U1 spike; see
+      # docs/solutions/patterns/claude-code-skill-entry-events.md.
+      #
+      # SEED_BATTERY holds bare names, so an exact comparison against the raw
+      # identity would fail EVERY case the moment real fixtures are recorded --
+      # a false FAIL, not a vacuous pass, but it would still make the gate
+      # useless and look like a routing catastrophe.
+      #
+      # The bare name is QUALIFIED for comparison rather than the recorded
+      # identity being stripped. Stripping would accept
+      # `other-plugin:sf-review` as this plugin's sf-review, which is a
+      # different skill entirely and exactly the kind of near-match this
+      # assertion exists to catch.
+      [[ "$skill" == "$expected" || "$skill" == "$PLUGIN_QUALIFIER:$expected" ]] && triggered=0
       break
     fi
     if is_benign_tool "$tool"; then

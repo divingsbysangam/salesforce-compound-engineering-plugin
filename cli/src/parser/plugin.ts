@@ -131,8 +131,19 @@ function parseMcpServers(pluginDir: string): Record<string, McpServer> {
  * the script stays the single source of truth for the primer text.
  */
 function extractSessionStartPrimer(scriptContent: string): string {
-  const match = scriptContent.match(/<<-?['"]?(\w+)['"]?\s*\n([\s\S]*?)\n\1\b/);
-  return match ? match[2].trim() : "";
+  // Anchor on the NAMED delimiter, not on "the first heredoc in the file".
+  // Position-based extraction fails silently: adding any heredoc above the
+  // primer would quietly make that text the discipline primer on eleven
+  // targets, with nothing to notice it had happened.
+  const named = scriptContent.match(
+    /<<-?['"]?SFCE_PRIMER['"]?\s*\n([\s\S]*?)\nSFCE_PRIMER\b/,
+  );
+  if (named) return named[1].trim();
+
+  // Fallback for a script predating the named delimiter, so an older checkout
+  // still converts rather than shipping an empty primer.
+  const first = scriptContent.match(/<<-?['"]?(\w+)['"]?\s*\n([\s\S]*?)\n\1\b/);
+  return first ? first[2].trim() : "";
 }
 
 function parseHooks(pluginDir: string): PluginHooks | undefined {

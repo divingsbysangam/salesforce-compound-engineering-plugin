@@ -131,7 +131,13 @@ fi
 # The gate's own inputs are ordinary files the agent can edit, and editing them
 # is never denied. This cannot prevent that; it makes it visible in the record.
 if [ -n "$PY" ]; then
-  DIGEST="$("$PY" - "$GATE" "$ALLOWLIST" "$ROUTING" <<'PY' 2>/dev/null
+  # -I, like every other parser spawn in this plugin. `"$PY" -` reads the
+  # program from stdin and does NOT isolate. This handler runs at session start
+  # with the project as the working directory, so without -I a hashlib.py
+  # committed to a repository the developer did not author would be imported and
+  # executed with full user permissions -- by the very check whose job is to
+  # confirm the enforcement inputs are intact.
+  DIGEST_PY="$(cat <<'DIGEST_PROGRAM'
 import hashlib, os, sys
 h = hashlib.sha256()
 for path in sys.argv[1:]:
@@ -142,8 +148,9 @@ for path in sys.argv[1:]:
         h.update(b"<missing>")
     h.update(b"\0")
 sys.stdout.write(h.hexdigest()[:16])
-PY
+DIGEST_PROGRAM
 )"
+  DIGEST="$("$PY" -I -c "$DIGEST_PY" "$GATE" "$ALLOWLIST" "$ROUTING" 2>/dev/null)"
   [ -n "$DIGEST" ] && say "  enforcement inputs digest: $DIGEST"
 fi
 
@@ -158,7 +165,7 @@ if [ -n "$PY" ]; then
   else STATE_ROOT="$HOME/.sfce"
   fi
 
-  SUMMARY="$("$PY" - "$STATE_ROOT/gate/audit.jsonl" <<'PY' 2>/dev/null
+  SUMMARY_PY="$(cat <<'SUMMARY_PROGRAM'
 import json, os, sys
 path = sys.argv[1]
 override = bypass = 0
@@ -206,8 +213,9 @@ if override or bypass or gap or uncorrelated:
     extra = (", %d unpaired legacy row(s)" % uncorrelated) if uncorrelated else ""
     sys.stdout.write("overrides %d, shell bypasses %d, edits with no decision row %d%s"
                      % (override, bypass, gap, extra))
-PY
+SUMMARY_PROGRAM
 )"
+  SUMMARY="$("$PY" -I -c "$SUMMARY_PY" "$STATE_ROOT/gate/audit.jsonl" 2>/dev/null)"
   if [ -n "$SUMMARY" ]; then
     say "  gate audit since install: $SUMMARY"
   fi

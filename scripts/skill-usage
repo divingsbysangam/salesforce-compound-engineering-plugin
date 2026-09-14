@@ -408,7 +408,12 @@ def purge(args):
 
     if args.older_than is None:
         removed = []
-        for target in (tel_dir, os.path.join(gate_dir, "audit.jsonl")):
+        # The salt goes too. It is the key that makes the telemetry references
+        # unlinkable; deleting every row but keeping the key leaves behind the
+        # one file actually worth removing, and a later re-enable would then
+        # produce references that correlate with the deleted set.
+        salt = os.path.join(root, "observer-salt")
+        for target in (tel_dir, os.path.join(gate_dir, "audit.jsonl"), salt):
             if os.path.isdir(target):
                 shutil.rmtree(target, ignore_errors=True)
                 removed.append(redact_path(target))
