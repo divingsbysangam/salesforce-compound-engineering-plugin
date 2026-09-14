@@ -395,14 +395,20 @@ DECISION=""
 $RESULT
 SFCE_RESULT
 
-AUDIT_OK=1
+# Starts at 0 and is set only by an append that actually succeeded. Defaulting
+# to 1 let the override branch claim "recorded to <path>" when the parser
+# produced NO row at all -- a malformed payload exits before emitting one -- so
+# the gate asserted an audit record that did not exist. Claiming bookkeeping
+# that never happened is worse than staying quiet, which is the whole reason
+# this flag exists.
+AUDIT_OK=0
 if [ -n "$AUDIT_ROW" ]; then
   if mkdir -p "$GATE_DIR" 2>/dev/null; then
     chmod 700 "$GATE_DIR" 2>/dev/null || true
-    printf '%s\n' "$AUDIT_ROW" >> "$AUDIT" 2>/dev/null || AUDIT_OK=0
+    if printf '%s\n' "$AUDIT_ROW" >> "$AUDIT" 2>/dev/null; then
+      AUDIT_OK=1
+    fi
     chmod 600 "$AUDIT" 2>/dev/null || true
-  else
-    AUDIT_OK=0
   fi
 fi
 

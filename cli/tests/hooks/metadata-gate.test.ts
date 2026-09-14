@@ -329,6 +329,23 @@ describe("override", () => {
     expect(out.stderr).toContain("audit.jsonl");
   });
 
+  test("does not claim an audit record when the parser produced no row", async () => {
+    // A malformed payload exits before emitting an audit row. The override
+    // branch still ran its "recorded to <path>" message, asserting bookkeeping
+    // that did not exist -- no audit file was ever created. Claiming a record
+    // that was never written is worse than staying quiet, which is exactly what
+    // this flag exists to prevent.
+    const out = await gate(
+      "PreToolUse",
+      '{"tool_name":"Edit","tool_input":{"file_path":"/r/force-app/a.cls"',
+      { SFCE_GATE_OVERRIDE: "1" },
+    );
+    expect(out.code).toBe(0);
+    expect(out.stderr).toContain("could NOT be written");
+    expect(out.stderr).not.toContain("recorded to");
+    expect(existsSync(join(state, "gate", "audit.jsonl"))).toBe(false);
+  });
+
   test("does not claim an audited override when the sink is unwritable", async () => {
     mkdirSync(state, { recursive: true });
     chmodSync(state, 0o500);
