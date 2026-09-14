@@ -44,10 +44,17 @@ set -u
 EVENT="${1:-}"
 
 # --- tier 1: flag test before stdin is read ---------------------------------
-case "${SFCE_GATE_ENABLED:-}" in
-  1|true|yes|on) ;;
-  *) exit 0 ;;
-esac
+# Both spellings are accepted. U1 measured that a userConfig DEFAULT never
+# reaches a hook process -- a value arrives only once set via /plugin configure
+# -- and could not observe the exact env-name transform, so the documented
+# SFCE_ name stays the reliable path and the plugin-option names are read
+# alongside it. Absent still means off.
+_gate_on=""
+for _v in "${SFCE_GATE_ENABLED:-}" "${CLAUDE_PLUGIN_OPTION_METADATA_GATE:-}" \
+          "${CLAUDE_PLUGIN_OPTION_metadata_gate:-}"; do
+  case "$_v" in 1|true|yes|on) _gate_on=1 ;; esac
+done
+[ -n "$_gate_on" ] || exit 0
 
 warn() { printf 'sfce-metadata-gate: %s\n' "$1" >&2; }
 
@@ -103,7 +110,7 @@ esac
 # A file_path containing a quote or a newline would otherwise produce malformed
 # JSON -- which fails open, and hands the model a deny-suppression primitive.
 GATE_PY="$(cat <<'PY'
-import fnmatch, json, os, posixpath, sys, time
+import fnmatch, hashlib, json, os, posixpath, sys, time
 
 event = sys.argv[1]
 routing_path = sys.argv[2]
@@ -119,6 +126,25 @@ def emit(obj):
     sys.stdout.flush()
 
 
+def call_ref():
+    """Correlation id shared by the PreToolUse decision and the PostToolUse
+    landing for the SAME tool call.
+
+    Comparing TOTALS instead of pairing was wrong and could cancel out: one
+    denied edit contributes a decision with no landing, one inert edit
+    contributes a landing with no decision, and the two offset so the
+    inert-gate warning stayed silent. tool_use_id is present on both events, so
+    the rows can be paired exactly.
+
+    It is hashed and truncated: a raw tool_use_id is not a session join key,
+    but nothing is gained by storing it verbatim in a file the reporter reads.
+    """
+    raw = payload.get("tool_use_id")
+    if not raw:
+        return None
+    return hashlib.sha256(str(raw).encode()).hexdigest()[:16]
+
+
 def decision(kind, extra=None):
     """A decision row on EVERY matched call, not only denies (KTD15).
 
@@ -127,6 +153,9 @@ def decision(kind, extra=None):
     row is detectable.
     """
     row = {"v": 1, "event": "gate_decision", "decision": kind}
+    ref = call_ref()
+    if ref:
+        row["call"] = ref
     if extra:
         row.update(extra)
     return row

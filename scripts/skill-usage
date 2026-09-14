@@ -1,0 +1,467 @@
+#!/usr/bin/env python3
+"""Report skill usage in a form that supports investigation, not deletion.
+
+The expensive failure this reporter exists to prevent is a WRONG DELETION: a
+maintainer reads "cold" next to a conditional skill, deletes it, and discovers
+months later that it fired only for a case nobody exercised that month. So the
+wording is the deliverable as much as the numbers are:
+
+  * A zero count inside a short collection window prints NO EVIDENCE, never
+    "cold" and never "unused". The word "unused" appears nowhere in any output.
+  * Subagent entries are reported in their own column. They are never summed
+    into the main-thread count -- a persona loading a skill for reference is
+    not the same event as a developer entering it -- and never discarded, since
+    they are the only visibility into what personas load.
+  * Every caveat the data requires is printed with the table, not buried.
+
+REDACTION (R14). Output carries no session references, repository references,
+agent ids, raw log lines, absolute paths, or prompt text. Health warnings name
+the condition and never print the colliding row. Skill names are stripped of
+non-printables before display: a name carrying terminal escape sequences must
+not be able to rewrite the report as it prints.
+
+PERFORMANCE (O13). One streaming pass per store, accumulating into dicts and
+sets. A per-skill re-scan over sixty-nine skills turns a million-row log into
+tens of seconds; this reads each line once and never holds the file in memory.
+
+Rotation lives HERE, not in the hook: a rename inside the hook races concurrent
+appends, and the size invariant that makes those appends safe does not survive
+a file moving under them.
+
+Usage:
+  skill-usage [--since 30d] [--state-dir DIR] [--plugin-root DIR]
+  skill-usage purge [--older-than 90d] [--state-dir DIR]
+"""
+
+import argparse
+import json
+import os
+import re
+import sys
+import shutil
+from collections import defaultdict
+from datetime import datetime, timedelta, timezone
+
+# A window shorter than this cannot support any claim about a skill that never
+# fired. Conditional skills (release notes, migration helpers) can idle for
+# weeks and still be load-bearing.
+NO_EVIDENCE_DAYS = 14
+
+NON_PRINTABLE = re.compile(r"[^\x20-\x7e]")
+
+
+def clean_name(name):
+    """Strip non-printables so a skill name cannot rewrite the terminal."""
+    return NON_PRINTABLE.sub("", str(name))[:48] or "(unnamed)"
+
+
+def redact_path(path):
+    """Never print an absolute path. Home-relative or basename only."""
+    home = os.path.expanduser("~")
+    if path.startswith(home):
+        return "~" + path[len(home):]
+    return os.path.basename(path.rstrip("/")) or "(store)"
+
+
+def parse_window(text):
+    m = re.fullmatch(r"(\d+)([dhw])", str(text).strip())
+    if not m:
+        raise argparse.ArgumentTypeError("window must look like 30d, 12h or 2w")
+    n, unit = int(m.group(1)), m.group(2)
+    return timedelta(days=n if unit == "d" else n * 7 if unit == "w" else 0,
+                     hours=n if unit == "h" else 0)
+
+
+def state_root(explicit):
+    if explicit:
+        return explicit
+    for var in ("SFCE_STATE_HOME", "SFCE_TEND_HOME"):
+        if os.environ.get(var):
+            return os.environ[var]
+    if os.environ.get("XDG_STATE_HOME"):
+        return os.environ["XDG_STATE_HOME"]
+    return os.path.join(os.path.expanduser("~"), ".sfce")
+
+
+def parse_ts(value):
+    try:
+        return datetime.strptime(str(value), "%Y-%m-%dT%H:%M:%SZ").replace(
+            tzinfo=timezone.utc)
+    except Exception:
+        return None
+
+
+class Stats(object):
+    __slots__ = ("main", "sub", "sessions", "repos", "first", "last", "entries")
+
+    def __init__(self):
+        self.main = 0
+        self.sub = 0
+        self.sessions = set()
+        self.repos = set()
+        self.first = None
+        self.last = None
+        self.entries = set()
+
+
+def read_telemetry(tel_dir, cutoff):
+    """One streaming pass. Returns (per-skill stats, skipped, collisions)."""
+    stats = defaultdict(Stats)
+    skipped = 0
+    # Collision detection for R17: the two entry paths are disjoint BY
+    # CONTRACT, so the same (skill, session, second) arriving on both is a
+    # broken invariant worth surfacing -- not something to dedupe away, which
+    # would hide it forever.
+    seen_keys = defaultdict(set)
+    collisions = 0
+
+    if not os.path.isdir(tel_dir):
+        return stats, skipped, collisions
+
+    for name in sorted(os.listdir(tel_dir)):
+        if not (name.startswith("skills-") and name.endswith(".jsonl")):
+            continue
+        path = os.path.join(tel_dir, name)
+        try:
+            handle = open(path, "r", encoding="utf-8", errors="replace")
+        except OSError:
+            skipped += 1
+            continue
+        with handle:
+            for line in handle:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                    if not isinstance(row, dict):
+                        raise ValueError
+                except Exception:
+                    skipped += 1
+                    continue
+
+                skill = row.get("skill")
+                ts = parse_ts(row.get("ts"))
+                if not skill or ts is None:
+                    skipped += 1
+                    continue
+                if cutoff and ts < cutoff:
+                    continue
+
+                st = stats[clean_name(skill)]
+                entry = row.get("entry") or "?"
+                st.entries.add(entry)
+                if row.get("agent_ref"):
+                    st.sub += 1
+                else:
+                    st.main += 1
+                if row.get("session_ref"):
+                    st.sessions.add(row["session_ref"])
+                if row.get("repo_ref"):
+                    st.repos.add(row["repo_ref"])
+                st.first = ts if st.first is None or ts < st.first else st.first
+                st.last = ts if st.last is None or ts > st.last else st.last
+
+                # A collision is specifically CROSS-PATH: the same skill, in the
+                # same session, in the same second, arriving on BOTH the slash
+                # and the model path. Two entries on the SAME path in one second
+                # are legitimate (a retry, a fast loop) and must not be flagged,
+                # or the warning cries wolf and stops being read.
+                key = (skill, row.get("session_ref"), row.get("ts"))
+                prior = seen_keys[key]
+                if prior and entry not in prior:
+                    collisions += 1
+                prior.add(entry)
+
+    return stats, skipped, collisions
+
+
+def read_audit(gate_dir):
+    """Second store, also one pass.
+
+    Returns (counts, skipped, gap, uncorrelated) where `gap` is the number of
+    landed edits whose PreToolUse decision is MISSING, paired by correlation id.
+
+    Pairing matters: comparing totals cancels out. One denied edit contributes a
+    decision with no landing and one inert edit contributes a landing with no
+    decision, so the totals match and the warning this exists for stays silent.
+    """
+    counts = defaultdict(int)
+    skipped = 0
+    decided_refs = set()
+    landed_refs = set()
+    uncorrelated_landed = 0
+
+    path = os.path.join(gate_dir, "audit.jsonl")
+    if not os.path.isfile(path):
+        return counts, skipped, 0, 0
+    try:
+        handle = open(path, "r", encoding="utf-8", errors="replace")
+    except OSError:
+        return counts, skipped + 1, 0, 0
+    with handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+                if not isinstance(row, dict):
+                    raise ValueError
+            except Exception:
+                skipped += 1
+                continue
+            event = row.get("event") or "?"
+            if event != "gate_decision":
+                counts[str(event)] += 1
+                continue
+
+            decision = str(row.get("decision") or "?")
+            counts["decision:" + decision] += 1
+            ref = row.get("call")
+            if decision == "edit_landed":
+                if ref:
+                    landed_refs.add(ref)
+                else:
+                    # Written before correlation ids existed. Counted apart
+                    # rather than guessed at, so an old store cannot produce a
+                    # confident-looking number the data does not support.
+                    uncorrelated_landed += 1
+            else:
+                # EVERY non-landing decision pairs, override included. Excluding
+                # overrides would report a legitimately overridden edit as
+                # having no decision row.
+                if ref:
+                    decided_refs.add(ref)
+
+    gap = len(landed_refs - decided_refs)
+    return counts, skipped, gap, uncorrelated_landed
+
+
+def known_skills(plugin_root):
+    skills_dir = os.path.join(plugin_root, "skills")
+    if not os.path.isdir(skills_dir):
+        return []
+    out = []
+    for name in sorted(os.listdir(skills_dir)):
+        if os.path.isfile(os.path.join(skills_dir, name, "SKILL.md")):
+            out.append(name)
+    return out
+
+
+def fmt_day(dt):
+    return dt.strftime("%Y-%m-%d") if dt else "-"
+
+
+def report(args):
+    root = state_root(args.state_dir)
+    tel_dir = os.path.join(root, "telemetry")
+    gate_dir = os.path.join(root, "gate")
+
+    cutoff = None
+    if args.since:
+        cutoff = datetime.now(timezone.utc) - args.since
+
+    stats, skipped, collisions = read_telemetry(tel_dir, cutoff)
+    audit, audit_skipped, gate_gap, uncorrelated = read_audit(gate_dir)
+    skipped += audit_skipped
+
+    observed_first = min((s.first for s in stats.values() if s.first), default=None)
+    observed_last = max((s.last for s in stats.values() if s.last), default=None)
+
+    if cutoff is not None:
+        window_start = cutoff
+    else:
+        window_start = observed_first
+    window_days = 0
+    if window_start:
+        window_days = (datetime.now(timezone.utc) - window_start).days
+
+    print("Skill usage")
+    print("  collection start : %s" % (fmt_day(window_start)))
+    print("  most recent entry: %s" % (fmt_day(observed_last)))
+    print("  window           : %s" % ("%d days" % window_days if window_start else "no data yet"))
+    print("  store            : %s" % redact_path(tel_dir))
+    print("")
+
+    if not stats:
+        print("  No entries recorded in this window.")
+        print("")
+        print_caveats(window_days, bool(stats))
+        print_health(audit, collisions, skipped, gate_gap, uncorrelated)
+        return 0
+
+    header = "  %-34s %7s %8s %8s %8s  %-10s %-10s" % (
+        "skill", "main", "subagent", "sessions", "repos", "first", "last")
+    print(header)
+    print("  " + "-" * (len(header) - 2))
+
+    for name in sorted(stats, key=lambda n: (-stats[n].main, n)):
+        st = stats[name]
+        print("  %-34s %7d %8d %8d %8d  %-10s %-10s" % (
+            name, st.main, st.sub, len(st.sessions), len(st.repos),
+            fmt_day(st.first), fmt_day(st.last)))
+
+    # Skills with no entries. The wording here is the whole unit.
+    seen = set(stats)
+    catalogue = known_skills(args.plugin_root)
+    silent = [s for s in catalogue if s not in seen]
+    if silent:
+        print("")
+        if window_days < NO_EVIDENCE_DAYS:
+            print("  NO EVIDENCE (%d skills) — the collection window is %d day(s),"
+                  % (len(silent), window_days))
+            print("  which is too short to support any claim about these. This is")
+            print("  not a finding; it is an absence of data.")
+        else:
+            print("  NO ENTRIES RECORDED (%d skills) over %d days."
+                  % (len(silent), window_days))
+            print("  This means no entry was OBSERVED, which is not the same as")
+            print("  never fired — see the caveats below before acting on it.")
+        for chunk_start in range(0, len(silent), 4):
+            print("    " + "  ".join("%-32s" % clean_name(s)
+                                      for s in silent[chunk_start:chunk_start + 4]).rstrip())
+
+    print("")
+    print_caveats(window_days, True)
+    print_health(audit, collisions, skipped, gate_gap, uncorrelated)
+    return 0
+
+
+def print_caveats(window_days, have_data):
+    print("  Caveats — read these before deleting anything:")
+    print("   * Counts cover Claude Code sessions on this machine only.")
+    print("   * Only observable entry paths are recorded: a typed slash command")
+    print("     and a model-initiated or description-matched skill call.")
+    print("   * An sf-lfg run UNDER-REPORTS its stage skills. A slash-invoked")
+    print("     skill is expanded into the prompt rather than called as a tool,")
+    print("     so the stages a pipeline runs inline produce no entry of their own.")
+    print("   * Subagent entries are counted separately and are never added to")
+    print("     the main-thread number; a persona loading a skill for reference")
+    print("     is a different event from a developer entering it.")
+    print("   * A conditional skill can idle for weeks and still be load-bearing.")
+
+
+def print_health(audit, collisions, skipped, gate_gap=0, uncorrelated=0):
+    warnings = []
+
+    if collisions:
+        # Never print the colliding row: it carries references.
+        warnings.append(
+            "entry-path collision: %d entr%s recorded on both paths within the "
+            "same second. The two paths are disjoint by contract, so this means "
+            "the contract broke. Rows are NOT deduplicated, so counts above may "
+            "be inflated." % (collisions, "y was" if collisions == 1 else "ies were"))
+
+    if gate_gap:
+        warnings.append(
+            "gate health: %d metadata edit(s) landed with no matching gate "
+            "decision row, paired by correlation id. A gate that timed out or "
+            "was never registered is otherwise indistinguishable from one that "
+            "allowed the edit." % gate_gap)
+    if uncorrelated:
+        warnings.append(
+            "%d landed-edit row(s) carry no correlation id and could not be "
+            "paired. They predate correlation and are excluded from the gate "
+            "check above rather than guessed at." % uncorrelated)
+
+    if skipped:
+        warnings.append(
+            "%d unparseable line(s) skipped. Counts above exclude them."
+            % skipped)
+
+    bypass = audit.get("bash_bypass", 0)
+    if bypass:
+        warnings.append(
+            "%d shell bypass event(s) recorded — metadata written from Bash, "
+            "which the gate does not deny by design." % bypass)
+
+    print("")
+    if not warnings:
+        print("  Health: no warnings.")
+        return
+    print("  Health warnings:")
+    for w in warnings:
+        first = True
+        for line in _wrap(w, 68):
+            print("   %s %s" % ("!" if first else " ", line))
+            first = False
+
+
+def _wrap(text, width):
+    words, line, out = text.split(), "", []
+    for w in words:
+        if len(line) + len(w) + 1 > width:
+            out.append(line)
+            line = w
+        else:
+            line = (line + " " + w).strip()
+    if line:
+        out.append(line)
+    return out
+
+
+def purge(args):
+    root = state_root(args.state_dir)
+    tel_dir = os.path.join(root, "telemetry")
+    gate_dir = os.path.join(root, "gate")
+
+    if args.older_than is None:
+        removed = []
+        for target in (tel_dir, os.path.join(gate_dir, "audit.jsonl")):
+            if os.path.isdir(target):
+                shutil.rmtree(target, ignore_errors=True)
+                removed.append(redact_path(target))
+            elif os.path.isfile(target):
+                os.remove(target)
+                removed.append(redact_path(target))
+        if removed:
+            print("Purged: %s" % ", ".join(removed))
+        else:
+            print("Nothing to purge.")
+        return 0
+
+    cutoff = datetime.now(timezone.utc) - args.older_than
+    dropped = 0
+    if os.path.isdir(tel_dir):
+        for name in sorted(os.listdir(tel_dir)):
+            m = re.match(r"^(?:skills|bypass)-(\d{4}-\d{2}-\d{2})\.jsonl$", name)
+            if not m:
+                continue
+            try:
+                day = datetime.strptime(m.group(1), "%Y-%m-%d").replace(
+                    tzinfo=timezone.utc)
+            except ValueError:
+                continue
+            # Compare DATES, not datetimes. A cutoff carrying the current
+            # time of day would drop the boundary partition whole, deleting
+            # rows written later that day which are still inside the window.
+            if day.date() < cutoff.date():
+                # Whole partitions only. Rewriting a file in place would race
+                # the appends this rotation exists to keep safe.
+                os.remove(os.path.join(tel_dir, name))
+                dropped += 1
+    print("Purged %d partition(s) older than %s." % (dropped, fmt_day(cutoff)))
+    return 0
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(prog="skill-usage", add_help=True)
+    parser.add_argument("command", nargs="?", default="report",
+                        choices=["report", "purge"])
+    parser.add_argument("--since", type=parse_window, default=None,
+                        help="only count entries newer than this, e.g. 30d")
+    parser.add_argument("--older-than", type=parse_window, default=None,
+                        help="purge: drop partitions older than this")
+    parser.add_argument("--state-dir", default=None)
+    parser.add_argument("--plugin-root", default=os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), ".."))
+    args = parser.parse_args(argv)
+
+    if args.command == "purge":
+        return purge(args)
+    return report(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

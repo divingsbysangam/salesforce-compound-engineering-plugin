@@ -1,0 +1,296 @@
+#!/usr/bin/env bash
+# Bash bypass observer for the SF compound-engineering plugin.
+#
+# The metadata gate denies Edit, Write and NotebookEdit. It deliberately does
+# NOT deny Bash: `sf project retrieve start` legitimately writes hundreds of
+# force-app files, so denying Bash would block routine retrieval (KTD7). That
+# leaves a hole -- an agent can write an Apex class from the shell -- and this
+# handler measures the hole rather than closing it.
+#
+# THIS HANDLER NEVER DENIES, UNDER ANY INPUT. It runs on PostToolUse, which
+# cannot deny by contract, and it emits no decision JSON on any path. Three
+# reasons for PostToolUse over PreToolUse:
+#   * it must not be able to deny
+#   * Bash is the most frequent tool and does not belong in the pre-tool
+#     critical path
+#   * the post-tool event records the OUTCOME, so a failed in-place edit does
+#     not inflate the bypass count
+#
+# IT RECORDS A PATTERN CLASS, NEVER THE COMMAND. A command line carries paths,
+# org data, and occasionally secrets. Recording "redirect" instead of the text
+# serves the privacy commitment and the 1024-byte row cap in one move (KTD16).
+#
+# IT ALSO REFRESHES THE GRANT'S IDLE TIMER (KTD5), on every invocation, matched
+# or not. This is the handler that makes the idle timer work: skill entry fires
+# once per run, so refreshing only there expires the grant during the research
+# and test stretch that precedes the first real edit -- denying the run exactly
+# when it becomes productive. Refresh only; this handler never mints.
+#
+# Env: SFCE_GATE_ENABLED, SFCE_SKILL_LOG_ENABLED, SFCE_STATE_HOME,
+#      SFCE_GATE_TTL_SECONDS  (see sfce-skill-observer for the full contract)
+#
+# Usage: sfce-bash-observer PostToolUse   (payload on stdin)
+
+set -u
+
+warn() { printf 'sfce-bash-observer: %s\n' "$1" >&2; }
+
+# --- tier 1: flag test, before stdin is read --------------------------------
+# Both spellings are accepted; see sfce-metadata-gate for why. Absent = off.
+GATE_ON=""
+for _v in "${SFCE_GATE_ENABLED:-}" "${CLAUDE_PLUGIN_OPTION_METADATA_GATE:-}" \
+          "${CLAUDE_PLUGIN_OPTION_metadata_gate:-}"; do
+  case "$_v" in 1|true|yes|on) GATE_ON=1 ;; esac
+done
+LOG_ON=""
+for _v in "${SFCE_SKILL_LOG_ENABLED:-}" "${CLAUDE_PLUGIN_OPTION_SKILL_TELEMETRY:-}" \
+          "${CLAUDE_PLUGIN_OPTION_skill_telemetry:-}"; do
+  case "$_v" in 1|true|yes|on) LOG_ON=1 ;; esac
+done
+if [ -z "$GATE_ON" ] && [ -z "$LOG_ON" ]; then
+  exit 0
+fi
+
+if [ -n "${SFCE_STATE_HOME:-}" ]; then
+  STATE_ROOT="$SFCE_STATE_HOME"
+elif [ -n "${SFCE_TEND_HOME:-}" ]; then
+  STATE_ROOT="$SFCE_TEND_HOME"
+elif [ -n "${XDG_STATE_HOME:-}" ]; then
+  STATE_ROOT="$XDG_STATE_HOME"
+else
+  STATE_ROOT="$HOME/.sfce"
+fi
+GATE_DIR="$STATE_ROOT/gate"
+GRANT_DIR="$GATE_DIR/grants"
+TELEMETRY_DIR="$STATE_ROOT/telemetry"
+TTL="${SFCE_GATE_TTL_SECONDS:-14400}"
+
+PAYLOAD="$(cat)"
+
+# --- grant refresh: runs BEFORE any pattern work, on every invocation -------
+# The session id is a UUID, so it cannot contain a JSON escape. That lets us
+# pull it with pure parameter expansion and NO subprocess -- which is what
+# keeps `git status` at tier-1 cost while still letting the idle timer work.
+SID=""
+case "$PAYLOAD" in
+  *'"session_id"'*)
+    _rest="${PAYLOAD#*\"session_id\"}"      # strip through the key
+    _rest="${_rest#*:}"                      # strip the colon
+    _rest="${_rest#\"}"                      # strip opening quote (compact JSON)
+    _cand="${_rest%%\"*}"                    # up to the closing quote
+    # Accept only a plausible id: no whitespace, braces, or quotes. Anything
+    # else means the payload was not compact and we simply skip the refresh
+    # rather than guess -- a missed refresh costs one skill re-entry, a wrong
+    # session id would touch another session's grant.
+    case "$_cand" in
+      ''|*[\ \{\}\"]*) SID="" ;;
+      *) SID="$_cand" ;;
+    esac
+    ;;
+esac
+
+if [ -n "$GATE_ON" ] && [ -n "$SID" ]; then
+  grant="$GRANT_DIR/$SID"
+  if [ -f "$grant" ]; then
+    now="$(date +%s 2>/dev/null || echo 0)"
+    cur="$(sed -n 's/^expires=//p' "$grant" 2>/dev/null | head -1)"
+    case "$cur" in
+      ''|*[!0-9]*) cur=0 ;;
+    esac
+    # REFRESH ONLY, NEVER MINT. An expired grant stays expired: reviving it
+    # here would let shell activity alone resurrect authority the session
+    # never earned, which is precisely what the gate exists to prevent.
+    if [ "$cur" -gt "$now" ] 2>/dev/null; then
+      skill_line="$(sed -n 's/^skill=//p' "$grant" 2>/dev/null | head -1)"
+      tmp="$GRANT_DIR/.refresh.$$.tmp"
+      if printf 'v=1\nexpires=%s\nskill=%s\n' "$((now + TTL))" "$skill_line" > "$tmp" 2>/dev/null; then
+        chmod 600 "$tmp" 2>/dev/null || true
+        mv -f "$tmp" "$grant" 2>/dev/null || rm -f "$tmp" 2>/dev/null
+      else
+        rm -f "$tmp" 2>/dev/null
+      fi
+    fi
+  fi
+fi
+
+# --- tier 2: substring pre-filter -------------------------------------------
+# Must be a strict SUPERSET of the authoritative predicate. A payload carrying
+# a backslash falls through unconditionally: JSON escapes mean a path spelled
+# with \uXXXX or \/ decodes to a match the raw bytes never contained, and a
+# false negative here is a silently unobserved bypass.
+#
+# Both a WRITE token and a METADATA token must be present, or there is nothing
+# this handler could match -- `git status` exits here, with no parser spawn.
+case "$PAYLOAD" in
+  *\\*) ;;
+  *)
+    _has_write=""
+    case "$PAYLOAD" in
+      *'>'*|*tee*|*sed*|*perl*|*python*|*node*|*cp\ *|*mv\ *|*install*|*patch*|*git*|*'<<'*)
+        _has_write=1 ;;
+    esac
+    _has_meta=""
+    case "$PAYLOAD" in
+      *force-app*|*.cls*|*.trigger*|*-meta.xml*|*lwc/*|*aura/*) _has_meta=1 ;;
+    esac
+
+    # Opaque-target forms name no path of their own: `git apply somefile.patch`
+    # writes whatever the patch says, which may be metadata. Requiring a
+    # metadata token here would make the pre-filter NARROWER than the
+    # authoritative predicate -- a false negative, and therefore a silently
+    # unobserved bypass. They fall through on the write token alone; tier 3
+    # records them under their own class so the ambiguity stays legible in the
+    # data rather than being hidden by either over- or under-counting.
+    case "$PAYLOAD" in
+      *'git apply'*|*'git am'*) _has_meta=1 ;;
+    esac
+
+    if [ -z "$_has_write" ] || [ -z "$_has_meta" ]; then
+      exit 0
+    fi
+    ;;
+esac
+
+PY=""
+for candidate in python3 python; do
+  if command -v "$candidate" >/dev/null 2>&1; then PY="$candidate"; break; fi
+done
+if [ -z "$PY" ]; then
+  exit 0
+fi
+
+# --- tier 3: classify --------------------------------------------------------
+OBSERVER_PY="$(cat <<'PY'
+import json, re, sys
+
+payload_ok = True
+try:
+    payload = json.load(sys.stdin)
+    if not isinstance(payload, dict):
+        payload_ok = False
+except Exception:
+    payload_ok = False
+if not payload_ok:
+    sys.exit(0)
+
+if payload.get("tool_name") != "Bash":
+    sys.exit(0)
+
+ti = payload.get("tool_input") or {}
+if not isinstance(ti, dict):
+    sys.exit(0)
+command = ti.get("command") or ""
+if not isinstance(command, str) or not command:
+    sys.exit(0)
+
+# --- EXCLUSIONS FIRST. This list matters more than the match list ------------
+# A bypass count inflated by routine retrieval is worthless: if the number
+# cannot be trusted, it cannot justify switching enforcement on, which is the
+# whole reason this handler exists.
+#
+# Two honest notes about what this list actually does today:
+#
+#   * The SF CLI entries are defence in depth, not load-bearing. Measured, none
+#     of `sf project retrieve|generate|deploy` carries a write token, so they
+#     exit at the substring tier and never reach this code. They are kept
+#     because the token list in that pre-filter may widen later, and because a
+#     reader expects to find them here.
+#     (No apostrophes in this block: it lives inside a $( ... ) command
+#     substitution, and bash 3.2 mis-parses an unbalanced quote there.)
+#   * The entry that genuinely bites is `git checkout -b`, which reaches the
+#     classifier and would otherwise match the git-restore pattern.
+#
+# KNOWN FALSE NEGATIVE: a compound command that pairs an excluded prefix with a
+# real write -- `sf project retrieve start && sed -i ... force-app/...` -- is
+# suppressed as a whole. Narrowing the exclusion to the matched sub-command
+# needs command splitting, which is deferred rather than done badly here.
+EXCLUSIONS = (
+    r"\bsf\s+project\s+retrieve\b",
+    r"\bsf\s+project\s+generate\b",
+    r"\bsf\s+project\s+deploy\b",
+    r"\bsf\s+project\s+convert\b",
+    r"\bsf\s+package\b",
+    r"\bsfdx\s+force:source:retrieve\b",
+    r"\bsfdx\s+force:source:pull\b",
+    r"\bgit\s+(clone|pull|fetch|merge|rebase|stash|checkout\s+-b)\b",
+)
+for pattern in EXCLUSIONS:
+    if re.search(pattern, command):
+        sys.exit(0)
+
+# --- metadata path shapes ----------------------------------------------------
+META = r"(force-app/|\.cls\b|\.trigger\b|[A-Za-z0-9_.-]+-meta\.xml|/lwc/|/aura/)"
+
+# Each form is its own class. The first four alone -- redirect, tee, in-place
+# stream editors, heredoc -- miss the most ordinary ways an agent writes a file
+# from a shell, and those forms appear on neither the match list nor the
+# exclusion list, so they would count as nothing at all.
+CLASSES = [
+    ("heredoc",            r"<<\s*[\"']?\w+[\"']?[\s\S]*" + META),
+    ("redirect",           r">>?\s*[^\s|;&]*" + META),
+    ("tee",                r"\btee\b(\s+-\w+)*\s+[^\s|;&]*" + META),
+    ("inplace-sed",        r"\bsed\b[^|;&]*\s-[a-z]*i[a-z]*\b[^|;&]*" + META),
+    ("inplace-perl",       r"\bperl\b[^|;&]*\s-[a-z]*i[a-z]*\b[^|;&]*" + META),
+    ("cp",                 r"\bcp\b[^|;&]*" + META),
+    ("mv",                 r"\bmv\b[^|;&]*" + META),
+    ("install",            r"\binstall\b[^|;&]*" + META),
+    ("patch",              r"\bpatch\b[^|;&]*" + META),
+    ("git-apply",          r"\bgit\s+apply\b[^|;&]*"),
+    ("git-restore",        r"\bgit\s+(checkout|restore)\b[^|;&]*" + META),
+    ("interpreter-write",  r"\b(python3?|node|perl|ruby)\b\s+-(c|e)\b[\s\S]*" + META),
+]
+
+matched = ""
+for name, pattern in CLASSES:
+    try:
+        if re.search(pattern, command):
+            matched = name
+            break
+    except re.error:
+        # A malformed pattern must never take the handler down; the command is
+        # attacker-influenced text but it is the SUBJECT here, never compiled.
+        continue
+
+if not matched:
+    sys.exit(0)
+
+# Only the class name leaves this process. The command string -- which carries
+# paths, org data and occasionally secrets -- never does.
+sys.stdout.write(matched)
+PY
+)"
+
+CLASS="$(printf '%s' "$PAYLOAD" | "$PY" -I -c "$OBSERVER_PY" 2>/dev/null)"
+
+if [ -z "$CLASS" ]; then
+  exit 0
+fi
+
+# --- record ------------------------------------------------------------------
+# Gate on: the bypass belongs in the gate audit, which is the record a human
+# reviews. Log flag unset must not lose it -- that is the configuration this
+# plan blesses, and routing bypasses only through the log sink would leave them
+# unrecorded there.
+if [ -n "$GATE_ON" ]; then
+  if mkdir -p "$GATE_DIR" 2>/dev/null; then
+    chmod 700 "$GATE_DIR" 2>/dev/null || true
+    printf '{"v":1,"event":"bash_bypass","class":"%s"}\n' "$CLASS" \
+      >> "$GATE_DIR/audit.jsonl" 2>/dev/null || warn "cannot record bypass event"
+    chmod 600 "$GATE_DIR/audit.jsonl" 2>/dev/null || true
+  else
+    warn "cannot record bypass event"
+  fi
+fi
+
+if [ -n "$LOG_ON" ]; then
+  if mkdir -p "$TELEMETRY_DIR" 2>/dev/null; then
+    chmod 700 "$TELEMETRY_DIR" 2>/dev/null || true
+    day="$(date -u +%Y-%m-%d 2>/dev/null || echo unknown)"
+    f="$TELEMETRY_DIR/bypass-$day.jsonl"
+    printf '{"v":1,"event":"bash_bypass","class":"%s"}\n' "$CLASS" >> "$f" 2>/dev/null || true
+    chmod 600 "$f" 2>/dev/null || true
+  fi
+fi
+
+# No decision is ever emitted on stdout. This handler cannot deny.
+exit 0
