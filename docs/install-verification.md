@@ -220,3 +220,84 @@ install until `install` is re-run. Consider a `--copy` flag if this bites.
 - **Claude Code has had no fresh-user install run.** Manifests are valid and reachable; the install itself is unconfirmed, because `/plugin` cannot be driven from a shell.
 - **Tool-load is unconfirmed everywhere.** Every verified row proves files land in the right place, not that the tool reads them.
 - **No external installers recruited yet.** DIV-58 targets 4/5 successful installs. Install *duration* is now measured at 1–5 seconds, but on one machine, by the author — which is the weakest possible sample for a docs-follow-along test. The success-rate half of the KPI is untaken.
+
+## Round 2 — hook layer first run (Claude Code)
+
+Added for plugin 3.2.0, which is the first release where installing can change
+what happens when you edit a file. Earlier rounds verified file placement only;
+a gate changes first run from "nothing visible happens" to "an edit can fail".
+
+Claude Code is also the one install path that has never had a fresh-user run
+recorded, which is why this round is Claude-Code-specific.
+
+### A. Default install — nothing should change
+
+1. Install at a commit SHA and start a session.
+2. Expect the discipline primer in context, and **nothing else** — no gate
+   banner, because the gate is off.
+3. Edit a `force-app` Apex class. It must succeed with no deny and no prompt.
+4. `ls ~/.sfce` — expect no `gate/` and no `telemetry/` directory. Nothing is
+   written until you opt in.
+
+### B. Opting in — the self-check must speak
+
+1. Enable `metadata_gate` via `/plugin configure`, then **restart the session**.
+   The flag is read by the hook process at startup; an un-restarted opt-in is
+   silently inert, which is exactly what the next step catches.
+2. Expect a session-start line reading `SF metadata gate: ENABLED`, with the
+   mode shown as `observe-only` until `SFCE_GATE_ENFORCE=1` is set.
+3. If you see nothing, the opt-in has not taken effect. Do not assume the gate
+   is running.
+
+### C. Prove it denies before trusting it
+
+With `SFCE_GATE_ENFORCE=1` and no authoring skill entered:
+
+1. Edit a `force-app` Apex class directly. Expect a deny naming the file, the
+   matched rule, and the owning skill.
+2. Enter `/sf-work`, then retry the same edit. Expect it to succeed.
+3. `scripts/skill-usage` — expect a decision row for each, and no health
+   warnings.
+
+A gate nobody has seen deny is indistinguishable from one that cannot.
+
+### D. Out-of-band check for enterprise hook suppression
+
+`allowManagedHooksOnly` and `disableAllHooks` suppress plugin hooks **including
+the self-check**, so the check cannot report its own suppression. Silence is not
+evidence of health. Verify out of band:
+
+1. Run `/hooks` and confirm the handlers are listed.
+2. If the list is empty while your settings enable the plugin, hooks are
+   suppressed at a level this plugin cannot observe or report.
+
+### Result
+
+| Step | Outcome |
+| --- | --- |
+| A — default install inert | not yet run against a fresh install |
+| B — opt-in visible | not yet run |
+| C — deny then allow | not yet run |
+| D — `/hooks` listing | not yet run |
+
+**This round is recorded but not yet performed.** It needs a restarted session
+on a fresh install, which cannot be done from inside a running one. The
+behaviour it describes is covered by automated tests
+(`cli/tests/hooks/opt-in.test.ts`); what remains unverified is the live
+registration itself.
+
+### Read before enabling the gate
+
+- These hooks are executable scripts that run on your machine, with your full user permissions and no sandbox, on every matching file edit and every Bash call. They are delivered as repository content at the ref you installed; a git tag is mutable and is not a content address, so pin a commit SHA.
+- The absence of a deny is never evidence of authorisation. A `PreToolUse` hook fails open. The gate does not run, and does not say so, when: the script errors or times out; the script is missing, not executable, or its interpreter is absent; its output JSON is malformed; enterprise `allowManagedHooksOnly` or `disableAllHooks` suppresses plugin hooks — including the session-start self-check, which the same setting suppresses; the opt-in has not taken effect because the session was not restarted; or the path predicate misses.
+- The gate's own enforcement inputs are ordinary files the agent can edit. The hook scripts, the authoring allowlist, and the path-class routing table are not Salesforce metadata, so a change to any of them is never denied and produces no bypass record. One such edit disarms the gate for every future session in that repository. The session-start self-check records a digest of these inputs so a change is visible in the audit record, but nothing prevents it.
+- The model can bypass this gate at any time, using Bash, which it uses constantly. The Bash observer measures that bypass. It does not prevent it. Files referenced with `@` in a prompt bypass `PreToolUse` entirely.
+- MCP writes and org deploys are ungated. `.mcp.json` configures `@salesforce/mcp`; `deploy_metadata` and its siblings write metadata and reach a live org without matching `Edit`, `Write`, `NotebookEdit`, or `Bash`. The drift this gate exists to prevent is more available through MCP than through the tools it watches.
+- Symlinked paths defeat a shape-only predicate. An edit to a benign filename that symlinks to an Apex class is not matched.
+- Enforcement exists on Claude Code only. The other eleven conversion targets receive the intent as text.
+- The log is local-only, pseudonymous rather than anonymous, retained until deleted, and shareable by the user. It is not an audit trail, and the override is not tamper-evident: the actor who sets the override can delete the record of it.
+- Stop and re-plan if U1 finds that no hook event carries skill identity for a description-matched entry. This breaks both halves, not only the reporter. The reporter's claim narrows to explicit invocations and the cold-skill feature is cut. For the gate it is worse: description-based routing is this plugin's primary designed entry path, so a developer who reaches an allowlisted authoring skill that way mints no grant and is denied on their first metadata edit. R4 and KTD1 both assume entry is observable, so U5 stops with U7 rather than proceeding on a narrowed claim.
+- Stop and re-plan if a full `sf-lfg` run cannot complete with the gate enabled after U2.
+- Stop and re-plan if U1's Cursor probe finds that Cursor does not silently ignore a `PreToolUse` entry it cannot honor and U9's file split cannot produce a `hooks/hooks.json` that Cursor accepts. The split is the prescribed remedy, so the probe's negative result redirects U8's config rather than halting the plan; only a failed split is the stop. Cursor receives `hooks/hooks.json` by manifest reference, bypassing the converter layer, so it is the one exception to this plan's inert-elsewhere premise.
+- Tail ownership: This plan ends at a reviewed, tested branch. Shipping is `/sf-commit-push-pr`.
+- 

@@ -26,4 +26,6 @@
 
 ## <span data-proof="authored" data-by="ai:claude">Scope</span>
 
-<span data-proof="authored" data-by="ai:claude">This repository is an AI coding plugin (skills, personas, and a small CLI). Typical reports include leaked credentials in the tree, unsafe install/hook instructions, or supply-chain issues in GitHub Actions.</span>
+<span data-proof="authored" data-by="ai:claude">This repository is an AI coding plugin (skills, personas, a small CLI, and **executable hook scripts**). Typical reports include leaked credentials in the tree, unsafe install instructions, or supply-chain issues in GitHub Actions.
+
+**The hook scripts under `scripts/sfce-*` are the highest-value report target here.** They run on your machine with your full user permissions and no sandbox, on every matching file edit and every Bash call, and they are delivered as repository content at whatever ref you installed. A git tag is mutable and is not a content address, so pin a commit SHA. Both features are off by default; see `docs/install-verification.md` for what runs, what is written, and how to disable each one.</span>

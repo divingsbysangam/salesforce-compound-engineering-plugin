@@ -6,6 +6,48 @@
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-09-14
+
+### Added — hook layer (opt-in, both features OFF by default)
+
+- **Metadata gate** (`scripts/sfce-metadata-gate`). Denies a file-mutating tool
+  call targeting Salesforce metadata when the session holds no authorisation
+  grant, and names the authoring skill that owns that path class. Ships
+  observe-only: without `SFCE_GATE_ENFORCE=1` it records the decision it would
+  have made and allows the call.
+- **Skill-entry observer** (`scripts/sfce-skill-observer`). One handler
+  normalising both entry paths into one versioned fact, writing to three sinks
+  across two failure domains.
+- **Bash bypass observer** (`scripts/sfce-bash-observer`). Measures metadata
+  written from the shell — which the gate deliberately does not deny — by
+  pattern class, never by command text. Also refreshes the grant idle timer.
+- **Usage reporter** (`scripts/skill-usage`). Per-skill counts, distinct
+  sessions and repositories, with health warnings for an inert gate and for
+  entry-path collisions. Never says a skill is unused.
+- **Session-start self-check** (`scripts/sfce-gate-selfcheck`). Proves the gate
+  actually denies rather than merely parsing, against a throwaway state
+  directory, writing nothing to real state.
+- `userConfig` options `metadata_gate` and `skill_telemetry`, both default
+  false. Nothing is enabled by installing.
+- `docs/install-verification.md` first-run round for Claude Code, including the
+  out-of-band check for enterprise hook suppression.
+- Protocol F defined in `CONTRIBUTING.md`; three documents cited it by name
+  with no definition anywhere.
+
+### Fixed
+
+- **The session-start primer never ran when the plugin path contained a space.**
+  `hooks/hooks.json` used an unquoted `${CLAUDE_PLUGIN_ROOT}`, which the shell
+  split — the primer failed with "No such file or directory" and exited 0.
+  Backfill note: the primer has shipped since the hooks layer was introduced,
+  so any install under a path with a space has never received it.
+- **Re-conversion stranded the primer.** The instructions-file writer returned
+  early whenever its marker was present, so an already-converted repository kept
+  its original primer forever and wording changes reached new installs only.
+- Primer extraction anchored on a named heredoc delimiter instead of position,
+  so a heredoc added above the primer can no longer silently become it.
+
+
 ### Fixed
 
 * **CLI `1.0.1`.** `@divings/sf-compound-plugin@1.0.0` was published before the destination-reporting fix landed, so the released binary still warned only about Windsurf and let OpenClaw and Qwen report a project directory they never wrote to. 1.0.1 ships `installRoot()`. A test now pins the version literal in `src/index.ts` to `package.json` so a published binary cannot report a version it is not.

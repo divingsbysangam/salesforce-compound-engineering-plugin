@@ -6,6 +6,77 @@
 
 ***
 
+## What this plugin runs on your machine
+
+Both hook features are **OFF by default**. Installing the plugin enables
+nothing; you opt in per feature with `/plugin configure`, or by setting
+`SFCE_GATE_ENABLED=1` / `SFCE_SKILL_LOG_ENABLED=1`.
+
+### The scripts, and when they run
+
+| Script | Event | Runs when |
+| --- | --- | --- |
+| `scripts/session-start` | `SessionStart` (startup) | always — prints the discipline primer |
+| `scripts/sfce-gate-selfcheck` | `SessionStart` (startup) | gate enabled |
+| `scripts/sfce-metadata-gate` | `PreToolUse` / `PostToolUse` on `Edit`, `Write`, `NotebookEdit` | gate enabled |
+| `scripts/sfce-skill-observer` | `PostToolUse` on `Skill`, `UserPromptExpansion`, `SessionStart` (clear/resume), `SessionEnd` | either feature enabled |
+| `scripts/sfce-bash-observer` | `PostToolUse` on `Bash` | either feature enabled |
+
+With both flags unset every one of them exits before reading stdin.
+
+### What is written, and where
+
+Nothing is written unless you opt in. When you do, state lives under
+`$SFCE_STATE_HOME`, or `$XDG_STATE_HOME`, or `~/.sfce` — never inside your
+repository, on any code path.
+
+| Path | Contains |
+| --- | --- |
+| `<state>/gate/grants/<session-id>` | one file per session, an expiry epoch and the granting skill |
+| `<state>/gate/audit.jsonl` | gate decisions, overrides, shell-bypass classes |
+| `<state>/telemetry/skills-<date>.jsonl` | one row per skill entry |
+| `<state>/observer-salt` | a per-install random salt, mode 0600 |
+
+Telemetry rows carry a skill name and **salted HMACs** of the session id,
+working directory and agent id — never the raw ids, never prompt text, never
+file contents, never org data, never credentials. Directories are created 0700
+and files 0600.
+
+**No network calls.** A test asserts the shipped scripts contain no
+network-capable construct, so the claim survives future edits.
+
+### How to turn it off, and how to delete the data
+
+- One feature: unset its option in `/plugin configure`, or unset the
+  environment variable, then restart the session.
+- Enforcement only, keeping the recording: leave `SFCE_GATE_ENFORCE` unset.
+- Everything: `disableAllHooks` in your Claude Code settings. Note this also
+  removes the discipline primer, which is the plugin's only cross-platform
+  mechanism, and it suppresses the self-check that would otherwise tell you.
+- Delete the data: `scripts/skill-usage purge`, or remove `<state>/gate` and
+  `<state>/telemetry` by hand.
+
+### Pinning
+
+Install at a **commit SHA**. A git tag is mutable and is not a content address,
+and these are executable scripts that run with your full permissions.
+
+### Read before enabling the gate
+
+- These hooks are executable scripts that run on your machine, with your full user permissions and no sandbox, on every matching file edit and every Bash call. They are delivered as repository content at the ref you installed; a git tag is mutable and is not a content address, so pin a commit SHA.
+- The absence of a deny is never evidence of authorisation. A `PreToolUse` hook fails open. The gate does not run, and does not say so, when: the script errors or times out; the script is missing, not executable, or its interpreter is absent; its output JSON is malformed; enterprise `allowManagedHooksOnly` or `disableAllHooks` suppresses plugin hooks — including the session-start self-check, which the same setting suppresses; the opt-in has not taken effect because the session was not restarted; or the path predicate misses.
+- The gate's own enforcement inputs are ordinary files the agent can edit. The hook scripts, the authoring allowlist, and the path-class routing table are not Salesforce metadata, so a change to any of them is never denied and produces no bypass record. One such edit disarms the gate for every future session in that repository. The session-start self-check records a digest of these inputs so a change is visible in the audit record, but nothing prevents it.
+- The model can bypass this gate at any time, using Bash, which it uses constantly. The Bash observer measures that bypass. It does not prevent it. Files referenced with `@` in a prompt bypass `PreToolUse` entirely.
+- MCP writes and org deploys are ungated. `.mcp.json` configures `@salesforce/mcp`; `deploy_metadata` and its siblings write metadata and reach a live org without matching `Edit`, `Write`, `NotebookEdit`, or `Bash`. The drift this gate exists to prevent is more available through MCP than through the tools it watches.
+- Symlinked paths defeat a shape-only predicate. An edit to a benign filename that symlinks to an Apex class is not matched.
+- Enforcement exists on Claude Code only. The other eleven conversion targets receive the intent as text.
+- The log is local-only, pseudonymous rather than anonymous, retained until deleted, and shareable by the user. It is not an audit trail, and the override is not tamper-evident: the actor who sets the override can delete the record of it.
+- Stop and re-plan if U1 finds that no hook event carries skill identity for a description-matched entry. This breaks both halves, not only the reporter. The reporter's claim narrows to explicit invocations and the cold-skill feature is cut. For the gate it is worse: description-based routing is this plugin's primary designed entry path, so a developer who reaches an allowlisted authoring skill that way mints no grant and is denied on their first metadata edit. R4 and KTD1 both assume entry is observable, so U5 stops with U7 rather than proceeding on a narrowed claim.
+- Stop and re-plan if a full `sf-lfg` run cannot complete with the gate enabled after U2.
+- Stop and re-plan if U1's Cursor probe finds that Cursor does not silently ignore a `PreToolUse` entry it cannot honor and U9's file split cannot produce a `hooks/hooks.json` that Cursor accepts. The split is the prescribed remedy, so the probe's negative result redirects U8's config rather than halting the plan; only a failed split is the stop. Cursor receives `hooks/hooks.json` by manifest reference, bypassing the converter layer, so it is the one exception to this plan's inert-elsewhere premise.
+- Tail ownership: This plan ends at a reviewed, tested branch. Shipping is `/sf-commit-push-pr`.
+- 
+
 ## The Compound Engineering Loop
 
 ```
