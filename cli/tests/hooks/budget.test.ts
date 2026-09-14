@@ -116,9 +116,24 @@ describe("latency budget, relative to the measured spawn floor", () => {
     const systemPy = "/usr/bin";
     const got = timeRuns([join(SCRIPTS, "sfce-metadata-gate"), "PreToolUse"], EDIT,
       { SFCE_GATE_ENABLED: "1", SFCE_GATE_ENFORCE: "1", PATH: `${systemPy}:/bin:/usr/sbin:/sbin` }, 15);
-    // The plan's ceiling for a matched gate path.
-    expect(got, `matched-path median ${got.toFixed(1)}ms exceeds the 60ms ceiling`)
-      .toBeLessThan(300);
+    // REVISED BUDGET, recorded rather than silently differing from the plan.
+    //
+    // The plan sets 60ms for a matched gate path, measured on a fast
+    // interpreter. On the macOS SYSTEM python3 the same path measures ~176ms,
+    // and roughly 85% of that is interpreter startup -- a cost no amount of
+    // work in this script can remove.
+    //
+    // So the assertion here is 250ms against the system interpreter, and the
+    // 60ms figure stands for a fast interpreter. Asserting 60 would fail every
+    // macOS run; asserting nothing would let a real regression through. Both
+    // numbers are stated so a future reader sees a decision, not a discrepancy.
+    const SYSTEM_INTERPRETER_CEILING_MS = 250;
+    expect(
+      got,
+      `matched-path median ${got.toFixed(1)}ms exceeds the ` +
+        `${SYSTEM_INTERPRETER_CEILING_MS}ms system-interpreter ceiling ` +
+        `(the plan's 60ms figure applies to a fast interpreter)`,
+    ).toBeLessThan(SYSTEM_INTERPRETER_CEILING_MS);
     console.log(`  matched path (system interpreter) = ${got.toFixed(1)}ms`);
   }, 120_000);
 });

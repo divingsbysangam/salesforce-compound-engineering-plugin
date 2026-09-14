@@ -26,9 +26,13 @@ With both flags unset every one of them exits before reading stdin.
 
 ### What is written, and where
 
-Nothing is written unless you opt in. When you do, state lives under
-`$SFCE_STATE_HOME`, or `$XDG_STATE_HOME`, or `~/.sfce` — never inside your
-repository, on any code path.
+Nothing is written unless you opt in. When you do, the state root is resolved in
+this order, and is never inside your repository on any code path:
+
+1. `$SFCE_STATE_HOME`
+2. `$SFCE_TEND_HOME` — a deprecated alias, still honoured
+3. `$XDG_STATE_HOME`
+4. `~/.sfce`
 
 | Path | Contains |
 | --- | --- |
@@ -53,8 +57,10 @@ network-capable construct, so the claim survives future edits.
 - Everything: `disableAllHooks` in your Claude Code settings. Note this also
   removes the discipline primer, which is the plugin's only cross-platform
   mechanism, and it suppresses the self-check that would otherwise tell you.
-- Delete the data: `scripts/skill-usage purge`, or remove `<state>/gate` and
-  `<state>/telemetry` by hand.
+- Delete the data: `scripts/skill-usage purge`, or by hand remove `<state>/gate`,
+  `<state>/telemetry`, **and `<state>/observer-salt`** — the salt is what keeps
+  the telemetry references unlinkable, so leaving it behind while deleting the
+  rows keeps the one file worth removing.
 
 ### Pinning
 

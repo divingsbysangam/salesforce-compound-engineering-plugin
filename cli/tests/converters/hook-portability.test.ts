@@ -128,6 +128,24 @@ describe("re-conversion replaces the primer instead of stranding it", () => {
     expect(opens).toBe(1);
   });
 
+  test("a LEGACY unterminated block does not eat the user's notes below it", () => {
+    // The destructive rule is tempting and wrong: "everything from the marker
+    // to EOF is the primer". An older CLI wrote an opening marker with no
+    // terminator, so anyone who added notes BELOW that primer would lose them
+    // on the next sync. The block is bounded at the next markdown heading.
+    convertWith("ORIGINAL");
+    const path = join(outDir, ".codex", "AGENTS.md");
+    const legacy = readFileSync(path, "utf-8")
+      .replace("<!-- /sf-compound-engineering:session-discipline-primer -->", "");
+    writeFileSync(path, legacy + "\n\n## My own notes\n\nkeep me please\n");
+
+    const after = convertWith("UPDATED");
+    expect(after, "user notes below a legacy block were destroyed").toContain("keep me please");
+    expect(after).toContain("## My own notes");
+    expect(after).toContain("UPDATED");
+    expect(after).not.toContain("ORIGINAL");
+  });
+
   test("user content around the block is preserved", () => {
     convertWith("ORIGINAL");
     const path = join(outDir, ".codex", "AGENTS.md");

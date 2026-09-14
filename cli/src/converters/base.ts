@@ -105,12 +105,32 @@ export abstract class BaseConverter {
       return;
     }
 
-    // Legacy shape: an opening marker with no terminator, written by an
-    // earlier CLI. Everything from that marker to the end of the file was the
-    // primer, so replacing the tail is the faithful upgrade.
+    // Legacy shape: an opening marker with no terminator, written by an earlier
+    // CLI that appended the primer at the end of the file.
+    //
+    // "Everything from the marker to EOF is the primer" is the tempting rule and
+    // it DESTROYS USER CONTENT: anyone who added notes below that old primer
+    // loses them on the next sync. So the block is bounded at the next markdown
+    // heading after the marker, and everything from there on is preserved.
     const legacyAt = existing.indexOf(begin);
     if (legacyAt !== -1) {
-      this.writeFile(path, existing.slice(0, legacyAt).replace(/\s*$/, "") + "\n\n" + block);
+      const before = existing.slice(0, legacyAt);
+      const rest = existing.slice(legacyAt + begin.length);
+
+      // Our own heading is part of the block; the next heading after it is the
+      // user's. Skip one leading heading, then look for the boundary.
+      const afterOwnHeading = rest.replace(/^\s*#.*$/m, "");
+      const offset = rest.length - afterOwnHeading.length;
+      const boundary = afterOwnHeading.search(/^#{1,6}\s|^<!--/m);
+
+      const tail = boundary === -1 ? "" : rest.slice(offset + boundary);
+      this.writeFile(
+        path,
+        before.replace(/\s*$/, "") +
+          (before.trim() ? "\n\n" : "") +
+          block +
+          (tail.trim() ? "\n\n" + tail.replace(/^\s*/, "") : "\n"),
+      );
       return;
     }
 

@@ -346,6 +346,16 @@ describe("purge", () => {
     expect(after[0]).toContain(day(ago(1)));
   });
 
+  test("purge removes the salt, not just the rows", async () => {
+    // The salt is the key that makes telemetry references unlinkable. Deleting
+    // every row but keeping it leaves behind the one file worth removing.
+    writeRows([{ skill: "sf-work" }]);
+    writeFileSync(join(state, "observer-salt"), "a-real-salt-value");
+    const r = await report(["purge"]);
+    expect(r.out).toContain("observer-salt");
+    expect(existsSync(join(state, "observer-salt"))).toBe(false);
+  });
+
   test("--older-than keeps the boundary partition", async () => {
     // The cutoff carries the current time of day, so a naive datetime compare
     // drops the whole boundary partition — deleting rows written later that day
