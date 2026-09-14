@@ -121,8 +121,30 @@ override = sys.argv[5] == "1"
 MUTATING = ("Edit", "Write", "NotebookEdit")  # MultiEdit no longer exists (2.1.x)
 
 
+# ONE interpreter spawn per invocation (KTD11). Two lines come out: line 1 is
+# the audit row for the shell to persist, line 2 is the decision Claude Code
+# reads. Either may be empty.
+#
+# This was three separate spawns -- decide, extract the audit row, strip it
+# back out -- which cost about 92ms of pure startup on every matched call.
+# Measured on this machine: bare `python3 -I -c pass` is 30.7ms.
+_AUDIT = [None]
+_DECISION = [None]
+
+
 def emit(obj):
-    sys.stdout.write(json.dumps(obj))
+    """Accumulate. The single write happens in flush_out()."""
+    rest = dict(obj)
+    _AUDIT[0] = rest.pop("__audit", None)
+    rest.pop("__override", None)
+    _DECISION[0] = rest or None
+
+
+def flush_out():
+    line1 = ("" if _AUDIT[0] is None
+             else json.dumps(_AUDIT[0], separators=(",", ":"), sort_keys=True))
+    line2 = "" if _DECISION[0] is None else json.dumps(_DECISION[0])
+    sys.stdout.write(line1 + "\n" + line2)
     sys.stdout.flush()
 
 
@@ -222,6 +244,7 @@ if event == "PostToolUse":
         # Path CLASS only -- never the path itself. This row exists to be
         # counted against gate decisions, not to describe the user's files.
         emit({"__audit": decision("edit_landed", {"rule": matched_rule, "tool": tool})})
+    flush_out()
     sys.exit(0)
 
 # ---------------------------------------------------------------------------
@@ -277,6 +300,7 @@ except OSError:
     # Unreadable state: fail open with a warning and record an error decision.
     sys.stderr.write("sfce-metadata-gate: cannot read gate state; allowing\n")
     emit({"__audit": decision("error", {"rule": matched_rule, "reason": "state_unreadable"})})
+    flush_out()
     sys.exit(0)
 
 # --- override ---------------------------------------------------------------
@@ -285,10 +309,12 @@ if override:
     # shell decides whether the record actually landed and adjusts the wording.
     emit({"__audit": decision("override", {"rule": matched_rule, "tool": tool}),
           "__override": True})
+    flush_out()
     sys.exit(0)
 
 if grant_state == "live":
     emit({"__audit": decision("allow", {"rule": matched_rule, "tool": tool})})
+    flush_out()
     sys.exit(0)
 
 # --- deny (or would-deny under observe-only) -------------------------------
@@ -336,6 +362,7 @@ else:
     emit({"__audit": decision("would_deny", {"rule": matched_rule, "tool": tool,
                                              "grant": grant_state,
                                              "subagent": bool(is_subagent)})})
+flush_out()
 sys.exit(0)
 PY
 )"
@@ -350,26 +377,23 @@ case "${SFCE_GATE_OVERRIDE:-}" in 1|true|yes|on) OVERRIDE=1 ;; esac
 # turns every fail-open into a silent allow, which is the failure mode this
 # design exists to avoid. The parser never raises to stderr on its own -- it
 # catches and prints a one-line message -- so what surfaces here is signal.
+# ONE interpreter spawn. Line 1 is the audit row, line 2 the decision.
 RESULT="$(printf '%s' "$PAYLOAD" | "$PY" -I -c "$GATE_PY" \
   "$EVENT" "$ROUTING" "$GRANT_DIR" "$ENFORCE" "$OVERRIDE")" || {
   warn "gate evaluation failed; allowing the call"
   allow_and_exit
 }
 
-if [ -z "$RESULT" ]; then
-  allow_and_exit
-fi
-
-# Split the parser's output: the audit row is ours to persist, the decision
-# object (if any) is what Claude Code reads from stdout.
-AUDIT_ROW="$(printf '%s' "$RESULT" | "$PY" -I -c '
-import json,sys
-try: d=json.load(sys.stdin)
-except Exception: sys.exit(0)
-row=d.get("__audit")
-if row is not None:
-    sys.stdout.write(json.dumps(row,separators=(",",":"),sort_keys=True))
-' 2>/dev/null)"
+# Split with read rather than parameter expansion on a newline: a heredoc
+# feeds this loop in the current shell, so no subshell and no extra process.
+AUDIT_ROW=""
+DECISION=""
+{
+  IFS= read -r AUDIT_ROW || true
+  IFS= read -r DECISION || true
+} <<SFCE_RESULT
+$RESULT
+SFCE_RESULT
 
 AUDIT_OK=1
 if [ -n "$AUDIT_ROW" ]; then
@@ -393,14 +417,8 @@ if [ "$OVERRIDE" = "1" ]; then
   allow_and_exit
 fi
 
-# Emit only the harness-facing decision, with the private audit key removed.
-printf '%s' "$RESULT" | "$PY" -I -c '
-import json,sys
-try: d=json.load(sys.stdin)
-except Exception: sys.exit(0)
-d.pop("__audit",None); d.pop("__override",None)
-if d:
-    sys.stdout.write(json.dumps(d))
-' 2>/dev/null
+if [ -n "$DECISION" ]; then
+  printf '%s' "$DECISION"
+fi
 
 exit 0

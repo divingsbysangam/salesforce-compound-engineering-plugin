@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "fs";
+import { mkdtempSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join, resolve } from "path";
 
@@ -66,6 +66,18 @@ function timeRuns(
   return median(samples);
 }
 
+/**
+ * The machine's own cost to start the SYSTEM interpreter and do nothing.
+ *
+ * A bash no-op is the wrong baseline for a path dominated by interpreter
+ * startup: at a 3.4ms bash floor, a x200 bound allows 680ms, which would let a
+ * 500ms parser regression through. Budgeting the hook's own work ABOVE python
+ * startup measures the thing that can actually regress.
+ */
+function pythonFloor(): number {
+  return timeRuns(["/usr/bin/python3", "-I", "-c", "pass"], "", {}, 15);
+}
+
 /** The machine's own cost to fork a shell that does nothing. */
 function spawnFloor(): number {
   return timeRuns(["/bin/bash", "-c", "exit 0"], "", {}, 20);
@@ -110,41 +122,44 @@ describe("latency budget, relative to the measured spawn floor", () => {
     expect(got, `non-matching median ${got.toFixed(1)}ms`).toBeLessThan(floor + Math.max(40, floor * 3));
   }, 120_000);
 
-  test("the matched path stays within its ceiling on the SYSTEM interpreter", () => {
-    // Pinned to /usr/bin/python3 so the ceiling does not hold only on a fast
-    // pyenv/conda build that happens to be first on PATH.
+  test("the matched path's own work stays small above interpreter startup", () => {
+    // Baseline is a bare SYSTEM python3 start, not a bash no-op. The matched
+    // path is dominated by interpreter startup, and budgeting against bash
+    // measures mostly that startup rather than anything this script does --
+    // at a 3.4ms bash floor a x200 bound allows 680ms, wide enough to hide a
+    // 500ms parser regression.
     //
-    // RELATIVE, like every other assertion here, and for a reason this test
-    // learned the hard way. An earlier version asserted a fixed 250ms. On one
-    // CI runner the same job measured 65.8ms and 265.6ms in two runs -- a
-    // fourfold swing, with the spawn floor moving 0.8ms to 3.4ms alongside it.
-    // A fixed bound cannot survive that; it either flakes or is set so high it
-    // catches nothing.
-    //
-    // The RATIO is stable where the absolute number is not: those two samples
-    // were 82x and 78x the floor respectively, and this machine measures ~100x.
-    // So the bound is a multiple of the measured floor, with an absolute minimum
-    // so a very fast floor cannot produce an impossibly tight ceiling.
-    //
-    // For the record: the plan's 60ms figure applies to a fast interpreter, and
-    // the system interpreter is dominated by startup cost no work in this script
-    // can remove.
-    const floor = spawnFloor();
-    const ceiling = Math.max(300, floor * 200);
+    // The gate spawns the interpreter EXACTLY ONCE (KTD11). It used to spawn it
+    // three times -- decide, extract the audit row, strip it back out -- which
+    // cost ~92ms of pure startup and is why this path measured 177ms. One spawn
+    // brings it to ~70ms against a ~31ms python floor, so the hook's own work
+    // is roughly 40ms.
+    const pyFloor = pythonFloor();
+    const OWN_WORK_BUDGET_MS = 120; // generous, but far below a second spawn
 
     const got = timeRuns([join(SCRIPTS, "sfce-metadata-gate"), "PreToolUse"], EDIT,
       { SFCE_GATE_ENABLED: "1", SFCE_GATE_ENFORCE: "1", PATH: "/usr/bin:/bin:/usr/sbin:/sbin" }, 15);
+    const ownWork = got - pyFloor;
 
     expect(
-      got,
-      `matched-path median ${got.toFixed(1)}ms exceeds ${ceiling.toFixed(0)}ms ` +
-        `(floor ${floor.toFixed(1)}ms x200, min 300ms). That is ${(got / floor).toFixed(0)}x ` +
-        `the spawn floor; the observed range is 78-100x.`,
-    ).toBeLessThan(ceiling);
+      ownWork,
+      `the gate's own work is ${ownWork.toFixed(1)}ms above a ${pyFloor.toFixed(1)}ms ` +
+        `interpreter floor (total ${got.toFixed(1)}ms), over the ${OWN_WORK_BUDGET_MS}ms ` +
+        `budget. A second interpreter spawn costs about a full floor, so check ` +
+        `that the parser is still invoked exactly once.`,
+    ).toBeLessThan(OWN_WORK_BUDGET_MS);
 
     console.log(
-      `  matched path (system interpreter) = ${got.toFixed(1)}ms ` +
-        `(${(got / floor).toFixed(0)}x floor, ceiling ${ceiling.toFixed(0)}ms)`,
+      `  matched path = ${got.toFixed(1)}ms (python floor ${pyFloor.toFixed(1)}ms, ` +
+        `own work ${ownWork.toFixed(1)}ms)`,
     );
   }, 120_000);
+
+  test("the gate spawns the interpreter exactly once (KTD11)", () => {
+    // The structural half of the budget above: a regression that adds a spawn
+    // is visible here even on a machine too fast for the timing to notice.
+    const body = readFileSync(join(SCRIPTS, "sfce-metadata-gate"), "utf-8");
+    const spawns = [...body.matchAll(/(?:\|\s*|\$\()"\$PY"\s+-I/g)];
+    expect(spawns.length, `expected exactly 1 parser spawn, found ${spawns.length}`).toBe(1);
+  });
 });
