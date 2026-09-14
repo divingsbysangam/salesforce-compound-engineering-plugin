@@ -78,6 +78,21 @@ before/after run of the skill-triggering eval harness at `tests/skill-triggering
 wording and again with the edit, and include the result in the PR. A gate-wording
 change without eval evidence is **not merged**.
 
+**Status of the evidence.** This is still produced by a MANUAL run. The CI step
+that would make it a blocking check is present but deliberately switched off,
+because no fixtures are recorded yet — see `.github/workflows/quality.yml`. The
+harness itself is ready: it replays recorded streams offline, a missing or
+truncated fixture fails rather than skips, and it no longer compares bare skill
+names against the plugin-qualified identity Claude Code actually reports, which
+would have false-FAILED every case. What remains is the recording session.
+
+Refreshing fixtures is a deliberate act that produces a reviewable diff: run
+`tests/skill-triggering/run-test.sh --live`, then review what changed in
+`tests/skill-triggering/fixtures/` before committing. Re-record after any change
+to skill `description` frontmatter or gate wording — a fixture freezes routing
+as it was on the day it was captured, and replay will keep asserting the old
+behaviour and stay green.
+
 ### Protocol F — no silently omitted conversion target
 
 Three documents cited Protocol F by name before it was ever defined. This is the

@@ -295,7 +295,17 @@ EOF
     skill="${rows[$i]#*	}"
     if is_skill_tool "$tool"; then
       first_skill="$skill"
-      [[ "$skill" == "$expected" ]] && triggered=0
+      # Claude Code reports skill identity PLUGIN-QUALIFIED, always:
+      # "sf-compound-engineering:sf-review", never a bare "sf-review".
+      # Measured on 2.1.270 in the U1 spike; see
+      # docs/solutions/patterns/claude-code-skill-entry-events.md.
+      #
+      # SEED_BATTERY holds bare names, so an exact comparison against the raw
+      # identity would fail EVERY case the moment real fixtures are recorded --
+      # a false FAIL, not a vacuous pass, but it would still make the gate
+      # useless and look like a routing catastrophe. Strip the qualifier before
+      # comparing; an expectation written qualified still matches too.
+      [[ "$skill" == "$expected" || "${skill##*:}" == "${expected##*:}" ]] && triggered=0
       break
     fi
     if is_benign_tool "$tool"; then
