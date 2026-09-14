@@ -16,13 +16,15 @@
 # any machine.
 set -euo pipefail
 
-cat <<'EOF'
+cat <<'SFCE_PRIMER'
 SF compound-engineering plugin active. Route Salesforce work through a workflow skill before raw edits — skills/index.md is the map. For ongoing work, bind one responsibility to one sf-tend feed and durable thread. For a quick fix, enter sf-work or sf-debug rather than editing Apex/LWC/Flow directly.
 
 Three non-negotiable discipline gates apply:
 - sf-plan — Verification Strategy (acceptance assertion, bulk threshold, governor boundary, sharing scenario, integration mock)
 - sf-work — System-Wide Test Check (trigger contexts, bulkification, governor limits, sharing, integration mocks)
 - sf-review — Non-Negotiable Gates (security, governor, test-coverage, trigger-context, sharing regressions)
-EOF
+
+Raw metadata edits are the drift this plugin exists to prevent: reach force-app Apex, LWC, Aura, or Flow through an authoring skill, never by editing the file directly. On Claude Code that intent is also enforced by an opt-in gate; everywhere else it is this instruction, and the absence of a refusal is never evidence that an edit was authorised.
+SFCE_PRIMER
 
 exit 0

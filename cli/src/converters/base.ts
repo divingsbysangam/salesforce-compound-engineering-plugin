@@ -10,6 +10,11 @@ export type HookClass =
   | "lifecycle-callback" // platform has an in-process startup callback (JS runtime)
   | "instructions-file"; // no hook primitive — append primer to an always-loaded file
 
+/** Escape a literal for use inside a RegExp. */
+function escapeRegExp(literal: string): string {
+  return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export abstract class BaseConverter {
   abstract readonly target: TargetPlatform;
   abstract readonly label: string;
@@ -60,26 +65,56 @@ export abstract class BaseConverter {
   }
 
   /**
-   * Append the primer to an always-loaded instructions file, idempotently
-   * (a marker comment guards against duplicate appends on re-sync).
+   * Write the primer into an always-loaded instructions file, REPLACING any
+   * block a previous conversion left behind.
+   *
+   * This used to return early whenever the marker was present, which is
+   * idempotent but wrong: an already-converted repository kept its OLD primer
+   * forever, so any change to the primer text reached new installs only. Every
+   * existing install would have been stranded on the previous wording -- which
+   * is precisely the population that most needs an updated instruction.
+   *
+   * The block is delimited at both ends so it can be replaced in place without
+   * disturbing anything the user wrote around it.
    */
   protected appendInstructionsPrimer(path: string, primer: string): void {
-    const marker = "<!-- sf-compound-engineering:session-discipline-primer -->";
+    const begin = "<!-- sf-compound-engineering:session-discipline-primer -->";
+    const end = "<!-- /sf-compound-engineering:session-discipline-primer -->";
     const block = [
-      marker,
+      begin,
       "# SF Compound Engineering — Session Discipline Primer",
       "",
       primer,
       "",
+      end,
     ].join("\n");
 
-    if (existsSync(path)) {
-      const existing = readFileSync(path, "utf-8");
-      if (existing.includes(marker)) return; // already present
-      this.writeFile(path, existing.replace(/\s*$/, "") + "\n\n" + block);
+    if (!existsSync(path)) {
+      this.writeFile(path, block);
       return;
     }
-    this.writeFile(path, block);
+
+    const existing = readFileSync(path, "utf-8");
+
+    // Current shape: a fully delimited block. Replace it wholesale.
+    const delimited = new RegExp(
+      `${escapeRegExp(begin)}[\\s\\S]*?${escapeRegExp(end)}`,
+    );
+    if (delimited.test(existing)) {
+      this.writeFile(path, existing.replace(delimited, block));
+      return;
+    }
+
+    // Legacy shape: an opening marker with no terminator, written by an
+    // earlier CLI. Everything from that marker to the end of the file was the
+    // primer, so replacing the tail is the faithful upgrade.
+    const legacyAt = existing.indexOf(begin);
+    if (legacyAt !== -1) {
+      this.writeFile(path, existing.slice(0, legacyAt).replace(/\s*$/, "") + "\n\n" + block);
+      return;
+    }
+
+    this.writeFile(path, existing.replace(/\s*$/, "") + "\n\n" + block);
   }
 
   /**

@@ -78,6 +78,29 @@ before/after run of the skill-triggering eval harness at `tests/skill-triggering
 wording and again with the edit, and include the result in the PR. A gate-wording
 change without eval evidence is **not merged**.
 
+### Protocol F — no silently omitted conversion target
+
+Three documents cited Protocol F by name before it was ever defined. This is the
+definition.
+
+**Every capability this plugin ships must have an explicit, recorded outcome for
+every conversion target — and "not deliverable here" is a valid outcome, while
+silence is not.**
+
+A target that simply goes unmentioned is indistinguishable from one that was
+considered and found unable to receive the capability. The first is an oversight
+a reader cannot detect; the second is a decision a reader can weigh. So when a
+capability lands, `docs/hook-portability-matrix.md` gains a cell for every
+target, with a class naming how it arrives or why it cannot.
+
+This is what forbids degrading enforcement onto platforms with no blocking
+primitive. An instructions file cannot deny a tool call. Emitting one and
+implying the capability shipped there is the silent omission this protocol
+exists to prevent — the honest cell is "intent only, no enforcement".
+
+A change that adds or removes a hook, or changes what a hook delivers, updates
+the matrix in the same PR.
+
 ### Protocol E — pressure-test records for gate changes
 
 No discipline-gate-tier skill or persona ships or is edited without **at least two**
