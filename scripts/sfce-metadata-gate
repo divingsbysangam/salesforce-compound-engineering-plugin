@@ -44,10 +44,17 @@ set -u
 EVENT="${1:-}"
 
 # --- tier 1: flag test before stdin is read ---------------------------------
-case "${SFCE_GATE_ENABLED:-}" in
-  1|true|yes|on) ;;
-  *) exit 0 ;;
-esac
+# Both spellings are accepted. U1 measured that a userConfig DEFAULT never
+# reaches a hook process -- a value arrives only once set via /plugin configure
+# -- and could not observe the exact env-name transform, so the documented
+# SFCE_ name stays the reliable path and the plugin-option names are read
+# alongside it. Absent still means off.
+_gate_on=""
+for _v in "${SFCE_GATE_ENABLED:-}" "${CLAUDE_PLUGIN_OPTION_METADATA_GATE:-}" \
+          "${CLAUDE_PLUGIN_OPTION_metadata_gate:-}"; do
+  case "$_v" in 1|true|yes|on) _gate_on=1 ;; esac
+done
+[ -n "$_gate_on" ] || exit 0
 
 warn() { printf 'sfce-metadata-gate: %s\n' "$1" >&2; }
 

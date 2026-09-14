@@ -36,10 +36,17 @@ set -u
 warn() { printf 'sfce-bash-observer: %s\n' "$1" >&2; }
 
 # --- tier 1: flag test, before stdin is read --------------------------------
-GATE_ON="${SFCE_GATE_ENABLED:-}"
-LOG_ON="${SFCE_SKILL_LOG_ENABLED:-}"
-case "$GATE_ON" in 1|true|yes|on) GATE_ON=1 ;; *) GATE_ON="" ;; esac
-case "$LOG_ON"  in 1|true|yes|on) LOG_ON=1  ;; *) LOG_ON=""  ;; esac
+# Both spellings are accepted; see sfce-metadata-gate for why. Absent = off.
+GATE_ON=""
+for _v in "${SFCE_GATE_ENABLED:-}" "${CLAUDE_PLUGIN_OPTION_METADATA_GATE:-}" \
+          "${CLAUDE_PLUGIN_OPTION_metadata_gate:-}"; do
+  case "$_v" in 1|true|yes|on) GATE_ON=1 ;; esac
+done
+LOG_ON=""
+for _v in "${SFCE_SKILL_LOG_ENABLED:-}" "${CLAUDE_PLUGIN_OPTION_SKILL_TELEMETRY:-}" \
+          "${CLAUDE_PLUGIN_OPTION_skill_telemetry:-}"; do
+  case "$_v" in 1|true|yes|on) LOG_ON=1 ;; esac
+done
 if [ -z "$GATE_ON" ] && [ -z "$LOG_ON" ]; then
   exit 0
 fi

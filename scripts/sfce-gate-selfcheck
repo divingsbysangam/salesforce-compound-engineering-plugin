@@ -1,0 +1,206 @@
+#!/usr/bin/env bash
+# Session-start self-check for the metadata gate.
+#
+# WHY THIS IS ITS OWN HANDLER, not an addition to scripts/session-start:
+# that script is copied verbatim and executed by Kiro, and it runs under shell
+# error-exit, so an environment read in it would abort before the heredoc and
+# delete the discipline primer on every conversion target (KTD13b).
+#
+# WHAT IT PROVES. Asserting that the gate script merely parses would pass for a
+# gate that never denies -- which is the failure mode that matters, because a
+# PreToolUse hook fails open and a gate that silently stopped denying looks
+# exactly like a session with nothing to deny. So this runs the real gate, in a
+# throwaway state directory, against a synthetic unauthorised metadata path, and
+# asserts the output carries a deny decision.
+#
+# WHAT IT MUST NOT DO. It must not touch the user's telemetry or grant state. A
+# real run would inject a synthetic skill entry every session -- corrupting the
+# counts U7 reports, and satisfying U7's own inert-gate health warning, which
+# would defeat the detector this check exists to complement.
+#
+# WHAT IT CANNOT DO. It cannot detect enterprise hook suppression in-band:
+# `allowManagedHooksOnly` and `disableAllHooks` suppress this self-check too, so
+# silence here is not evidence of health. docs/install-verification.md carries
+# the out-of-band check.
+
+set -u
+
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)}"
+GATE="$PLUGIN_ROOT/scripts/sfce-metadata-gate"
+ALLOWLIST="$PLUGIN_ROOT/hooks/authoring-skills.txt"
+ROUTING="$PLUGIN_ROOT/hooks/metadata-path-routing.txt"
+
+# --- flag, as OBSERVED by a hook process ------------------------------------
+# Printed as observed rather than as documented: an opt-in that has not taken
+# effect because the session was never restarted is otherwise silently inert,
+# and the user believes enforcement is on.
+#
+# Both spellings are read. U1 measured that a userConfig DEFAULT never reaches a
+# hook process -- values arrive only once set through /plugin configure -- and
+# could not observe the exact env-name transform, so the documented SFCE_ names
+# remain the reliable path and the plugin-option names are accepted alongside.
+gate_flag=""
+for candidate in \
+  "${SFCE_GATE_ENABLED:-}" \
+  "${CLAUDE_PLUGIN_OPTION_METADATA_GATE:-}" \
+  "${CLAUDE_PLUGIN_OPTION_metadata_gate:-}"; do
+  case "$candidate" in 1|true|yes|on) gate_flag=1 ;; esac
+done
+
+# Nothing to check when the gate is off. Staying quiet here is deliberate: a
+# default install must print nothing at all.
+if [ -z "$gate_flag" ]; then
+  exit 0
+fi
+
+say() { printf '%s\n' "$1"; }
+
+say "SF metadata gate: ENABLED (flag read from this hook process, not from config)"
+
+# --- override: unmissable ----------------------------------------------------
+case "${SFCE_GATE_OVERRIDE:-}" in
+  1|true|yes|on)
+    say ""
+    say "  !! SFCE_GATE_OVERRIDE IS SET — ENFORCEMENT IS OFF FOR THIS SESSION."
+    say "  !! Every metadata edit will be allowed and recorded as an override."
+    say "  !! Unset it in the environment that launched this session to restore the gate."
+    say ""
+    ;;
+esac
+
+case "${SFCE_GATE_ENFORCE:-}" in
+  1|true|yes|on) say "  mode: ENFORCING — an unauthorised metadata edit will be denied" ;;
+  *) say "  mode: observe-only — decisions are recorded, nothing is denied (set SFCE_GATE_ENFORCE=1 to enforce)" ;;
+esac
+
+# --- structural checks -------------------------------------------------------
+problems=0
+note() { say "  WARNING: $1"; problems=$((problems + 1)); }
+
+[ -f "$GATE" ] || note "the gate script is missing at its expected location"
+if [ -f "$GATE" ] && [ ! -x "$GATE" ]; then
+  note "the gate script is not executable — every metadata edit will proceed ungated"
+fi
+
+PY=""
+for candidate in python3 python; do
+  if command -v "$candidate" >/dev/null 2>&1; then
+    PY="$(command -v "$candidate")"
+    break
+  fi
+done
+if [ -z "$PY" ]; then
+  note "no python interpreter on PATH — the gate cannot evaluate and will fail open"
+else
+  case "$PY" in
+    /*) ;;
+    *) note "the python interpreter does not resolve to an absolute path" ;;
+  esac
+  # An interpreter inside the project is one the agent can rewrite, which would
+  # let it replace the thing that judges its own edits.
+  proj="${CLAUDE_PROJECT_DIR:-$PWD}"
+  case "$PY" in
+    "$proj"/*) note "the python interpreter resolves INSIDE the project directory ($PY)" ;;
+  esac
+fi
+
+# --- behavioural check: does it actually DENY? ------------------------------
+if [ -f "$GATE" ] && [ -x "$GATE" ] && [ -n "$PY" ]; then
+  probe_state="$(mktemp -d -t sfce-selfcheck.XXXXXX 2>/dev/null)"
+  if [ -n "$probe_state" ] && [ -d "$probe_state" ]; then
+    probe_out="$(
+      printf '%s' '{"hook_event_name":"PreToolUse","tool_name":"Edit","session_id":"selfcheck-no-such-session","agent_id":null,"cwd":"/selfcheck","tool_input":{"file_path":"/selfcheck/force-app/main/default/classes/SelfCheck.cls"}}' \
+      | SFCE_STATE_HOME="$probe_state" \
+        SFCE_GATE_ENABLED=1 \
+        SFCE_GATE_ENFORCE=1 \
+        SFCE_GATE_OVERRIDE= \
+        "$GATE" PreToolUse 2>/dev/null
+    )"
+    rm -rf "$probe_state"
+
+    case "$probe_out" in
+      *'"permissionDecision"'*'"deny"'*) ;;
+      *) note "the gate did NOT deny a synthetic unauthorised metadata edit — it is loaded but not enforcing" ;;
+    esac
+  else
+    note "could not create a throwaway directory for the behavioural check"
+  fi
+fi
+
+# --- enforcement-input digest ------------------------------------------------
+# The gate's own inputs are ordinary files the agent can edit, and editing them
+# is never denied. This cannot prevent that; it makes it visible in the record.
+if [ -n "$PY" ]; then
+  DIGEST="$("$PY" - "$GATE" "$ALLOWLIST" "$ROUTING" <<'PY' 2>/dev/null
+import hashlib, os, sys
+h = hashlib.sha256()
+for path in sys.argv[1:]:
+    try:
+        with open(path, "rb") as fh:
+            h.update(fh.read())
+    except OSError:
+        h.update(b"<missing>")
+    h.update(b"\0")
+sys.stdout.write(h.hexdigest()[:16])
+PY
+)"
+  [ -n "$DIGEST" ] && say "  enforcement inputs digest: $DIGEST"
+fi
+
+# --- R34: the audit summary that puts the record in front of a human --------
+# The Principle 3 trade-off is justified only if a human actually sees the
+# record. This line is what makes that condition hold without the user ever
+# running the reporter.
+if [ -n "$PY" ]; then
+  if [ -n "${SFCE_STATE_HOME:-}" ]; then STATE_ROOT="$SFCE_STATE_HOME"
+  elif [ -n "${SFCE_TEND_HOME:-}" ]; then STATE_ROOT="$SFCE_TEND_HOME"
+  elif [ -n "${XDG_STATE_HOME:-}" ]; then STATE_ROOT="$XDG_STATE_HOME"
+  else STATE_ROOT="$HOME/.sfce"
+  fi
+
+  SUMMARY="$("$PY" - "$STATE_ROOT/gate/audit.jsonl" <<'PY' 2>/dev/null
+import json, os, sys
+path = sys.argv[1]
+override = bypass = landed = decided = 0
+if os.path.isfile(path):
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except Exception:
+                    continue
+                if not isinstance(row, dict):
+                    continue
+                event = row.get("event")
+                if event == "bash_bypass":
+                    bypass += 1
+                elif event == "gate_decision":
+                    d = row.get("decision")
+                    if d == "override":
+                        override += 1
+                    elif d == "edit_landed":
+                        landed += 1
+                    else:
+                        decided += 1
+    except OSError:
+        pass
+gap = landed - decided
+if override or bypass or gap > 0:
+    sys.stdout.write("overrides %d, shell bypasses %d, edits with no decision row %d"
+                     % (override, bypass, gap if gap > 0 else 0))
+PY
+)"
+  if [ -n "$SUMMARY" ]; then
+    say "  gate audit since install: $SUMMARY"
+  fi
+fi
+
+if [ "$problems" -gt 0 ]; then
+  say "  $problems problem(s) above. The absence of a deny is never evidence of authorisation."
+fi
+
+exit 0
