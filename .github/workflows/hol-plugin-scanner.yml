@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: HOL AI Plugin Scanner
-        uses: hashgraph-online/ai-plugin-scanner-action@fc91f16ca4e6c0c919e807238f27b329dd828cbe # pin to commit
+        uses: hashgraph-online/ai-plugin-scanner-action@bb4f519048c0fd1cd9d7b42056072d6070b8ad7d # pin to commit
         with:
           plugin_dir: "."
           min_score: "80"
