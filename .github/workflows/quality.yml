@@ -31,25 +31,59 @@ jobs:
         run: |
           python -m py_compile sfce.py
           python sfce.py --help
-      - name: Skill trigger fixtures (not wired in yet -- U13)
-        # NOT EXECUTED YET, deliberately. The harness now replays recorded
-        # fixtures from tests/skill-triggering/fixtures/ instead of skipping
-        # when the claude CLI is absent, and no fixtures are committed yet, so
-        # running it here would fail the build for a missing recording rather
-        # than for a routing regression.
+      - name: Skill trigger replay (blocked on fixtures -- U13)
+        # STILL NOT EXECUTED, and the reason narrowed to exactly one thing.
         #
-        # The previous form wrapped the harness in an exit-77 tolerance, which
-        # meant this step passed without ever running the eval. That tolerance
-        # is not being restored: a check that cannot fail is worse than one
-        # that is visibly switched off.
+        # U13 makes this a blocking check. Two things blocked it; one is now
+        # fixed and one is not:
         #
-        # Re-enabling this as a blocking check is U13 in
-        # docs/plans/2026-09-12-2142-feat-metadata-gate-and-skill-telemetry-plan.md
+        #   FIXED. The harness compared BARE names from SEED_BATTERY against
+        #   the skill identity in a recording. U1 measured that Claude Code
+        #   always reports identity plugin-qualified
+        #   ("sf-compound-engineering:sf-review"), so every case would have
+        #   false-FAILED the moment real fixtures landed. run-test.sh now
+        #   strips the qualifier before comparing.
+        #
+        #   REMAINING. No fixtures are committed. Recording them needs roughly
+        #   70 minutes of live CLI time, and one seed case currently shows a
+        #   real routing anomaly worth understanding before it is frozen into a
+        #   fixture. Switching this on today would fail the build for a missing
+        #   recording rather than for a routing regression.
+        #
+        # The exit-77 tolerance is still NOT restored: a check that cannot fail
+        # is worse than one that is visibly switched off.
         run: |
-          echo "skill-triggering replay is not wired into CI yet (see U13)" >&2
+          echo "skill-triggering replay still needs recorded fixtures (see U13)" >&2
       - name: Type-check, test, and lint
         working-directory: cli
         run: |
           bun run typecheck
           bun test
           bun run lint -- ..
+
+  # U10 asked whether to add a macOS leg or downgrade the bash-3.2 claim to a
+  # manual pre-release check. Decision: add the leg. The claim that the hook
+  # scripts run on macOS system bash 3.2 is load-bearing -- it is the shell
+  # every macOS user's hooks actually execute under -- and a claim nothing
+  # checks is a claim that quietly stops being true. Linux CI cannot test it:
+  # ubuntu-latest ships bash 5.
+  hooks-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: latest
+      - name: Record the bash version under test
+        run: /bin/bash --version | head -1
+      - name: Every hook script parses under system bash 3.2
+        run: |
+          for s in scripts/sfce-* scripts/session-start; do
+            /bin/bash -n "$s" || exit 1
+          done
+      - name: Install locked CLI dependencies
+        working-directory: cli
+        run: bun install --frozen-lockfile
+      - name: Hook behaviour and budget tests
+        working-directory: cli
+        run: bun test tests/hooks/
