@@ -14,6 +14,34 @@ const HOOK_SCRIPTS = [
 ];
 const ALL_SHIPPED = [...HOOK_SCRIPTS, "skill-usage", "session-start"];
 
+/**
+ * Scripts permitted to make a network call. THE ONLY ENTRY IS THE DELEGATION
+ * TIER, whose entire purpose is an API call to a cheap worker.
+ *
+ * This list exists so the exception is DECLARED rather than a hole. The
+ * "no network, ever" test below used to iterate a hardcoded ALL_SHIPPED, which
+ * meant a new network-capable script in scripts/ was covered by nothing at all
+ * -- and the next person adding a hook would reasonably copy whatever was
+ * already there. The test now enumerates the directory, so every script is
+ * either network-free or named here on purpose.
+ *
+ * Adding an entry is a threat-model change, not a convenience. A PreToolUse
+ * hook that can reach the network is a different thing entirely: hooks run on
+ * every matched tool call, before permission resolution, with the user's full
+ * rights.
+ */
+const NETWORK_PERMITTED = ["sfce-delegate"];
+
+/** Every script shipped from scripts/, discovered rather than listed. */
+const shippedScripts = (): string[] =>
+  readdirSync(SCRIPTS, { withFileTypes: true })
+    .filter((e) => e.isFile())
+    .map((e) => e.name)
+    // .mjs/.py helpers are build and reporting tools, not shipped hook scripts,
+    // and are covered by their own checks.
+    .filter((n) => !n.endsWith(".mjs") && !n.endsWith(".py"))
+    .sort();
+
 const read = (name: string) => readFileSync(join(SCRIPTS, name), "utf-8");
 
 /**
@@ -34,16 +62,65 @@ describe("no network, ever", () => {
       /urllib/, /http\.client/, /\brequests\./, /socket\.socket/,
       /fetch\s*\(/, /https?:\/\/[a-z0-9.-]+\.[a-z]{2,}\/?/i,
     ];
-    for (const name of ALL_SHIPPED) {
+    // Enumerated, not listed. A hardcoded list silently exempts whatever is
+    // added next, which is the failure mode that let a network-capable script
+    // sit in scripts/ covered by nothing.
+    for (const name of shippedScripts()) {
+      if (NETWORK_PERMITTED.includes(name)) continue;
       const body = read(name);
       for (const pattern of banned) {
         const m = pattern.exec(body);
         expect(
           m,
-          `${name} contains a network-capable construct: ${m?.[0]}`,
+          `${name} contains a network-capable construct: ${m?.[0]}\n` +
+            `If this is deliberate, add it to NETWORK_PERMITTED and say why. ` +
+            `Do not widen the pattern list.`,
         ).toBeNull();
       }
     }
+  });
+
+  test("no exemption is stale, and the enumeration actually sees the scripts", () => {
+    // A stale exemption is an exemption nobody is reviewing: if sfce-delegate
+    // were renamed, NETWORK_PERMITTED would keep exempting a name that no
+    // longer exists while the new name went unchecked.
+    const present = shippedScripts();
+    for (const name of NETWORK_PERMITTED) {
+      expect(
+        present.includes(name),
+        `NETWORK_PERMITTED names ${name}, which is not in scripts/`,
+      ).toBe(true);
+    }
+    // And the enumeration must actually be finding files. A readdir that
+    // returned nothing -- wrong path, changed layout -- would make the
+    // no-network loop above iterate zero scripts and pass vacuously, which is
+    // the same shape of bug as the echo that stood in for the eval gate.
+    expect(present.length).toBeGreaterThanOrEqual(ALL_SHIPPED.length);
+    for (const name of ALL_SHIPPED) {
+      expect(present, `the enumeration missed ${name}`).toContain(name);
+    }
+  });
+
+  test("no hook script invokes the delegation tier", () => {
+    // Calling sfce-delegate from a hook would put a network round-trip on every
+    // matched tool call and route the hook payload to a third party. The
+    // no-network invariant above would still pass, because the hook itself
+    // would contain no curl.
+    for (const name of ALL_SHIPPED) {
+      expect(read(name), `${name} invokes sfce-delegate`).not.toContain("sfce-delegate");
+    }
+  });
+
+  test("the delegation tier cannot be pointed at an arbitrary host", () => {
+    // It is the one script allowed to talk to the network, so the set of hosts
+    // it will talk to is the whole of its blast radius. The endpoint override
+    // exists for offline testing and is constrained to loopback; without that
+    // constraint an env var would be a way to ship the repository's own source
+    // (which is passed as reference material) to a third party.
+    const body = read("sfce-delegate");
+    expect(body).toContain('DEFAULT_API_BASE="https://api.anthropic.com"');
+    expect(body).toContain("http://127.0.0.1");
+    expect(body).toMatch(/fatal "SFCE_WORKER_API_BASE must be/);
   });
 });
 
