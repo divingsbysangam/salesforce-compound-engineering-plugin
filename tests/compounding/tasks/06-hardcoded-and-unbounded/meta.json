@@ -1,0 +1,10 @@
+{
+  "id": "06-hardcoded-and-unbounded",
+  "kind": "refactor",
+  "primary_rules": [
+    "HARDCODED_ID",
+    "SOQL_UNBOUNDED",
+    "MISSING_FLS_ON_QUERY"
+  ],
+  "why_this_task": "A hardcoded record-type/owner id and an unbounded query. Both break on deploy to a new org."
+}

@@ -50,6 +50,9 @@ Compound-Engineering-Plugin-Teardown.md
 .sfdx/
 .sf/
 
+# Loop measurement traces (local)
+.sfce/
+
 # CLI build artifacts
 cli/dist/
 cli/node_modules/
@@ -70,3 +73,9 @@ bun.lockb
 .openclaw/
 .qwen/
 .opencode/
+
+# Compounding A/B run output. Transcripts are raw model output captured from a
+# repo clone, so they are NOT committed by default. To publish a run as evidence,
+# review it for anything sensitive and add it deliberately:
+#   git add -f tests/compounding/results/<run-id>
+tests/compounding/results/
