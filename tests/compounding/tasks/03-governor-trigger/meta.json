@@ -1,0 +1,10 @@
+{
+  "id": "03-governor-trigger",
+  "kind": "refactor",
+  "primary_rules": [
+    "TRIGGER_LOGIC_INLINE",
+    "SOQL_IN_LOOP",
+    "DML_IN_LOOP"
+  ],
+  "why_this_task": "Trigger with inline logic, a query per record, and no handler indirection."
+}

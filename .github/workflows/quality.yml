@@ -54,6 +54,27 @@ jobs:
         # is worse than one that is visibly switched off.
         run: |
           echo "skill-triggering replay still needs recorded fixtures (see U13)" >&2
+      - name: Compounding A/B scoring path
+        # The A/B harness's expensive path needs ~12 live CLI turns, so in
+        # practice it is run rarely and its output trusted -- which makes every
+        # silent bug in the SCORING and REPORTING path a bug that survives.
+        # Nobody re-derives a number that took ninety minutes to produce.
+        #
+        # So the parts that need no model are checked on every commit. This
+        # asserts, among 30 checks: a crashed cell is EXCLUDED rather than
+        # scored zero (a cell that produced nothing has zero violations in the
+        # most misleading sense, and scoring it would make a crash the best
+        # available result); a condition that did not take is flagged from the
+        # learning count rather than trusted from its label; and a negative
+        # result is reported plainly and still exits 0, so the harness cannot
+        # become a gate on its own hypothesis being true.
+        #
+        # It says nothing about whether compounding works. That needs the live
+        # runs, which have not been spent -- see
+        # docs/solutions/best-practices/measuring-whether-compounding-works.md
+        run: |
+          python3 tests/compounding/score.py --selftest
+          tests/compounding/selftest.sh
       - name: Type-check, test, and lint
         working-directory: cli
         run: |

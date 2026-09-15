@@ -1,0 +1,10 @@
+{
+  "id": "05-test-bulk-coverage",
+  "kind": "author",
+  "primary_rules": [
+    "TEST_WITHOUT_ASSERT",
+    "TEST_NOT_BULK",
+    "TEST_SEE_ALL_DATA"
+  ],
+  "why_this_task": "An existing test that asserts nothing, uses SeeAllData, and tests one record."
+}
