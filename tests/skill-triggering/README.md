@@ -8,12 +8,41 @@ It mirrors [obra/Superpowers](https://github.com/obra/superpowers)'s `tests/expl
 the prerequisite for **Protocol G**: no gate-wording edit ships without an eval run.
 The harness is intentionally usable standalone.
 
-## Two modes
+## The three entry points
+
+| Script | How to run | Needs the CLI? | What it answers |
+| --- | --- | --- | --- |
+| `selftest.sh` | `tests/skill-triggering/selftest.sh` | no | **Can the gate go red at all?** Feeds sixteen synthetic streams to the real assertions and checks the exit code for every documented failure mode. Needs no fixtures. |
+| `run-test.sh` | `tests/skill-triggering/run-test.sh` | no (replay) / yes (`--live`) | **Does the plugin route correctly?** Replays recorded fixtures, or re-records them. |
+| `ci.sh` | `tests/skill-triggering/ci.sh` | no | The CI entry point. Runs `selftest.sh` (always blocking), then arms the battery from the fixtures on disk. |
+
+`selftest.sh` and `run-test.sh` answer genuinely different questions, and the
+difference is the reason CI has something to run today. A broken **assertion
+engine** makes the battery green no matter how routing behaves — `selftest.sh`
+catches that with no fixtures. A **routing regression** makes the battery red —
+only recorded fixtures catch that, and `selftest.sh` claims nothing about it.
+
+### `run-test.sh` modes
 
 | Mode | How to run | Needs the CLI? | What it is for |
 | --- | --- | --- | --- |
-| **replay** (default) | `run-test.sh` | no | Deterministic offline check against recorded fixtures. Intended as the CI mode; the CI step is switched off until fixtures are committed (U13). |
+| **replay** (default) | `run-test.sh` | no | Deterministic offline check against recorded fixtures. |
 | **live** | `run-test.sh --live` | yes | Re-records fixtures against the real CLI, then asserts against what it recorded. |
+
+### How `ci.sh` arms itself
+
+| Fixtures present | CI result | What is checked |
+| --- | --- | --- |
+| 0 of 10 | **pass**, with a loud UNARMED notice | the assertion engine only |
+| 1–9 of 10 | **fail** — partial recording refused | nothing |
+| 10 of 10 | battery verdict | routing for all ten seed prompts |
+
+The middle rule is load-bearing. Without it the natural failure mode is
+recording three easy cases, going green, and never finishing — a gate reporting
+on three routes while every reader assumes ten. There is no flag to flip: the
+battery becomes blocking the moment the last fixture lands, and it cannot be
+half-armed. See [`fixtures/README.md`](fixtures/README.md) for why the directory
+is currently empty.
 
 Replay reads a recorded tool-use stream from `fixtures/<case>.jsonl` and runs the
 assertions against it. **A missing, empty, unreadable, or truncated fixture is a
@@ -43,6 +72,12 @@ A case passes only when **both** assertions hold.
 ## How to run
 
 ```bash
+# What CI runs (selftest, then the self-arming battery)
+tests/skill-triggering/ci.sh
+
+# Just the assertion-engine selftest (no fixtures, no CLI, seconds)
+tests/skill-triggering/selftest.sh
+
 # Replay the whole seed battery (no CLI needed)
 tests/skill-triggering/run-test.sh
 
