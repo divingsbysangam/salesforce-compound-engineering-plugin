@@ -31,29 +31,35 @@ jobs:
         run: |
           python -m py_compile sfce.py
           python sfce.py --help
-      - name: Skill trigger replay (blocked on fixtures -- U13)
-        # STILL NOT EXECUTED, and the reason narrowed to exactly one thing.
+      - name: Skill-triggering eval gate
+        # NOW EXECUTED. This replaces the `echo` that stood here through U13,
+        # and it is a real blocking check rather than a narrated one.
         #
-        # U13 makes this a blocking check. Two things blocked it; one is now
-        # fixed and one is not:
+        # ci.sh runs two phases and owns the policy for the second:
         #
-        #   FIXED. The harness compared BARE names from SEED_BATTERY against
-        #   the skill identity in a recording. U1 measured that Claude Code
-        #   always reports identity plugin-qualified
-        #   ("sf-compound-engineering:sf-review"), so every case would have
-        #   false-FAILED the moment real fixtures landed. run-test.sh now
-        #   strips the qualifier before comparing.
+        #   phase 1  The assertion-engine selftest. Sixteen synthetic streams
+        #            fed to the real assertions in run-test.sh, covering every
+        #            failure mode the harness documents — wrong skill,
+        #            near-match name, another plugin's same-named skill, the
+        #            expected skill reached second, a premature Bash/Edit, a
+        #            truncated fixture, a missing one. No CLI, no network, no
+        #            fixtures. Always blocking. This is what closes U13: there
+        #            is now a step here that can go red.
         #
-        #   REMAINING. No fixtures are committed. Recording them needs roughly
-        #   70 minutes of live CLI time, and one seed case currently shows a
-        #   real routing anomaly worth understanding before it is frozen into a
-        #   fixture. Switching this on today would fail the build for a missing
-        #   recording rather than for a routing regression.
+        #   phase 2  The recorded battery, which ARMS ITSELF from the fixtures
+        #            on disk: 0 of 10 passes with a loud UNARMED notice, 1..9
+        #            FAILS as a partial recording, 10 of 10 makes the battery's
+        #            verdict the build's. No flag to flip, and recording three
+        #            easy cases cannot buy a green gate.
         #
-        # The exit-77 tolerance is still NOT restored: a check that cannot fail
-        # is worse than one that is visibly switched off.
-        run: |
-          echo "skill-triggering replay still needs recorded fixtures (see U13)" >&2
+        # Why phase 2 may still pass with nothing recorded: the ~70 minutes of
+        # live CLI time is only time, but one seed case shows a genuine routing
+        # anomaly and a fixture is a single sample — freezing the wrong run
+        # would create a permanent false failure or permanent false confidence.
+        # See tests/skill-triggering/fixtures/README.md.
+        #
+        # The exit-77 tolerance is still NOT restored anywhere.
+        run: tests/skill-triggering/ci.sh
       - name: Type-check, test, and lint
         working-directory: cli
         run: |
@@ -81,6 +87,22 @@ jobs:
           for s in scripts/sfce-* scripts/session-start; do
             /bin/bash -n "$s" || exit 1
           done
+      - name: Every eval-harness script parses under system bash 3.2
+        # The harness documents bash 3.2 support deliberately (no mapfile, no
+        # associative arrays, no case-modification expansion) because the people
+        # recording fixtures do so on macOS, where /bin/bash is 3.2. ubuntu-latest
+        # ships bash 5 and would accept a bash-4 construct silently, so the claim
+        # has to be checked on this leg or it is not checked at all.
+        run: |
+          for s in tests/skill-triggering/*.sh; do
+            /bin/bash -n "$s" || exit 1
+          done
+      - name: Assertion-engine selftest under system bash 3.2
+        # Parsing is not the property that matters. The selftest runs the real
+        # assertions against sixteen synthetic streams, so running it here proves
+        # the engine BEHAVES the same under 3.2 as under the bash 5 on the Linux
+        # leg -- which is the shell every recording session actually uses.
+        run: tests/skill-triggering/selftest.sh
       - name: Install locked CLI dependencies
         working-directory: cli
         run: bun install --frozen-lockfile
