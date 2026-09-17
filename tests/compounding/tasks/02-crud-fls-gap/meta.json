@@ -1,0 +1,10 @@
+{
+  "id": "02-crud-fls-gap",
+  "kind": "refactor",
+  "primary_rules": [
+    "MISSING_FLS_ON_QUERY",
+    "MISSING_CRUD_ON_DML",
+    "SHARING_NOT_DECLARED"
+  ],
+  "why_this_task": "Reads and writes with no access enforcement and no declared sharing model."
+}

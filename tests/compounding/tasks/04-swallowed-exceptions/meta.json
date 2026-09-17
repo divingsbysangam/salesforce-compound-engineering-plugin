@@ -1,0 +1,9 @@
+{
+  "id": "04-swallowed-exceptions",
+  "kind": "refactor",
+  "primary_rules": [
+    "EMPTY_CATCH",
+    "DEBUG_ONLY_CATCH"
+  ],
+  "why_this_task": "Two swallowed exceptions, one silent and one debug-only. Failures disappear."
+}
