@@ -12,7 +12,7 @@ The harness is intentionally usable standalone.
 
 | Script | How to run | Needs the CLI? | What it answers |
 | --- | --- | --- | --- |
-| `selftest.sh` | `tests/skill-triggering/selftest.sh` | no | **Can the gate go red at all?** Feeds sixteen synthetic streams to the real assertions and checks the exit code for every documented failure mode. Needs no fixtures. |
+| `selftest.sh` | `tests/skill-triggering/selftest.sh` | no | **Can the gate go red at all?** Feeds sixteen synthetic streams to the real assertions and checks both the exit code and the verdict line for every documented failure mode. Needs no fixtures. |
 | `run-test.sh` | `tests/skill-triggering/run-test.sh` | no (replay) / yes (`--live`) | **Does the plugin route correctly?** Replays recorded fixtures, or re-records them. |
 | `ci.sh` | `tests/skill-triggering/ci.sh` | no | The CI entry point. Runs `selftest.sh` (always blocking), then arms the battery from the fixtures on disk. |
 

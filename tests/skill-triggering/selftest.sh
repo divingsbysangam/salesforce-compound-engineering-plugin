@@ -11,10 +11,10 @@
 #
 # This script answers a DIFFERENT and independently useful question:
 # **can the gate go red at all?** It feeds synthetic streams to the real
-# assertion engine in `run-test.sh` and asserts the exit code, including for
-# every failure mode the harness claims to catch. It needs no `claude` CLI, no
-# network, and no recorded fixtures, so it is blocking in CI from the first
-# commit.
+# assertion engine in `run-test.sh` and asserts both the exit code and the
+# verdict line behind it, including for every failure mode the harness claims
+# to catch. It needs no `claude` CLI, no network, and no recorded fixtures, so
+# it is blocking in CI from the first commit.
 #
 # The distinction matters because the two failure modes are not interchangeable:
 #
@@ -82,19 +82,27 @@ tool_line() {
 }
 
 # --- the case runner --------------------------------------------------------
-# Args: <case-name> <expected-exit> <expected-skill> <fixture-body-or-marker>
+# Args: <case-name> <expected-exit> <expected-skill> <expected-verdict>
+#       <fixture-body-or-marker>
+#
+# <expected-verdict> is a fixed string that must appear in the harness output.
+# The exit code alone is not enough: every rejection exits 1, so a case aimed at
+# one guard would stay green if the harness bailed out earlier for an unrelated
+# reason. That happened — the seed-prompt case used to omit the prompt file,
+# which run-test.sh rejects during argument parsing, so the replay_case() guard
+# it was named after was never reached.
 #
 # Markers, for the cases where the point is an ABSENT or unusable file rather
 # than its contents:
 #   __NO_FIXTURE__     do not create a fixture at all
 #   __EMPTY_FIXTURE__  create a zero-byte fixture
-#   __NO_PROMPT__      create the fixture but no prompt file
+#   __EMPTY_PROMPT__   create the fixture and a zero-byte prompt file
 #
 # The prompt file is created non-empty in every other case because replay_case()
 # guards on it: a fixture whose seed prompt was deleted must not keep passing.
 run_case() {
-  local name="$1" want_exit="$2" expected="$3" body="$4"
-  local sandbox rc case_id="synthetic-case"
+  local name="$1" want_exit="$2" expected="$3" want_verdict="$4" body="$5"
+  local sandbox rc out case_id="synthetic-case"
 
   sandbox="$(mktemp -d -t sfce-selftest.XXXXXX)" || { bad "$name (could not mktemp)"; return; }
 
@@ -106,7 +114,11 @@ run_case() {
   mkdir -p "$sandbox/prompts" "$sandbox/fixtures"
 
   case "$body" in
-    __NO_PROMPT__)
+    __EMPTY_PROMPT__)
+      # Zero bytes, not absent. An absent prompt is rejected by run-test.sh's
+      # argument parsing before replay_case() runs, which would test the wrong
+      # guard.
+      : >"$sandbox/prompts/$case_id.txt"
       skill_line "$expected" >"$sandbox/fixtures/$case_id.jsonl"
       ;;
     __NO_FIXTURE__)
@@ -123,17 +135,24 @@ run_case() {
   esac
 
   # Single-case mode, so the battery's orphan-prompt sweep and SEED_BATTERY are
-  # not involved. Output is discarded: the exit code is the contract under test,
-  # and the harness's own log lines would drown the selftest's report.
-  "$sandbox/run-test.sh" "$expected" "prompts/$case_id.txt" >/dev/null 2>&1
+  # not involved. Output is captured, not shown: the harness's own log lines
+  # would drown the selftest's report.
+  #
+  # Run under "$BASH" rather than via the shebang. `#!/usr/bin/env bash` resolves
+  # to whatever bash is first on PATH, which on a macOS machine with Homebrew
+  # is bash 5 — so `/bin/bash selftest.sh` would otherwise exercise the harness
+  # under bash 5 while claiming 3.2.
+  out="$("$BASH" "$sandbox/run-test.sh" "$expected" "prompts/$case_id.txt" 2>&1)"
   rc=$?
 
   rm -rf "$sandbox"
 
-  if [[ "$rc" -eq "$want_exit" ]]; then
-    ok "$name (exit $rc)"
-  else
+  if [[ "$rc" -ne "$want_exit" ]]; then
     bad "$name (expected exit $want_exit, got $rc)"
+  elif [[ "$out" != *"$want_verdict"* ]]; then
+    bad "$name (exit $rc, but output lacks: $want_verdict)"
+  else
+    ok "$name (exit $rc)"
   fi
 }
 
@@ -146,12 +165,14 @@ log "-- assertion A: the right skill, entered first, passes"
 # U1 measured that Claude Code always reports identity plugin-qualified. This is
 # the shape every real recording will have, so it is the primary pass case.
 run_case "qualified identity passes" 0 "sf-review" \
+  "PASS: A triggered: 'sf-review' skill invoked first" \
   "$(skill_line 'sf-compound-engineering:sf-review')"
 
 # The harness accepts a bare name too. Not because one was ever observed, but
 # because SEED_BATTERY holds bare names and a hand-written fixture is a
 # legitimate thing for a reviewer to produce.
 run_case "bare identity passes" 0 "sf-review" \
+  "PASS: A triggered: 'sf-review' skill invoked first" \
   "$(skill_line 'sf-review')"
 
 log ""
@@ -161,24 +182,29 @@ log "-- assertion A: every near-miss that an earlier form let through"
 # sf-work. If this case ever passes, assertion A has regressed to a substring
 # comparison and the battery is worthless.
 run_case "near-match name is rejected" 1 "sf-work" \
+  "FAIL: A triggered: first skill entered was 'sf-compound-engineering:sf-work-log'" \
   "$(skill_line 'sf-compound-engineering:sf-work-log')"
 
 # Stripping the qualifier instead of qualifying the expectation would accept a
 # DIFFERENT plugin's same-named skill. This case pins the decision recorded in
 # docs/solutions/patterns/claude-code-skill-entry-events.md.
 run_case "another plugin's same-named skill is rejected" 1 "sf-review" \
+  "FAIL: A triggered: first skill entered was 'other-plugin:sf-review'" \
   "$(skill_line 'other-plugin:sf-review')"
 
 # The second bug: a whole-file match passed a stream that routed somewhere else
 # first and reached the expected skill afterwards. Routing is about which skill
 # is reached FIRST.
 run_case "right skill reached second is rejected" 1 "sf-review" \
+  "FAIL: A triggered: first skill entered was 'sf-compound-engineering:sf-plan'" \
   "$(skill_line 'sf-compound-engineering:sf-plan'; skill_line 'sf-compound-engineering:sf-review')"
 
 run_case "wrong skill is rejected" 1 "sf-review" \
+  "FAIL: A triggered: first skill entered was 'sf-compound-engineering:sf-plan'" \
   "$(skill_line 'sf-compound-engineering:sf-plan')"
 
 run_case "no Skill event at all is rejected" 1 "sf-review" \
+  "FAIL: A triggered: no Skill invocation found" \
   "$(tool_line 'Read'; tool_line 'Edit')"
 
 log ""
@@ -187,15 +213,18 @@ log "-- assertion B: premature raw action"
 # The behaviour the plugin's whole discipline rests on: no Edit/Write/Bash
 # before the model enters a workflow skill.
 run_case "Bash before Skill is rejected" 1 "sf-review" \
+  "FAIL: B no-premature-action: 'Bash' fired before any Skill invocation" \
   "$(tool_line 'Bash'; skill_line 'sf-compound-engineering:sf-review')"
 
 run_case "Edit before Skill is rejected" 1 "sf-work" \
+  "FAIL: B no-premature-action: 'Edit' fired before any Skill invocation" \
   "$(tool_line 'Edit'; skill_line 'sf-compound-engineering:sf-work')"
 
 # TodoWrite is explicitly benign. Asserted so a future tightening of
 # is_benign_tool() cannot silently turn every real recording red — Claude Code
 # writes todos early and routinely.
 run_case "TodoWrite before Skill is benign" 0 "sf-review" \
+  "PASS: B no-premature-action" \
   "$(tool_line 'TodoWrite'; skill_line 'sf-compound-engineering:sf-review')"
 
 log ""
@@ -206,26 +235,32 @@ log "-- fixture integrity: unusable input must never read as a pass"
 # successful prefix. extract_tool_rows() exits non-zero instead; this is the
 # case that proves it still does.
 run_case "truncated stream after a valid Skill event is rejected" 1 "sf-review" \
+  "FAIL: could not parse" \
   "$(skill_line 'sf-compound-engineering:sf-review'; printf '{"type":"assistant","message":{"content":[{"type":"too')"
 
 run_case "malformed first line is rejected" 1 "sf-review" \
+  "FAIL: could not parse" \
   "$(printf 'not json at all\n'; skill_line 'sf-compound-engineering:sf-review')"
 
-run_case "empty fixture is rejected" 1 "sf-review" "__EMPTY_FIXTURE__"
+run_case "empty fixture is rejected" 1 "sf-review" \
+  "fixture is empty" "__EMPTY_FIXTURE__"
 
 # This is the U13 hole itself, expressed as a test: a missing recording must
 # fail, not skip. Exit 77 here would mean CI had gone back to treating an
 # unrecorded case as success.
-run_case "missing fixture is a failure, not a skip" 1 "sf-review" "__NO_FIXTURE__"
+run_case "missing fixture is a failure, not a skip" 1 "sf-review" \
+  "no fixture at" "__NO_FIXTURE__"
 
 # A fixture is named after its prompt file, so a deleted or renamed prompt would
 # otherwise keep replaying against a fixture nothing ties to a live seed.
-run_case "fixture without its seed prompt is rejected" 1 "sf-review" "__NO_PROMPT__"
+run_case "fixture without its seed prompt is rejected" 1 "sf-review" \
+  "prompt file missing or empty" "__EMPTY_PROMPT__"
 
 log ""
 log "-- stream shape: events with no tool_use"
 
 run_case "stream carrying no tool_use events is rejected" 1 "sf-review" \
+  "FAIL: no tool_use events found" \
   "$(printf '{"type":"assistant","message":{"content":[{"type":"text","text":"thinking"}]}}\n')"
 
 # --- report -----------------------------------------------------------------
