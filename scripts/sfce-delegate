@@ -1,0 +1,605 @@
+#!/usr/bin/env bash
+# Cheap-worker delegation tier for pure-pattern Salesforce generation.
+#
+# WHAT THIS IS FOR
+#
+# Everything in this plugin runs on the frontier model, including work that is
+# pure pattern-matching: a TestDataFactory, a custom-object field list, the
+# boilerplate half of a service class. Those have a known shape, a reference to
+# follow, and no judgement in them. Generating them on the frontier model costs frontier
+# tokens twice -- once to produce the code and again because the produced code
+# then sits in the orchestrator's context for the rest of the session.
+#
+# This sends such a job to a cheaper worker, strips the fences, and writes the
+# result STRAIGHT TO DISK. The generated code never passes through the calling
+# session's context. That second part is most of the saving.
+#
+# IT IS OPT-IN AND DEFAULT BEHAVIOUR IS UNCHANGED. Nothing invokes this unless a
+# human or a skill explicitly does. With no API key it declines cleanly and the
+# caller does the work inline exactly as before.
+#
+# THIS IS THE ONLY RUNTIME SCRIPT IN scripts/ PERMITTED TO MAKE A NETWORK CALL.
+# `cli/tests/hooks/invariants.test.ts` walks this directory and asserts every
+# other script is network-free, with this file and the CI-only npm release
+# check named as the declared exceptions, and asserts no hook references either. Do not copy this file as the starting point for a hook: a
+# PreToolUse hook that can reach the network is a different threat model
+# entirely, and the invariant test will fail if one appears.
+#
+# WHAT IT REFUSES TO DELEGATE, and why the denylist is deliberately over-broad
+#
+# Security, sharing, governor-sensitive logic, and debugging stay on the frontier
+# model. The denylist that enforces that matches on the spec AND on every
+# reference file, and it will sometimes refuse a job that would have been fine.
+#
+# That bias is correct because the failure costs are not symmetric:
+#
+#   a false refusal  costs one round-trip; the caller generates it inline
+#   a false accept   ships CRUD/FLS or sharing logic written by a weak model
+#
+# An over-broad denylist is the cheap error. Tuning it toward "delegates more"
+# is trading a bounded cost for an unbounded one, so the threshold for loosening
+# any pattern here is a demonstrated false refusal, not an intuition.
+#
+# EXIT CODES. The distinction between 3 and 1 is the contract:
+#   0  delegated; the output file was written
+#   3  DECLINED -- not an error. No key, no worker, below threshold, or an
+#      excluded topic. The caller should do the work inline.
+#   1  a real failure -- API error, malformed response, or a write that failed.
+#   2  usage error.
+#
+# A caller treats 3 as "carry on normally" and must not retry.
+
+set -uo pipefail
+
+EXIT_OK=0
+EXIT_ERROR=1
+EXIT_USAGE=2
+EXIT_DECLINED=3
+
+PROG="$(basename "$0")"
+
+# Haiku-class default. SFCE_WORKER_MODEL overrides when set to a NON-EMPTY
+# value; unset OR empty selects this default, which is requirement (d).
+#
+# `:-` rather than `-` on purpose. `export SFCE_WORKER_MODEL=` is a plausible
+# mistake, and treating it as unset is the kinder contract than sending an empty
+# model name to the API and surfacing whatever error comes back. An earlier
+# version also carried an explicit empty-value decline below; it was unreachable
+# for exactly this reason and has been removed rather than left to read as a
+# handled case.
+DEFAULT_WORKER_MODEL="claude-haiku-4-5-20251001"
+WORKER_MODEL="${SFCE_WORKER_MODEL:-$DEFAULT_WORKER_MODEL}"
+
+# Below this many expected output lines, delegation is not worth a round-trip:
+# the latency exceeds what is saved, and a 10-line factory costs almost nothing
+# to keep in context.
+MIN_LINES="${SFCE_DELEGATE_MIN_LINES:-40}"
+
+MAX_OUTPUT_TOKENS="${SFCE_DELEGATE_MAX_TOKENS:-8000}"
+
+# Endpoint. The override exists so the whole pipeline can be tested offline
+# against a local mock, and it is CONSTRAINED rather than free: an arbitrary
+# host here would turn an env var into a way to ship the repo's source to a
+# third party. Only the real Anthropic endpoint and loopback are accepted.
+DEFAULT_API_BASE="https://api.anthropic.com"
+API_BASE="${SFCE_WORKER_API_BASE:-$DEFAULT_API_BASE}"
+ANTHROPIC_VERSION="2023-06-01"
+
+log()     { printf '%s: %s\n' "$PROG" "$*" >&2; }
+decline() { printf '%s: DECLINED (%s) -- generate this inline\n' "$PROG" "$*" >&2; exit "$EXIT_DECLINED"; }
+fatal()   { printf '%s: ERROR: %s\n' "$PROG" "$*" >&2; exit "$EXIT_ERROR"; }
+have()    { command -v "$1" >/dev/null 2>&1; }
+
+usage() {
+  cat >&2 <<USAGE
+usage: $PROG --spec <file> --out <file> [--reference <file>]... [--expect-lines N] [--kind <kind>]
+
+  --spec <file>        what to generate. Required.
+  --out <file>         where the generated code is written. Required.
+  --reference <file>   a reference the worker must follow. Repeatable.
+                       At least one is required: an unreferenced generation is
+                       exactly the judgement call that should not be delegated.
+  --expect-lines N     roughly how many lines the output should be. Used only
+                       for the threshold gate. Default: $MIN_LINES.
+  --kind <kind>        test-factory | metadata | apex-boilerplate. Advisory;
+                       the exclusion scan runs regardless.
+  --dry-run            run every gate and print the decision. No network call.
+
+env:
+  ANTHROPIC_API_KEY          required for a real call; absent => exit $EXIT_DECLINED
+  SFCE_WORKER_MODEL          worker model (default: $DEFAULT_WORKER_MODEL)
+  SFCE_DELEGATE_MIN_LINES    threshold (default: 40)
+  SFCE_DELEGATE_MAX_TOKENS   output cap (default: 8000)
+  SFCE_WORKER_API_BASE       endpoint; Anthropic or loopback only
+USAGE
+}
+
+# --- args -------------------------------------------------------------------
+SPEC=""
+OUT=""
+REFS=""
+EXPECT_LINES=""
+KIND="apex-boilerplate"
+DRY_RUN=0
+
+# Every value-taking option checks that a value follows BEFORE shifting. With
+# `shift 2` on a final bare `--spec`, the shift fails, $# never reaches zero,
+# and the loop spins forever on the same argument -- a hang, not an error.
+need_value() {
+  [ "$2" -ge 2 ] && return 0
+  log "$1 requires a value"
+  usage
+  exit "$EXIT_USAGE"
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --spec)         need_value "$1" $#; SPEC="$2"; shift 2 ;;
+    --out)          need_value "$1" $#; OUT="$2"; shift 2 ;;
+    --reference)    need_value "$1" $#; REFS="$REFS${REFS:+
+}$2"; shift 2 ;;
+    --expect-lines) need_value "$1" $#; EXPECT_LINES="$2"; shift 2 ;;
+    --kind)         need_value "$1" $#; KIND="$2"; shift 2 ;;
+    --dry-run)      DRY_RUN=1; shift ;;
+    -h|--help)      usage; exit "$EXIT_OK" ;;
+    *)              log "unknown argument: $1"; usage; exit "$EXIT_USAGE" ;;
+  esac
+done
+
+[ -n "$SPEC" ] || { log "--spec is required"; usage; exit "$EXIT_USAGE"; }
+[ -n "$OUT" ]  || { log "--out is required"; usage; exit "$EXIT_USAGE"; }
+[ -s "$SPEC" ] || { log "spec file missing or empty: $SPEC"; exit "$EXIT_USAGE"; }
+
+case "$KIND" in
+  test-factory|metadata|apex-boilerplate) ;;
+  *) log "unknown --kind: $KIND"; usage; exit "$EXIT_USAGE" ;;
+esac
+
+# A generation with no reference is a generation from judgement, which is the
+# thing this tier exists NOT to do. Required rather than optional.
+[ -n "$REFS" ] || decline "no --reference given; an unreferenced generation is not pattern-matching"
+
+# Heredoc rather than a pipeline: a `while read` on the right of a pipe runs in
+# a SUBSHELL, so its `exit` would end only the subshell and the script would
+# carry on with a missing reference. Same reason run-test.sh reads rows this way.
+while IFS= read -r r; do
+  [ -n "$r" ] || continue
+  [ -s "$r" ] || { log "reference missing or empty: $r"; exit "$EXIT_USAGE"; }
+done <<REFCHECK
+$REFS
+REFCHECK
+
+if ! have python3; then
+  # JSON request bodies and response parsing both need a real parser. Building
+  # JSON with string concatenation in shell is how a stray quote in a spec
+  # becomes a malformed request or, worse, injected fields.
+  decline "python3 is not available and is required to build and parse JSON safely"
+fi
+
+# --- gate 1: endpoint sanity -------------------------------------------------
+# PARSED, not glob-matched. An earlier version accepted `http://localhost:*`,
+# and `http://localhost:18081@evil.example:18081` matches that glob while curl
+# reads everything before the @ as userinfo and connects to evil.example --
+# carrying the API key, the spec and every reference. So the override is split
+# into its parts, every part is checked, and the URL handed to curl is REBUILT
+# from the checked parts rather than passed through as typed. Anything that
+# does not rebuild to exactly what was given is refused.
+#
+# Accepted: exactly the default Anthropic base, or http on 127.0.0.1/localhost
+# with an explicit port, no userinfo, no query or fragment, and a path of
+# nothing or "/" (the script appends /v1/messages itself).
+REQUEST_URL="$(python3 -I -c '
+import re, sys
+from urllib.parse import urlsplit
+
+raw, default = sys.argv[1], sys.argv[2]
+if raw == default:
+    print(default + "/v1/messages")
+    sys.exit(0)
+
+# Strict shape first, so nothing a URL parser might forgive (whitespace,
+# backslashes, percent-encoding, a second authority) reaches the parser.
+if not re.fullmatch(r"http://(127\.0\.0\.1|localhost):[0-9]{1,5}/?", raw):
+    sys.exit(1)
+try:
+    parts = urlsplit(raw)
+    port = parts.port
+except ValueError:
+    sys.exit(1)
+if (parts.scheme != "http"
+        or parts.hostname not in ("127.0.0.1", "localhost")
+        or parts.username is not None or parts.password is not None
+        or port is None or not 1 <= port <= 65535
+        or parts.query or parts.fragment
+        or parts.path not in ("", "/")
+        or parts.netloc != "%s:%d" % (parts.hostname, port)):
+    sys.exit(1)
+print("http://%s:%d/v1/messages" % (parts.hostname, port))
+' "$API_BASE" "$DEFAULT_API_BASE")"
+if [ $? -ne 0 ] || [ -z "$REQUEST_URL" ]; then
+  # Refused rather than declined: a non-loopback override is a misconfiguration
+  # worth stopping on, not a reason to quietly fall back to doing the work
+  # inline. Falling back would hide it.
+  fatal "SFCE_WORKER_API_BASE must be $DEFAULT_API_BASE or a loopback address (http://127.0.0.1:PORT or http://localhost:PORT); got: $API_BASE"
+fi
+
+# --- gate 2: the exclusion scan ---------------------------------------------
+# Runs over the spec and EVERY reference. A spec that says "follow the sharing
+# rules in this reference" is an excluded job even though the spec alone reads
+# as boilerplate, which is why the references are scanned too.
+EXCLUDE_PATTERNS='
+with sharing
+without sharing
+inherited sharing
+sharing rule
+sharing model
+apexsharing
+__share
+crud
+field-level security
+field level security
+fls
+isaccessible
+iscreateable
+iscreatable
+isupdateable
+isupdatable
+isdeletable
+stripinaccessible
+user_mode
+security_enforced
+security.strip
+runas
+permission set
+permissionset
+profile
+governor
+limitexception
+too many soql
+heap size
+cpu time
+soql 101
+dml 101
+limits.get
+queueable
+batchable
+schedulable
+@future
+callout
+named credential
+namedcredential
+oauth
+credential
+secret
+api key
+apikey
+encrypt
+crypto
+csrf
+xss
+soql injection
+escapesinglequotes
+debug
+stack trace
+stacktrace
+reproduce the bug
+root cause
+sharing
+permission
+access level
+accesslevel
+record access
+organization-wide default
+org-wide default
+system_mode
+ as user
+password
+token
+session
+sessionid
+http
+httprequest
+enqueuejob
+database.query
+injection
+troubleshoot
+ fix the
+'
+
+# Most stems are bare substrings on purpose (over-broad is the cheap error).
+# The two that start with a space -- " as user", " fix the" -- are anchored to
+# a word start so "has user" and "prefix the" are not refused; the haystack is
+# given a leading space so a match at the very start still counts.
+scan_excluded() {
+  # Lower-cased, so a pattern matches regardless of source casing. tr rather
+  # than ${x,,} because that expansion needs bash 4 and this must run on the
+  # macOS system bash 3.2 like every other script here.
+  #
+  # Whitespace is then collapsed: every run of spaces, tabs and newlines becomes
+  # ONE space. Without that, `with  sharing`, `with<TAB>sharing` and a keyword
+  # split across a line break all slipped past a pattern written with a single
+  # space.
+  local haystack lower pat
+  haystack="$1"
+  lower=" $(printf '%s' "$haystack" | tr '[:upper:]' '[:lower:]' | tr -s '[:space:]' ' ')"
+  while IFS= read -r pat; do
+    [ -n "$pat" ] || continue
+    case "$lower" in
+      *"$pat"*) printf '%s' "$pat"; return 0 ;;
+    esac
+  done <<PATTERNS
+$EXCLUDE_PATTERNS
+PATTERNS
+  return 0
+}
+
+# Accumulate the scan text in the CURRENT shell. An earlier version appended
+# inside a `| while` loop, where every assignment was lost with the subshell --
+# so only the spec was ever scanned and every reference slipped past the gate.
+# The references are the half that matters: a spec reading as plain boilerplate
+# can point at a reference full of sharing logic.
+scan_blob="$(cat "$SPEC")"
+while IFS= read -r r; do
+  [ -n "$r" ] || continue
+  scan_blob="$scan_blob
+$(cat "$r")"
+done <<REFSCAN
+$REFS
+REFSCAN
+
+hit="$(scan_excluded "$scan_blob")"
+if [ -n "$hit" ]; then
+  decline "the job touches an excluded topic ('$hit'); security, sharing, governor and debugging work stays on the frontier model"
+fi
+
+# --- gate 3: the size threshold ---------------------------------------------
+if [ -n "$EXPECT_LINES" ]; then
+  case "$EXPECT_LINES" in
+    ''|*[!0-9]*) log "--expect-lines must be a non-negative integer"; exit "$EXIT_USAGE" ;;
+  esac
+  if [ "$EXPECT_LINES" -lt "$MIN_LINES" ]; then
+    decline "expected output is $EXPECT_LINES lines, below the $MIN_LINES-line threshold; the round-trip costs more than it saves"
+  fi
+fi
+
+# --- gate 4: is a worker actually reachable ---------------------------------
+if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+  # Requirement (d): this is the clean fallback. An absent key is the normal
+  # state for most installs, so it must be a decline and never an error.
+  decline "ANTHROPIC_API_KEY is not set, so there is no worker to delegate to"
+fi
+have curl || decline "curl is not available"
+
+if [ "$DRY_RUN" -eq 1 ]; then
+  log "dry-run: every gate passed"
+  log "  worker model:   $WORKER_MODEL$([ -n "${SFCE_WORKER_MODEL:-}" ] && printf '%s' " (from SFCE_WORKER_MODEL)" || printf '%s' " (default)")"
+  log "  endpoint:       $REQUEST_URL"
+  log "  kind:           $KIND"
+  log "  out:            $OUT"
+  log "  threshold:      $MIN_LINES lines"
+  log "no network call was made"
+  exit "$EXIT_OK"
+fi
+
+# --- build the request ------------------------------------------------------
+REQ_FILE="$(mktemp -t sfce-delegate-req.XXXXXX)" || fatal "could not create a temp file"
+RESP_FILE="$(mktemp -t sfce-delegate-resp.XXXXXX)" || fatal "could not create a temp file"
+trap 'rm -f "$REQ_FILE" "$RESP_FILE"' EXIT INT TERM
+
+# Built by python so every value is JSON-escaped properly. Shell string
+# concatenation would break on the first apostrophe in a spec.
+python3 -I -c '
+import json, os, sys
+
+spec_path  = sys.argv[1]
+model      = sys.argv[2]
+kind       = sys.argv[3]
+max_tokens = int(sys.argv[4])
+out_path   = sys.argv[5]
+
+refs = [p for p in (line.strip() for line in sys.stdin) if p]
+
+def read(p):
+    with open(p, encoding="utf-8", errors="replace") as fh:
+        return fh.read()
+
+parts = []
+for p in refs:
+    parts.append("<reference path=\"%s\">\n%s\n</reference>" % (os.path.basename(p), read(p)))
+parts.append("<spec>\n%s\n</spec>" % read(spec_path))
+
+# The worker is told to emit ONLY code. A worker that explains itself defeats
+# the purpose: the explanation is exactly the frontier-context cost being
+# avoided, and it would have to be stripped anyway.
+system = (
+    "You generate Salesforce %s code. Follow the supplied reference patterns exactly.\n"
+    "Output ONLY the file contents. No prose, no explanation, no markdown fences, "
+    "no leading or trailing commentary.\n"
+    "If the spec is ambiguous, choose the option the reference demonstrates. "
+    "Do not invent security, sharing, or permission logic -- if the spec appears "
+    "to require any, output exactly: DELEGATION_REFUSED" % kind
+)
+
+body = {
+    "model": model,
+    "max_tokens": max_tokens,
+    "system": system,
+    "messages": [{"role": "user", "content": "\n\n".join(parts)}],
+}
+with open(out_path, "w", encoding="utf-8") as fh:
+    json.dump(body, fh)
+' "$SPEC" "$WORKER_MODEL" "$KIND" "$MAX_OUTPUT_TOKENS" "$REQ_FILE" <<REFLIST
+$REFS
+REFLIST
+# Status checked on its own line. A `<<HEREDOC \` line continuation does NOT
+# work the way it looks: bash begins the heredoc body at the next PHYSICAL
+# newline, so a `|| fatal ...` written on the continued line is read as heredoc
+# DATA and the failure is never checked.
+[ $? -eq 0 ] || fatal "could not build the request body"
+
+# --- call -------------------------------------------------------------------
+# The key never goes on curl's command line. Anything in argv is readable by
+# every local user through `ps` for the life of the request, so the header is
+# written to curl's STDIN as a config file (`-K -`) by printf, a shell builtin
+# that is not itself a process with an argv. The body comes from a file via
+# --data-binary @file, so stdin is free for the config.
+#
+# `-q` must be the FIRST argument: it stops curl reading ~/.curlrc, which could
+# otherwise add a proxy, extra headers, or a --trace that writes the key to
+# disk -- the user's curl defaults are not this script's to inherit.
+#
+# `--noproxy '*'` for the same reason, one layer out: curl honours http_proxy,
+# https_proxy and ALL_PROXY from the environment, and a proxy would receive the
+# key in cleartext on the loopback path and could relay the validated request
+# anywhere. The endpoint check means nothing if the connection does not go
+# straight to the endpoint. Behind a mandatory proxy the call fails, the script
+# exits non-zero, and the caller generates inline -- the tier is optional.
+#
+# The key is character-checked first because it is interpolated into a quoted
+# config string; a quote or newline in it would let the variable inject curl
+# options. The check never prints the value.
+case "$ANTHROPIC_API_KEY" in
+  *[!A-Za-z0-9_-]*) fatal "ANTHROPIC_API_KEY contains characters that cannot appear in an API key; refusing to send it" ;;
+esac
+
+http_code="$(printf 'header = "x-api-key: %s"\n' "$ANTHROPIC_API_KEY" | curl -q --noproxy '*' -sS -K - \
+  -o "$RESP_FILE" -w '%{http_code}' \
+  --max-time "${SFCE_DELEGATE_HTTP_TIMEOUT:-120}" \
+  -X POST "$REQUEST_URL" \
+  -H "content-type: application/json" \
+  -H "anthropic-version: $ANTHROPIC_VERSION" \
+  --data-binary "@$REQ_FILE" 2>/dev/null)" || fatal "the request to the worker failed"
+
+case "$http_code" in
+  200) ;;
+  401|403) fatal "the worker rejected the credentials (HTTP $http_code)" ;;
+  429)     fatal "the worker is rate limited (HTTP 429); generate this inline for now" ;;
+  *)       fatal "the worker returned HTTP $http_code" ;;
+esac
+
+# --- extract, strip fences, report tokens -----------------------------------
+# NOTE: no apostrophe may appear anywhere inside this python3 -c '...' block.
+# A single quote closes the shell quoting early and bash then tries to parse
+# the python source as shell. The failure surfaces as a syntax error on a line
+# far below the real cause, which is what makes it expensive. Same applies to
+# the request-builder block above. cli/tests/delegate/ asserts this.
+# Requirement (b): token counts go to STDERR, so the numbers are visible to the
+# operator without becoming part of any stdout the caller might capture.
+python3 -I -c '
+import json, os, re, sys, tempfile
+
+resp_path, out_path = sys.argv[1], sys.argv[2]
+
+try:
+    with open(resp_path, encoding="utf-8") as fh:
+        data = json.load(fh)
+except (OSError, ValueError) as exc:
+    sys.stderr.write("sfce-delegate: ERROR: unreadable worker response: %s\n" % exc)
+    sys.exit(1)
+
+if data.get("type") == "error":
+    err = data.get("error", {})
+    sys.stderr.write("sfce-delegate: ERROR: worker error: %s: %s\n"
+                     % (err.get("type", "?"), err.get("message", "?")))
+    sys.exit(1)
+
+text = "".join(b.get("text", "") for b in data.get("content", [])
+               if isinstance(b, dict) and b.get("type") == "text")
+
+usage = data.get("usage", {}) or {}
+sys.stderr.write(
+    "sfce-delegate: worker=%s  input_tokens=%s  output_tokens=%s\n"
+    % (data.get("model", "?"),
+       usage.get("input_tokens", "?"),
+       usage.get("output_tokens", "?")))
+sys.stderr.write(
+    "sfce-delegate: %s output tokens did NOT enter the caller context\n"
+    % usage.get("output_tokens", "?"))
+
+# Only a turn the model ENDED is a finished file. max_tokens means the output
+# was cut off mid-file, and a truncated class written as success is worse than
+# no file: it looks generated. No stop sequences or tools are sent, so
+# end_turn is the only legitimate completion; stop_sequence, tool_use,
+# pause_turn and refusal are all unexpected here and none is a whole file.
+stop_reason = data.get("stop_reason")
+if stop_reason != "end_turn":
+    hint = ""
+    if stop_reason == "max_tokens":
+        hint = " (output was truncated; raise SFCE_DELEGATE_MAX_TOKENS or generate inline)"
+    sys.stderr.write("sfce-delegate: ERROR: the worker did not finish: stop_reason=%s%s\n"
+                     % (stop_reason, hint))
+    sys.exit(1)
+
+if not text.strip():
+    sys.stderr.write("sfce-delegate: ERROR: the worker returned no text\n")
+    sys.exit(1)
+
+if "DELEGATION_REFUSED" in text:
+    # The worker itself decided the job needed security or sharing judgement.
+    # Honour that: it is a second, independent chance to catch what the keyword
+    # denylist missed.
+    sys.stderr.write("sfce-delegate: DECLINED (the worker refused: the spec appears to "
+                     "require security or sharing logic) -- generate this inline\n")
+    sys.exit(3)
+
+# Strip a markdown fence if the worker added one despite being told not to.
+# Only an OUTER fence wrapping the whole response is removed; a fence in the
+# middle of the text means the worker emitted prose around code, which is not
+# a file and must not be written as one.
+stripped = text.strip()
+fence = re.match(r"^```[A-Za-z0-9_+-]*\r?\n(.*?)\r?\n?```$", stripped, re.DOTALL)
+if fence:
+    stripped = fence.group(1)
+elif "```" in stripped:
+    sys.stderr.write("sfce-delegate: ERROR: the response mixes prose and fenced code; "
+                     "refusing to write a partial file\n")
+    sys.exit(1)
+
+if not stripped.endswith("\n"):
+    stripped += "\n"
+
+# Written to a temp file in the SAME directory and renamed into place. Opening
+# --out with "w" truncated an existing file before the content was known to
+# encode, so a failure (a lone surrogate in the response, a full disk) left the
+# caller with an EMPTY file where their previous one had been. os.replace is
+# atomic within a filesystem: --out is either the old file or the new one.
+out_abs = os.path.abspath(out_path)
+out_dir = os.path.dirname(out_abs)
+tmp_path = None
+try:
+    try:
+        mode = os.stat(out_abs).st_mode & 0o7777
+    except FileNotFoundError:
+        umask = os.umask(0)
+        os.umask(umask)
+        mode = 0o666 & ~umask
+    fd, tmp_path = tempfile.mkstemp(dir=out_dir, prefix=".sfce-delegate.", suffix=".tmp")
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        fh.write(stripped)
+    os.chmod(tmp_path, mode)
+    os.replace(tmp_path, out_abs)
+    tmp_path = None
+except (OSError, UnicodeError) as exc:
+    sys.stderr.write("sfce-delegate: ERROR: could not write %s: %s\n" % (out_path, exc))
+    sys.exit(1)
+finally:
+    if tmp_path is not None:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+sys.stderr.write("sfce-delegate: wrote %d lines to %s\n"
+                 % (stripped.count("\n"), out_path))
+' "$RESP_FILE" "$OUT"
+rc=$?
+
+case "$rc" in
+  0) ;;
+  3) exit "$EXIT_DECLINED" ;;
+  *) exit "$EXIT_ERROR" ;;
+esac
+
+# stdout carries ONLY the path. The whole point is that the generated code does
+# not reach the caller's context, so echoing the content here would undo it.
+printf '%s\n' "$OUT"
+exit "$EXIT_OK"
