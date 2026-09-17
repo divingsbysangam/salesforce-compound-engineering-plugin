@@ -8,6 +8,16 @@ const WORKFLOW = join(REPO_ROOT, ".github", "workflows", "quality.yml");
 
 const workflow = () => readFileSync(WORKFLOW, "utf-8");
 
+/** The body of one named step in quality.yml, up to the next step or job. */
+const step = (name: string): string => {
+  const body = workflow();
+  const start = body.indexOf(`- name: ${name}\n`);
+  expect(start, `quality.yml has no step named "${name}"`).toBeGreaterThanOrEqual(0);
+  const rest = body.slice(start + 1);
+  const end = rest.search(/\n\s*- name: |\n  [\w-]+:\n/);
+  return end === -1 ? rest : rest.slice(0, end);
+};
+
 /**
  * The eval gate's wiring, as tests rather than as a promise.
  *
@@ -40,8 +50,11 @@ describe("the skill-triggering gate is actually invoked by CI", () => {
   test("the macOS leg runs the selftest, not merely a parse check", () => {
     // bash -n proves the file parses. It does not prove the assertions behave
     // the same under macOS system bash 3.2, which is the shell every fixture
-    // recording session actually uses.
-    expect(workflow()).toContain("run: tests/skill-triggering/selftest.sh");
+    // recording session actually uses. The interpreter is named explicitly:
+    // the shebang's `env bash` would pick up Homebrew's bash 5 on the runner.
+    expect(step("Assertion-engine selftest under system bash 3.2")).toContain(
+      "run: /bin/bash tests/skill-triggering/selftest.sh",
+    );
   });
 
   test("exit 77 is not tolerated anywhere in the workflow", () => {
@@ -52,6 +65,16 @@ describe("the skill-triggering gate is actually invoked by CI", () => {
     expect(body).not.toContain("continue-on-error");
     expect(/exit_code\s*==\s*77|\|\|\s*\[\s*\$\?\s*-eq\s*77\s*\]/.test(body)).toBe(false);
   });
+
+  for (const name of ["Skill-triggering eval gate", "Assertion-engine selftest under system bash 3.2"]) {
+    test(`the "${name}" step does not swallow its exit code`, () => {
+      // Scoped to the gate steps: `|| true` is harmless elsewhere, but here it
+      // turns the only check that can go red back into a narrated one.
+      const body = step(name);
+      expect(/\|\|\s*(true\b|:(\s|$))/.test(body), `"${name}" tolerates failure`).toBe(false);
+      expect(body).not.toContain("continue-on-error");
+    });
+  }
 });
 
 describe("the gate's scripts exist and can run", () => {
@@ -75,7 +98,15 @@ describe("the selftest covers the failure modes it claims to", () => {
   // is pinned here rather than trusted to review.
   const selftest = () => readFileSync(join(HARNESS_DIR, "selftest.sh"), "utf-8");
 
+  // Names are matched against actual `run_case "<name>"` registrations, not
+  // against the file as a whole: a deleted case whose name survives in a
+  // comment or log line must not count as present.
+  const registeredCases = () =>
+    new Set([...selftest().matchAll(/^run_case "([^"]+)"/gm)].map((m) => m[1]));
+
   const REQUIRED_CASES = [
+    "qualified identity passes",
+    "bare identity passes",
     "near-match name is rejected",
     "another plugin's same-named skill is rejected",
     "right skill reached second is rejected",
@@ -89,13 +120,24 @@ describe("the selftest covers the failure modes it claims to", () => {
     "empty fixture is rejected",
     "missing fixture is a failure, not a skip",
     "fixture without its seed prompt is rejected",
+    "stream carrying no tool_use events is rejected",
   ];
 
   for (const name of REQUIRED_CASES) {
     test(`case present: ${name}`, () => {
-      expect(selftest()).toContain(name);
+      expect(registeredCases().has(name), `no run_case registers "${name}"`).toBe(true);
     });
   }
+
+  test("the seed-prompt case reaches the replay guard, not argument parsing", () => {
+    // An absent prompt file is rejected by run-test.sh before replay_case()
+    // runs, so that case passed for the wrong reason. It must use a zero-byte
+    // prompt and pin the guard's own message.
+    const body = selftest();
+    expect(body).toMatch(
+      /run_case "fixture without its seed prompt is rejected"[^\n]*\\\n\s*"prompt file missing or empty" "__EMPTY_PROMPT__"/,
+    );
+  });
 
   test("the selftest invokes the shipped harness rather than reimplementing it", () => {
     // A selftest that restated the assertions would pass while run-test.sh was
@@ -116,6 +158,13 @@ describe("ci.sh refuses a partially recorded battery", () => {
   test("a partial fixture set is a failure", () => {
     expect(ci()).toContain("PARTIALLY recorded");
     expect(/present"\s*-lt\s*"\$expected/.test(ci())).toBe(true);
+  });
+
+  test("fixtures arm the battery on existence, so empty ones cannot read as unrecorded", () => {
+    // run-test.sh rejects a zero-byte fixture. Counting with -s would treat a
+    // set of empty fixtures as zero recorded — UNARMED and green.
+    expect(ci()).toContain('[[ -e "$FIXTURE_DIR/$case_id.jsonl" ]]');
+    expect(ci()).not.toContain('-s "$FIXTURE_DIR');
   });
 
   test("an empty prompts directory is a failure, not an empty-by-design pass", () => {

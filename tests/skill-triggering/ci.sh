@@ -99,13 +99,18 @@ fi
 
 # Count only fixtures that correspond to a live seed prompt. A leftover fixture
 # from a renamed prompt must not count toward being fully armed.
+#
+# Arming is on EXISTENCE, not on non-empty content. Usability is run-test.sh's
+# call, and it rejects a zero-byte fixture. Counting with `-s` here would let
+# ten empty fixtures read as zero recorded, i.e. UNARMED and green, which hands
+# a broken recording the one verdict the harness exists to refuse it.
 present=0
 missing=""
 for pf in "$PROMPT_DIR"/*.txt; do
   [[ -e "$pf" ]] || continue
   base="${pf##*/}"
   case_id="${base%.txt}"
-  if [[ -s "$FIXTURE_DIR/$case_id.jsonl" ]]; then
+  if [[ -e "$FIXTURE_DIR/$case_id.jsonl" ]]; then
     present=$((present + 1))
   else
     missing="$missing
@@ -114,7 +119,7 @@ for pf in "$PROMPT_DIR"/*.txt; do
 done
 
 log "  seed prompts:      $expected"
-log "  usable fixtures:   $present"
+log "  fixtures on disk:  $present"
 log ""
 
 if [[ "$present" -eq 0 ]]; then
