@@ -202,8 +202,9 @@ fi
 rm -rf "$run"
 
 echo
-echo "-- with repeats, unequal valid n per condition is shown and kept out of TOTAL"
+echo "-- with repeats, samples are paired by repeat index, never by count"
 run="$(mktemp -d)"; make_meta "$run" 2
+# t1: primed repeat 2 fails, so cold repeat 2 has no partner and is dropped.
 make_cell "$run" "t1" "cold"   1 "$BAD_CLS"  0
 make_cell "$run" "t1" "cold"   2 "$BAD_CLS"  0
 make_cell "$run" "t1" "primed" 1 "$GOOD_CLS" 12
@@ -212,13 +213,21 @@ make_cell "$run" "t2" "cold"   1 "$GOOD_CLS" 0
 make_cell "$run" "t2" "cold"   2 "$GOOD_CLS" 0
 make_cell "$run" "t2" "primed" 1 "$GOOD_CLS" 12
 make_cell "$run" "t2" "primed" 2 "$GOOD_CLS" 12
+# t3: EQUAL valid counts (1 and 1) but on different repeats — no pair exists.
+make_cell "$run" "t3" "cold"   1 "EMPTY"     0
+make_cell "$run" "t3" "cold"   2 "$BAD_CLS"  0
+make_cell "$run" "t3" "primed" 1 "$GOOD_CLS" 12
+make_cell "$run" "t3" "primed" 2 "EMPTY"     12
 out="$(report_of "$run")"
-printf '%s\n' "$out" | grep -q "^  t1 .* 2 *1 .*unequal valid samples" \
-  && ok "per-task n_cold/n_primed printed and the unequal task named" \
-  || bad "unequal n per condition not shown"
-printf '%s\n' "$out" | grep -q "TOTAL .*across 1 task" \
-  && ok "the unequal-n task is excluded from TOTAL" \
-  || bad "the unequal-n task still counted in TOTAL"
+printf '%s\n' "$out" | grep -q "^  t1 .* 2 *1 .*1 unpaired sample(s) dropped" \
+  && ok "per-task n_cold/n_primed printed and the unpaired sample named" \
+  || bad "an unpaired sample was not reported"
+printf '%s\n' "$out" | grep -q "^  t3 .*no repeat is valid in both conditions" \
+  && ok "equal counts on different repeats are excluded, not compared" \
+  || bad "equal counts on different repeats were compared as if paired"
+printf '%s\n' "$out" | grep -q "TOTAL .*across 2 task" \
+  && ok "only tasks with a paired repeat reach TOTAL" \
+  || bad "TOTAL counted a task with no paired repeat"
 rm -rf "$run"
 
 echo

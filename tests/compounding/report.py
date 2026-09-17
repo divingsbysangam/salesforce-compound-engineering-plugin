@@ -92,8 +92,8 @@ def read_int(path: str) -> Optional[int]:
         return None
 
 
-def collect(run_dir: str) -> Tuple[Dict[str, Dict[str, List[Optional[int]]]], List[str]]:
-    """Per task, per condition, the ordered list of sample scores.
+def collect(run_dir: str) -> Tuple[Dict[str, Dict[str, Dict[str, Optional[int]]]], List[str]]:
+    """Per task, per condition, each sample's score keyed by its repeat index.
 
     A sample is None whenever the cell cannot be trusted to measure its label:
 
@@ -111,7 +111,7 @@ def collect(run_dir: str) -> Tuple[Dict[str, Dict[str, List[Optional[int]]]], Li
     scoring it as a perfect run would make a crashed cell the best result in
     the table.
     """
-    scores: Dict[str, Dict[str, List[Optional[int]]]] = {}
+    scores: Dict[str, Dict[str, Dict[str, Optional[int]]]] = {}
     problems: List[str] = []
 
     for task_id in sorted(os.listdir(run_dir)):
@@ -120,7 +120,7 @@ def collect(run_dir: str) -> Tuple[Dict[str, Dict[str, List[Optional[int]]]], Li
             continue
         if not all(os.path.isdir(os.path.join(task_path, c)) for c in CONDITIONS):
             continue
-        scores[task_id] = {c: [] for c in CONDITIONS}
+        scores[task_id] = {c: {} for c in CONDITIONS}
         for cond in CONDITIONS:
             cond_path = os.path.join(task_path, cond)
             for sample in sorted(os.listdir(cond_path)):
@@ -135,17 +135,17 @@ def collect(run_dir: str) -> Tuple[Dict[str, Dict[str, List[Optional[int]]]], Li
                         why = open(invalid, encoding="utf-8").read().strip()
                     except OSError:
                         why = "invalid"
-                    scores[task_id][cond].append(None)
+                    scores[task_id][cond][sample] = (None)
                     problems.append("%s excluded — %s" % (label, why or "invalid"))
                     continue
 
                 rc = read_int(os.path.join(cell, "exit-code.txt"))
                 if rc is None:
-                    scores[task_id][cond].append(None)
+                    scores[task_id][cond][sample] = (None)
                     problems.append("%s excluded — no readable exit-code.txt, so it is not known the session ran" % label)
                     continue
                 if rc != 0:
-                    scores[task_id][cond].append(None)
+                    scores[task_id][cond][sample] = (None)
                     problems.append("%s excluded — claude exited %d" % (label, rc))
                     continue
 
@@ -154,27 +154,27 @@ def collect(run_dir: str) -> Tuple[Dict[str, Dict[str, List[Optional[int]]]], Li
                 # condition; averaging it in would make the delta meaningless.
                 present = read_int(os.path.join(cell, "learnings-present.txt"))
                 if present is None:
-                    scores[task_id][cond].append(None)
+                    scores[task_id][cond][sample] = (None)
                     problems.append("%s excluded — no readable learnings-present.txt, so the condition is unverified" % label)
                     continue
                 if cond == "cold" and present != 0:
-                    scores[task_id][cond].append(None)
+                    scores[task_id][cond][sample] = (None)
                     problems.append(
                         "%s had %d learnings present — the cold condition did not take (excluded)"
                         % (label, present))
                     continue
                 if cond == "primed" and present == 0:
-                    scores[task_id][cond].append(None)
+                    scores[task_id][cond][sample] = (None)
                     problems.append(
                         "%s had no learnings present — the primed condition did not take (excluded)" % label)
                     continue
 
                 data = read_json(os.path.join(cell, "score.json"))
                 if not data or "violations_total" not in data:
-                    scores[task_id][cond].append(None)
+                    scores[task_id][cond][sample] = (None)
                     problems.append("%s has no usable score.json (excluded)" % label)
                     continue
-                scores[task_id][cond].append(int(data["violations_total"]))
+                scores[task_id][cond][sample] = (int(data["violations_total"]))
     return scores, problems
 
 
@@ -199,11 +199,8 @@ def primed_treatment(run_dir: str) -> Tuple[int, int]:
     return recorded, empty
 
 
-def mean_of(values: List[Optional[int]]) -> Optional[float]:
-    usable = [v for v in values if v is not None]
-    if not usable:
-        return None
-    return statistics.fmean(usable)
+def valid_count(samples: Dict[str, Optional[int]]) -> int:
+    return sum(1 for v in samples.values() if v is not None)
 
 
 def main(argv: List[str]) -> int:
@@ -254,31 +251,31 @@ def main(argv: List[str]) -> int:
 
     deltas: List[float] = []
     invalid_tasks = 0
-    unequal_tasks = 0
+    unpaired_samples = 0
 
     for task_id in sorted(scores):
-        n_cold = sum(1 for v in scores[task_id]["cold"] if v is not None)
-        n_primed = sum(1 for v in scores[task_id]["primed"] if v is not None)
-        cold = mean_of(scores[task_id]["cold"])
-        primed = mean_of(scores[task_id]["primed"])
-        if cold is None or primed is None:
+        cold_s = scores[task_id]["cold"]
+        primed_s = scores[task_id]["primed"]
+        n_cold = valid_count(cold_s)
+        n_primed = valid_count(primed_s)
+        # Pair by repeat index: only a repeat valid in BOTH conditions counts.
+        # Equal valid counts are not enough — cold sample 1 failing while primed
+        # sample 2 fails leaves 1 and 1, but the two means would then describe
+        # different repeats.
+        paired = sorted(k for k, v in cold_s.items()
+                        if v is not None and primed_s.get(k) is not None)
+        if not paired:
             invalid_tasks += 1
+            reason = ("a condition has no valid cell" if not n_cold or not n_primed
+                      else "no repeat is valid in both conditions")
             print("  %-28s %8s %8s %8s %4d %4d   %s" % (
-                task_id,
-                "n/a" if cold is None else "%.1f" % cold,
-                "n/a" if primed is None else "%.1f" % primed,
-                "n/a", n_cold, n_primed,
-                "EXCLUDED — a condition has no valid cell"))
+                task_id, "n/a", "n/a", "n/a", n_cold, n_primed, "EXCLUDED — " + reason))
             continue
-        if n_cold != n_primed:
-            # With --repeats > 1, a mean over 3 cold samples against a mean over
-            # 1 primed sample is not the same measurement on both sides, and the
-            # side with fewer samples is the noisier one. Shown, not totalled.
-            unequal_tasks += 1
-            print("  %-28s %8.1f %8.1f %8s %4d %4d   %s" % (
-                task_id, cold, primed, "n/a", n_cold, n_primed,
-                "EXCLUDED — unequal valid samples per condition"))
-            continue
+        dropped = n_cold + n_primed - 2 * len(paired)
+        if dropped:
+            unpaired_samples += dropped
+        cold = statistics.fmean(cold_s[k] for k in paired)
+        primed = statistics.fmean(primed_s[k] for k in paired)
         delta = round(cold - primed, ROUND_DIGITS)
         deltas.append(delta)
         if delta > 0:
@@ -287,6 +284,8 @@ def main(argv: List[str]) -> int:
             note = "primed WORSE"
         else:
             note = "no measured difference"
+        if dropped:
+            note += " (%d unpaired sample(s) dropped)" % dropped
         print("  %-28s %8.1f %8.1f %+8.1f %4d %4d   %s" % (task_id, cold, primed, delta, n_cold, n_primed, note))
 
     print("  " + "-" * 84)
@@ -309,9 +308,9 @@ def main(argv: List[str]) -> int:
     print("  tasks where priming hurt:   %d" % worse)
     print("  tasks with no difference:   %d" % same)
     if invalid_tasks:
-        print("  tasks excluded (no valid cell in a condition): %d" % invalid_tasks)
-    if unequal_tasks:
-        print("  tasks excluded (unequal valid n per condition): %d" % unequal_tasks)
+        print("  tasks excluded (no repeat valid in both):     %d" % invalid_tasks)
+    if unpaired_samples:
+        print("  samples dropped (valid in one condition only):  %d" % unpaired_samples)
     print()
 
     # --- the verdict, and the caveats it cannot be read without -------------
