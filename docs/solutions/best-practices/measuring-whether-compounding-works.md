@@ -19,10 +19,11 @@ test it, the reasoning behind each choice, and — stated up front — the fact 
 
 | | |
 | --- | --- |
-| Method | built and self-tested offline (`tests/compounding/selftest.sh`, 30 checks) |
+| Method | built and self-tested offline (`tests/compounding/selftest.sh`, 50 checks, including the real runner driven by a stub `claude`) |
 | Scorer | built and self-tested (`score.py --selftest`) |
 | Tasks | 6 committed, every seed verified to start with real violations |
 | **Numbers** | **not collected.** Needs ~12 live `claude -p` turns, well over an hour |
+| **Treatment** | **absent today.** No committed learning relates to the Apex these tasks exercise — see below |
 
 The numbers section below is deliberately empty rather than absent. An empty
 section is a visible debt; a missing one reads as an oversight, and in six
@@ -32,9 +33,24 @@ months nobody will remember which it was.
 
 Run the same Salesforce task twice, changing exactly one thing:
 
-* **COLD** — a disposable clone with every file under `docs/solutions/` deleted
+* **COLD** — a disposable export with every file under `docs/solutions/` deleted
   except `README.md`.
-* **PRIMED** — the same clone with the captured learnings intact.
+* **PRIMED** — the same export with the captured learnings intact.
+
+Both arms are built from `git archive HEAD` into a temp directory, with the
+removals applied **before** a fresh single-commit repository is initialised.
+An earlier version cloned the repo and deleted files afterwards, which left
+every "removed" learning one `git show HEAD:docs/solutions/...` away from a
+COLD session running with permission checks disabled.
+
+Two things are removed from **both** arms, because they are the ruler rather
+than the treatment:
+
+* `tests/compounding/` — `score.py` and each task's `meta.json`
+  (`primary_rules`) state exactly what is counted.
+* This document. It names `SOQL_IN_LOOP`, `score.py` and the rules, and it is a
+  file under `docs/solutions/`, so leaving it in would have leaked the ruler
+  into PRIMED only. It never counts as a learning.
 
 Score both with the same deterministic ruler. Report `delta = cold - primed`.
 Violations are counted, so **higher is worse** and **a positive delta means
@@ -117,6 +133,32 @@ documentation.
    therefore consistent with two different explanations, and the harness cannot
    tell them apart.
 
+## The primed arm currently has no treatment
+
+State this before anything else about a result: **every learning committed
+under `docs/solutions/` today is about hooks, telemetry, packaging, or catalog
+layout. None is about bulkification, CRUD/FLS, exception handling, or Apex
+tests** — the only things these six tasks exercise. PRIMED therefore differs
+from COLD by unrelated documents, and a null result is near-guaranteed and
+uninformative. It would not be evidence that compounding fails; it would be
+evidence that nothing relevant had been compounded yet.
+
+No learnings were written to fix this. A learning fabricated to make the
+harness produce a positive delta would be the treatment and the result at the
+same time.
+
+The harness makes the gap impossible to miss rather than pretending it away.
+`run-ab.sh` (including `--dry-run`) and `report.py` run a keyword check over
+each learning's frontmatter and H1 title — `apex`, `soql`, `dml`, `bulk`,
+`fls`, `crud`, `sharing`, `trigger`, `exception`, `test` — and print a loud
+warning when nothing matches. When that warning fires, a null verdict is
+printed as *not* evidence about compounding. The check is deliberately crude: a
+match is a floor for relevance, not proof of it; no match is strong evidence of
+no treatment.
+
+The run becomes worth spending once real Apex work has been captured through
+`/sf-compound` and the warning stops firing on its own.
+
 ## Guarding against the ways this could lie
 
 The offline selftest exists because the expensive path will be run rarely and
@@ -127,13 +169,29 @@ of its checks matter more than the rest:
   nothing has zero violations in the most literal and most misleading sense.
   Scoring it would make a crash the best available result, and a run with
   several crashes would report a large positive delta *for the condition that
-  failed more often.* This is the single most dangerous bug the harness could
-  have, and it is tested directly.
+  failed more often.* The subtler version is worse: seeds are copied in before
+  `claude` runs, so a crash or auth failure leaves the unchanged seed behind,
+  and scoring *that* reports a "legitimate" null. A cell is therefore invalid
+  when `claude` exits non-zero, when it produced no Apex, or when every
+  produced file is byte-identical to its seed — and `report.py` independently
+  excludes any cell whose `exit-code.txt` is missing or non-zero. This is tested
+  through the real runner with a stub `claude` that crashes, and one that exits
+  0 without touching anything.
 
 * **A condition that did not take is flagged.** Each cell records how many
   learning files were actually on disk. A "cold" cell that still has learnings
   is the same condition as its pair, and the delta would be meaningless. The
-  count is trusted over the label.
+  count is trusted over the label: a contradicting cell, or one with no
+  recorded count, is **excluded** from the total, not merely warned about.
+
+* **`--score-only` re-scores, it does not re-read.** Each cell's `produced/`
+  Apex is scored again (with the run's `score.py.snapshot` when present) into
+  a scratch copy, and any stored `score.json` that does not reproduce is named
+  as a `MISMATCH`. A stored number is just a file someone handed you.
+
+* **Unequal samples are not averaged against each other.** With `--repeats`,
+  each task row prints `n_c`/`n_p`; a task whose valid sample counts differ
+  between conditions is shown and kept out of the total.
 
 * **A negative result exits 0 and is stated plainly.** A non-zero exit on a
   negative delta would make the harness a gate on the hypothesis being true, and
@@ -175,5 +233,5 @@ uncomfortable.
 * `tests/compounding/README.md` — how to run it
 * `tests/compounding/score.py` — the rules and the reasoning per signal
 * `tests/compounding/report.py` — delta computation and the attached caveats
-* `tests/compounding/selftest.sh` — the 30 offline checks
+* `tests/compounding/selftest.sh` — the 50 offline checks
 * `tests/compounding/tasks/` — the six tasks and their seeds

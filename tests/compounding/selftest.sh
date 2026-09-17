@@ -59,6 +59,10 @@ make_cell() {
   python3 "$SCORER" "$cell/produced" --json >"$cell/score.json" 2>/dev/null || printf '{}' >"$cell/score.json"
 }
 
+# Force a cell's stored total, for report-arithmetic cases that need exact
+# counts rather than whatever a fixture class happens to score.
+set_total() { printf '{"violations_total": %s}' "$2" >"$1/score.json"; }
+
 make_meta() {
   cat >"$1/run-meta.json" <<META
 {"run_id":"selftest","repeats":${2:-1},"tasks":1,"cells":2,"git_head":"selftest"}
@@ -155,6 +159,88 @@ else
 fi
 rm -rf "$run"
 
+# The label is not trusted over the count: a contradicting cell is EXCLUDED, not
+# merely warned about. t1 is a real +5; t2's cold cell had learnings on disk,
+# so t2 is primed-vs-primed and averaging it in would cancel t1 to a false 0.
+run="$(mktemp -d)"; make_meta "$run"
+make_cell "$run" "t1" "cold"   1 "$BAD_CLS"  0
+make_cell "$run" "t1" "primed" 1 "$GOOD_CLS" 12
+make_cell "$run" "t2" "cold"   1 "$GOOD_CLS" 9    # cold, but learnings present
+make_cell "$run" "t2" "primed" 1 "$BAD_CLS"  12
+out="$(report_of "$run")"
+if printf '%s\n' "$out" | grep -q "^  t2 .*EXCLUDED" && printf '%s\n' "$out" | grep -q "TOTAL .*+5.0 .*across 1 task"; then
+  ok "a contradicting cell is excluded from TOTAL, not averaged in"
+else
+  bad "a contradicting cell still contributed to TOTAL"
+fi
+rm -rf "$run"
+
+run="$(mktemp -d)"; make_meta "$run"
+make_cell "$run" "t1" "cold"   1 "$BAD_CLS"  0
+make_cell "$run" "t1" "primed" 1 "$GOOD_CLS" 12
+rm -f "$run/t1/primed/1/learnings-present.txt"
+out="$(report_of "$run")"
+if printf '%s' "$out" | grep -q "VERDICT: none" && printf '%s' "$out" | grep -q "no readable learnings-present.txt"; then
+  ok "a cell with no learnings-present.txt is excluded as unverified"
+else
+  bad "a cell with no learnings-present.txt was trusted"
+fi
+rm -rf "$run"
+
+echo
+echo "-- a failed session is excluded even when nothing marked it INVALID"
+run="$(mktemp -d)"; make_meta "$run"
+make_cell "$run" "t1" "cold"   1 "$BAD_CLS"  0
+make_cell "$run" "t1" "primed" 1 "$GOOD_CLS" 12
+printf '1' >"$run/t1/cold/1/exit-code.txt"
+out="$(report_of "$run")"
+if printf '%s' "$out" | grep -q "VERDICT: none" && printf '%s' "$out" | grep -q "claude exited 1"; then
+  ok "a non-zero exit-code.txt excludes the cell"
+else
+  bad "a non-zero exit-code.txt was scored"
+fi
+rm -rf "$run"
+
+echo
+echo "-- with repeats, unequal valid n per condition is shown and kept out of TOTAL"
+run="$(mktemp -d)"; make_meta "$run" 2
+make_cell "$run" "t1" "cold"   1 "$BAD_CLS"  0
+make_cell "$run" "t1" "cold"   2 "$BAD_CLS"  0
+make_cell "$run" "t1" "primed" 1 "$GOOD_CLS" 12
+make_cell "$run" "t1" "primed" 2 "EMPTY"     12
+make_cell "$run" "t2" "cold"   1 "$GOOD_CLS" 0
+make_cell "$run" "t2" "cold"   2 "$GOOD_CLS" 0
+make_cell "$run" "t2" "primed" 1 "$GOOD_CLS" 12
+make_cell "$run" "t2" "primed" 2 "$GOOD_CLS" 12
+out="$(report_of "$run")"
+printf '%s\n' "$out" | grep -q "^  t1 .* 2 *1 .*unequal valid samples" \
+  && ok "per-task n_cold/n_primed printed and the unequal task named" \
+  || bad "unequal n per condition not shown"
+printf '%s\n' "$out" | grep -q "TOTAL .*across 1 task" \
+  && ok "the unequal-n task is excluded from TOTAL" \
+  || bad "the unequal-n task still counted in TOTAL"
+rm -rf "$run"
+
+echo
+echo "-- float noise cannot manufacture a sign"
+# Means over 3 samples: t1 delta is -1/3, t2 is 3/3-2/3, which in float is
+# 0.33333333333333337. Unrounded, the total is 5.55e-17 and reads as "moved".
+run="$(mktemp -d)"; make_meta "$run" 3
+for smp in 1 2 3; do
+  make_cell "$run" "t1" "cold"   "$smp" "$GOOD_CLS" 0;  set_total "$run/t1/cold/$smp" 0
+  make_cell "$run" "t2" "cold"   "$smp" "$GOOD_CLS" 0;  set_total "$run/t2/cold/$smp" 0
+  make_cell "$run" "t1" "primed" "$smp" "$GOOD_CLS" 12; set_total "$run/t1/primed/$smp" 0
+  make_cell "$run" "t2" "primed" "$smp" "$GOOD_CLS" 12; set_total "$run/t2/primed/$smp" 0
+done
+set_total "$run/t1/primed/3" 1
+set_total "$run/t2/cold/3" 3
+set_total "$run/t2/primed/3" 2
+out="$(report_of "$run")"
+printf '%s' "$out" | grep -q "No measured effect" \
+  && ok "an exactly-cancelling total is reported as no effect, not as float residue" \
+  || bad "float residue changed the verdict"
+rm -rf "$run"
+
 echo
 echo "-- the sign of the result is reported faithfully in all three directions"
 
@@ -222,6 +308,116 @@ if "$RUNNER" --task no-such-task --dry-run >/dev/null 2>&1; then
 else
   ok "an unknown --task is rejected"
 fi
+
+echo
+echo "-- --score-only re-scores the produced Apex instead of trusting score.json"
+run="$(mktemp -d)"; make_meta "$run"
+make_cell "$run" "t1" "cold"   1 "$BAD_CLS"  0
+make_cell "$run" "t1" "primed" 1 "$GOOD_CLS" 12
+set_total "$run/t1/cold/1" 0     # tampered: BAD_CLS really scores 5
+out="$("$RUNNER" --score-only "$run" 2>&1)"
+printf '%s' "$out" | grep -q "MISMATCH t1/cold/1" \
+  && ok "a tampered score.json is named as a MISMATCH" \
+  || bad "a tampered score.json was not detected"
+printf '%s\n' "$out" | grep -q "^  t1 .* 5\.0 .* 0\.0 .*+5\.0" \
+  && ok "the report uses the re-scored value, not the stored one" \
+  || bad "the report still used the tampered value"
+printf '%s' "$out" | grep -q "with the CURRENT score.py" \
+  && ok "--score-only says which scorer it used" \
+  || bad "--score-only did not say which scorer it used"
+grep -q '"violations_total": 0' "$run/t1/cold/1/score.json" \
+  && ok "--score-only leaves the original run directory untouched" \
+  || bad "--score-only modified the run directory it was checking"
+rm -rf "$run"
+
+echo
+echo "-- the REAL runner path, with a stub claude (no model, no network)"
+# The report-level checks above build run directories by hand. These drive
+# run-ab.sh itself, because that is where the seeds are copied in before claude
+# runs and where a crash used to turn into a scored, unchanged seed.
+stub_root="$(mktemp -d)"
+mkdir -p "$stub_root/bin"
+cat >"$stub_root/bin/claude" <<'STUB'
+#!/usr/bin/env bash
+# Records what the session could see, then behaves per SFCE_AB_STUB_MODE.
+learn_disk="$(find docs/solutions -type f ! -name README.md 2>/dev/null | wc -l | tr -d ' ')"
+learn_git="$(git rev-list --all --objects 2>/dev/null \
+  | git cat-file --batch-check='%(objecttype) %(rest)' 2>/dev/null \
+  | awk '$1 == "blob" && $2 ~ /^docs\/solutions\// && $2 !~ /README\.md$/' | wc -l | tr -d ' ')"
+ruler_git="$(git rev-list --all --objects 2>/dev/null | grep -c ' tests/compounding' | tr -d ' ')"
+harness_git="$(git rev-list --all --objects 2>/dev/null | grep -c 'measuring-whether-compounding-works' | tr -d ' ')"
+commits="$(git rev-list --all 2>/dev/null | wc -l | tr -d ' ')"
+ruler_disk=absent; [[ -e tests/compounding ]] && ruler_disk=present
+harness_disk=absent; [[ -e docs/solutions/best-practices/measuring-whether-compounding-works.md ]] && harness_disk=present
+printf 'learn_disk=%s learn_git=%s ruler_disk=%s ruler_git=%s harness_disk=%s harness_git=%s commits=%s\n' \
+  "$learn_disk" "$learn_git" "$ruler_disk" "$ruler_git" "$harness_disk" "$harness_git" "$commits" >>"$SFCE_AB_STUB_LOG"
+case "${SFCE_AB_STUB_MODE:-}" in
+  crash)  echo "stub: simulated auth failure" >&2; exit 1 ;;
+  noop)   exit 0 ;;
+  modify) for f in ab-workspace/*.cls ab-workspace/*.trigger; do
+            [[ -f "$f" ]] && printf '\n// refactored\n' >>"$f"
+          done
+          exit 0 ;;
+esac
+exit 3
+STUB
+chmod +x "$stub_root/bin/claude"
+
+runner_with_stub() {
+  # <mode>: run one task through run-ab.sh with the stub first on PATH.
+  local mode="$1"
+  : >"$stub_root/$mode.log"
+  PATH="$stub_root/bin:$PATH" SFCE_AB_STUB_MODE="$mode" SFCE_AB_STUB_LOG="$stub_root/$mode.log" \
+    SFCE_AB_RESULTS_DIR="$stub_root/results-$mode" \
+    "$RUNNER" --task 01-bulkification 2>&1
+}
+
+for mode in crash noop; do
+  out="$(runner_with_stub "$mode")"
+  inval="$(find "$stub_root/results-$mode" -name INVALID | wc -l | tr -d ' ')"
+  [[ "$inval" -eq 2 ]] \
+    && ok "stub claude '$mode': both cells marked INVALID by the runner" \
+    || bad "stub claude '$mode': $inval of 2 cells marked INVALID"
+  if printf '%s' "$out" | grep -q "VERDICT: none" \
+     && ! printf '%s\n' "$out" | grep -q "^VERDICT$" \
+     && ! printf '%s' "$out" | grep -q "legitimate finding"; then
+    ok "stub claude '$mode': no verdict and no 'legitimate finding' from unchanged seeds"
+  else
+    bad "stub claude '$mode': the report produced a verdict from cells that did no work"
+  fi
+done
+
+out="$(runner_with_stub modify)"
+inval="$(find "$stub_root/results-modify" -name INVALID | wc -l | tr -d ' ')"
+[[ "$inval" -eq 0 ]] && printf '%s\n' "$out" | grep -q "^VERDICT$" \
+  && ok "stub claude 'modify': cells that changed the seed are valid and reach a verdict" \
+  || bad "stub claude 'modify': a working session was excluded ($inval INVALID)"
+printf '%s' "$out" | grep -q "NO Apex-related learning" \
+  && ok "an unrelated primed corpus triggers the no-treatment warning" \
+  || bad "an unrelated primed corpus did not warn"
+# The stub only appends a comment, so the scores tie. With no treatment on disk
+# that tie must not be called a legitimate finding about compounding.
+if printf '%s' "$out" | grep -q "NOT evidence about compounding" \
+   && ! printf '%s' "$out" | grep -q "legitimate finding"; then
+  ok "a null with no primed treatment is not called a legitimate finding"
+else
+  bad "a null with no primed treatment was reported as a legitimate finding"
+fi
+
+cold_line="$(grep 'learn_disk=0 ' "$stub_root/modify.log" | head -1)"
+primed_line="$(grep -v 'learn_disk=0 ' "$stub_root/modify.log" | head -1)"
+case "$cold_line" in
+  *"learn_git=0 "*) ok "cold clone: no docs/solutions learning reachable through git" ;;
+  *) bad "cold clone: learnings reachable through git ($cold_line)" ;;
+esac
+for line in "$cold_line" "$primed_line"; do
+  case "$line" in
+    *"ruler_disk=absent ruler_git=0 harness_disk=absent harness_git=0 commits=1"*)
+      ok "clone (${line%% *}): no tests/compounding or harness doc on disk or in history" ;;
+    *) bad "clone leaks the ruler or harness doc, or has history: ${line:-<no stub record>}" ;;
+  esac
+done
+rm -rf "$stub_root"
 
 echo
 echo "===== summary ====="

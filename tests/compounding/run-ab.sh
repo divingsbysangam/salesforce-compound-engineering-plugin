@@ -32,6 +32,11 @@
 #      control would need a third condition primed with irrelevant documents of
 #      equal length. That is not built. It is the most important gap.
 #
+#   4. THE PRIMED ARM MAY CARRY NO TREATMENT. If no learning in docs/solutions/
+#      is about the Apex these tasks exercise (true of the committed corpus as
+#      of this writing), PRIMED differs from COLD by unrelated documents only
+#      and a null is uninformative. The runner and report warn loudly.
+#
 # WHAT IS ACTUALLY SCORED. Static Apex violations, counted by score.py — higher
 # is worse, so delta = cold - primed and POSITIVE MEANS PRIMING HELPED.
 # sf-review's own finding count is collected but never scored (it is inside the
@@ -43,7 +48,7 @@
 #   run-ab.sh                      run every task, both conditions, 1 sample
 #   run-ab.sh --repeats 3          3 samples per cell (6x the CLI time)
 #   run-ab.sh --task 01-bulkification
-#   run-ab.sh --score-only <dir>   re-score a previous run's output, no CLI
+#   run-ab.sh --score-only <dir>   re-score a previous run's produced Apex, no CLI
 #
 # COST. Each cell is a real headless `claude -p` turn that performs the task.
 # Twelve cells at several minutes each: budget well over an hour for one pass.
@@ -61,6 +66,13 @@ ONLY_TASK=""
 DRY_RUN=0
 SCORE_ONLY=""
 CELL_TIMEOUT_SECS="${SFCE_AB_TIMEOUT_SECS:-900}"
+REPORTER="$SCRIPT_DIR/report.py"
+
+# The harness's own write-up. It names SOQL_IN_LOOP, score.py and the rules, so
+# leaving it in the PRIMED clone would hand that arm the ruler. It is removed
+# from BOTH clones (COLD already loses every learning) and never counts as a
+# learning.
+HARNESS_DOC="docs/solutions/best-practices/measuring-whether-compounding-works.md"
 
 log() { printf '%s\n' "$*" >&2; }
 die() { log "ERROR: $*"; exit 1; }
@@ -73,7 +85,7 @@ while [[ $# -gt 0 ]]; do
     --repeats)    REPEATS="${2:-}"; shift 2 ;;
     --task)       ONLY_TASK="${2:-}"; shift 2 ;;
     --score-only) SCORE_ONLY="${2:-}"; shift 2 ;;
-    -h|--help)    sed -n '2,40p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)    awk 'NR > 1 && !/^#/ { exit } NR > 1' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *)            die "unknown argument: $1" ;;
   esac
 done
@@ -107,11 +119,58 @@ cells=$((task_count * 2 * REPEATS))
 # This is what makes a published delta checkable by someone else: they take the
 # committed run directory and recompute the number without an API key. If only
 # the live path existed, every result would be take-it-or-leave-it.
+#
+# It RE-SCORES rather than re-reads. A stored score.json is just a file in a
+# directory someone handed you; trusting it would make --score-only a way of
+# reprinting a number, not of checking one. Every cell's produced/ Apex is scored
+# again into a scratch copy of the run (the original directory is never
+# modified), and any cell whose stored total disagrees is named.
 if [[ -n "$SCORE_ONLY" ]]; then
   [[ -d "$SCORE_ONLY" ]] || die "not a directory: $SCORE_ONLY"
-  log "re-scoring $SCORE_ONLY (offline; no CLI invoked)"
+  rescorer="$SCORER"
+  if [[ -f "$SCORE_ONLY/score.py.snapshot" ]]; then
+    rescorer="$SCORE_ONLY/score.py.snapshot"
+    log "re-scoring $SCORE_ONLY with the run's own score.py.snapshot (offline; no CLI invoked)"
+  else
+    log "re-scoring $SCORE_ONLY with the CURRENT score.py — this run kept no snapshot (offline; no CLI invoked)"
+  fi
+
+  scratch="$(mktemp -d -t sfce-ab-rescore.XXXXXX)" || die "could not mktemp"
+  trap 'rm -rf "$scratch"' EXIT
+  cp -R "$SCORE_ONLY"/. "$scratch/" || die "could not copy $SCORE_ONLY"
+
+  mismatches=0
+  while IFS= read -r produced_dir; do
+    cell="$(dirname "$produced_dir")"
+    rel="${cell#"$scratch"/}"
+    stored="$(python3 -c 'import json,sys
+try: print(json.load(open(sys.argv[1]))["violations_total"])
+except Exception: print("none")' "$cell/score.json" 2>/dev/null || echo none)"
+    review_args=()
+    [[ -f "$cell/transcript.txt" ]] && review_args=(--review "$cell/transcript.txt")
+    if python3 "$rescorer" "$produced_dir" ${review_args[@]+"${review_args[@]}"} --json >"$cell/score.json.fresh" 2>/dev/null; then
+      mv "$cell/score.json.fresh" "$cell/score.json"
+    else
+      rm -f "$cell/score.json.fresh"
+      printf '{}' >"$cell/score.json"
+    fi
+    fresh="$(python3 -c 'import json,sys
+try: print(json.load(open(sys.argv[1]))["violations_total"])
+except Exception: print("none")' "$cell/score.json")"
+    if [[ "$stored" != "$fresh" ]]; then
+      mismatches=$((mismatches + 1))
+      log "  MISMATCH $rel: stored score.json says $stored, re-scoring gives $fresh (the re-scored value is reported)"
+    fi
+  done < <(find "$scratch" -mindepth 4 -maxdepth 4 -type d -name produced | sort)
+
+  if [[ "$mismatches" -gt 0 ]]; then
+    log "WARNING: $mismatches cell(s) had a stored score that does not reproduce."
+  else
+    log "every stored score reproduced"
+  fi
   log ""
-  exec python3 "$SCRIPT_DIR/report.py" "$SCORE_ONLY"
+  python3 "$REPORTER" "$scratch"
+  exit $?
 fi
 
 # --- the plan ---------------------------------------------------------------
@@ -130,6 +189,23 @@ for id in $TASKS; do
   log "    $(printf '%-28s' "$id") $base"
 done
 log ""
+
+# A PRIMED arm is only a treatment if the corpus says something about the work.
+# This is a keyword check over frontmatter and titles, not a relevance judgement;
+# its job is to make an empty treatment impossible to miss, not to certify a
+# full one. Checked here against the working tree for the plan, and again per
+# primed cell against the exact clone the model saw.
+relevant_now="$(python3 "$REPORTER" --corpus-check "$REPO_ROOT/docs/solutions" --exclude "$HARNESS_DOC")"
+if [[ -z "$relevant_now" ]]; then
+  log "  !!! WARNING: NO LEARNING IN docs/solutions/ PLAUSIBLY RELATES TO APEX !!!"
+  log "  !!! The PRIMED arm carries no treatment for these tasks, so a null     !!!"
+  log "  !!! result is near-guaranteed and says nothing about compounding.      !!!"
+  log ""
+else
+  log "  Apex-related learnings in the primed corpus:"
+  printf '%s\n' "$relevant_now" | while IFS= read -r f; do log "    $f"; done
+  log ""
+fi
 
 if [[ "$DRY_RUN" -eq 1 ]]; then
   log "--dry-run: nothing executed."
@@ -166,7 +242,7 @@ log ""
 # redirected into the same temp tree so feed state and caches are disposable.
 run_cell() {
   local id="$1" cond="$2" sample="$3"
-  local work_root clone workspace out_dir rc
+  local work_root clone workspace out_dir rc state
 
   out_dir="$RUN_DIR/$id/$cond/$sample"
   mkdir -p "$out_dir"
@@ -176,12 +252,33 @@ run_cell() {
   state="$work_root/state"
   mkdir -p "$state"
 
-  if ! git clone --quiet --no-hardlinks --local "$REPO_ROOT" "$clone" 2>/dev/null; then
-    log "    could not clone; refusing to run in the live checkout"
+  # An EXPORT, not a clone. A clone carries history, and a COLD session with
+  # permission checks disabled could recover every deleted learning with
+  # `git show HEAD:docs/solutions/...`. The committed tree is exported, the
+  # removals below are applied, and only then is a fresh single-commit
+  # repository made, so nothing removed is reachable from any object in it.
+  # There is no remote and no shared object store with the real repository.
+  mkdir -p "$clone"
+  if ! git -C "$REPO_ROOT" archive --format=tar HEAD | tar -x -C "$clone" 2>/dev/null; then
+    log "    could not export HEAD; refusing to run in the live checkout"
     rm -rf "$work_root"
     return 1
   fi
-  git -C "$clone" remote remove origin >/dev/null 2>&1 || true
+
+  # Every deletion below operates on a throwaway temporary export, never on the
+  # real checkout: docs/solutions/ there is protected and irrecoverable
+  # (CLAUDE.md). This guard makes a wrong $clone fail closed instead.
+  if [[ -z "$work_root" || "$clone" != "$work_root"/repo || "$clone" == "$REPO_ROOT" ]]; then
+    log "    clone path $clone is not inside the temp work root; refusing to delete anything"
+    rm -rf "$work_root"
+    return 1
+  fi
+
+  # The ruler is removed from BOTH arms: score.py and tasks/*/meta.json
+  # (primary_rules) say exactly what is counted, and a model that can read the
+  # scorer is optimising the score, not writing Apex.
+  rm -rf "$clone/tests/compounding"
+  rm -f "$clone/$HARNESS_DOC"
 
   # THE INDEPENDENT VARIABLE, and the only difference between the two
   # conditions. COLD removes every captured learning; PRIMED leaves them.
@@ -191,11 +288,21 @@ run_cell() {
     find "$clone/docs/solutions" -type f ! -name 'README.md' -delete 2>/dev/null || true
   fi
 
+  if ! { git -C "$clone" init --quiet \
+         && git -C "$clone" add -A \
+         && git -C "$clone" -c user.name=sfce-ab -c user.email=sfce-ab@invalid \
+              -c commit.gpgsign=false commit --quiet -m "A/B $cond export"; } >/dev/null 2>&1; then
+    log "    could not initialise the exported repository"
+    rm -rf "$work_root"
+    return 1
+  fi
+
   # Record what the condition actually was, rather than trusting the label. A
   # clone that failed to strip learnings would otherwise be reported as cold.
   local learning_count
   learning_count="$(find "$clone/docs/solutions" -type f ! -name 'README.md' 2>/dev/null | wc -l | tr -d ' ')"
   printf '%s' "$learning_count" >"$out_dir/learnings-present.txt"
+  python3 "$REPORTER" --corpus-check "$clone/docs/solutions" >"$out_dir/apex-relevant-learnings.txt" 2>/dev/null || true
 
   workspace="$clone/ab-workspace"
   mkdir -p "$workspace"
@@ -221,13 +328,34 @@ The files are in ab-workspace/ relative to the repository root. Work there."
   find "$workspace" -maxdepth 2 -type f \( -name '*.cls' -o -name '*.trigger' \) \
     -exec cp {} "$out_dir/produced/" \; 2>/dev/null || true
 
-  local produced
+  # A cell only counts if the model demonstrably did the work. Three ways it
+  # did not, and each must exclude the cell rather than score it:
+  #
+  #   * claude exited non-zero (crash, auth failure, timeout);
+  #   * nothing was produced at all;
+  #   * every produced file is byte-identical to its seed. The seeds are copied
+  #     in BEFORE claude runs, so a session that did nothing leaves the seed
+  #     behind, and scoring it would report the seed's violations as that
+  #     condition's result — a crash dressed as a legitimate null.
+  local produced reasons="" changed=0 f seed_file
   produced="$(find "$out_dir/produced" -type f | wc -l | tr -d ' ')"
+  [[ "$rc" -ne 0 ]] && reasons="${reasons}claude exited $rc; "
   if [[ "$produced" -eq 0 ]]; then
-    # An empty cell must not be scored 0 violations and reported as perfect.
-    # This is the single most dangerous failure mode in the whole harness.
-    log "      NO APEX PRODUCED (claude exited $rc) — cell marked invalid, not scored 0"
-    printf 'invalid: no Apex produced; claude exited %s\n' "$rc" >"$out_dir/INVALID"
+    reasons="${reasons}no Apex produced; "
+  else
+    while IFS= read -r f; do
+      seed_file="$TASK_DIR/$id/seed/$(basename "$f")"
+      if [[ ! -f "$seed_file" ]] || ! cmp -s "$f" "$seed_file"; then
+        changed=1
+        break
+      fi
+    done < <(find "$out_dir/produced" -type f)
+    [[ "$changed" -eq 0 ]] && reasons="${reasons}every produced file is identical to its seed; "
+  fi
+  if [[ -n "$reasons" ]]; then
+    reasons="${reasons%; }"
+    log "      INVALID CELL ($reasons) — excluded, not scored"
+    printf 'invalid: %s\n' "$reasons" >"$out_dir/INVALID"
   fi
 
   python3 "$SCORER" "$out_dir/produced" --review "$out_dir/transcript.txt" --json \

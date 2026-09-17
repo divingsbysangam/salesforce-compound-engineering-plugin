@@ -75,8 +75,15 @@ from typing import Dict, List, NamedTuple, Optional, Tuple
 # source normalisation
 # --------------------------------------------------------------------------
 
-def strip_noise(src: str) -> str:
+def strip_noise(src: str, keep_strings: bool = False) -> str:
     """Blank out comments and string literals, preserving offsets and lines.
+
+    With keep_strings=True only comments are blanked and string literals are
+    copied through verbatim. That mode exists for HARDCODED_ID, the one rule
+    whose evidence lives inside a literal: it must still see strings, and it
+    must not see ids that only appear in a `/* */`, `/** */` or trailing `//`
+    comment. Strings are still PARSED in that mode, so a `//` inside
+    'https://...' is not mistaken for a comment.
 
     Every character removed is replaced by a space (newlines kept), so a hit's
     line number in the normalised text is its line number in the original. This
@@ -107,19 +114,20 @@ def strip_noise(src: str) -> str:
             continue
         if c == "'":
             # Apex string. Doubled '' is an escaped quote inside a literal.
-            out.append(" ")
+            start = i
             i += 1
             while i < n:
                 if src[i] == "'":
                     if i + 1 < n and src[i + 1] == "'":
-                        out.append("  ")
                         i += 2
                         continue
-                    out.append(" ")
                     i += 1
                     break
-                out.append("\n" if src[i] == "\n" else " ")
                 i += 1
+            if keep_strings:
+                out.append(src[start:i])
+            else:
+                out.append("".join("\n" if ch == "\n" else " " for ch in src[start:i]))
             continue
         out.append(c)
         i += 1
@@ -194,12 +202,20 @@ DML_RE = re.compile(
 )
 DYNAMIC_SOQL_RE = re.compile(r"\bDatabase\s*\.\s*(?:query|queryWithBinds|countQuery)\s*\(", re.IGNORECASE)
 
-# 15- or 18-character Salesforce id literal. Applied to the ORIGINAL source,
-# because strip_noise() blanks string contents and every hardcoded id lives in
-# one. That is the single rule that reads raw text, and it is why it also
-# excludes `//`-commented lines explicitly.
-HARDCODED_ID_RE = re.compile(r"'(?:[a-zA-Z0-9]{15}|[a-zA-Z0-9]{18})'")
-ID_PREFIXES = re.compile(r"^(?:001|003|005|006|00[DQ]|00e|0[0-9A-Za-z]{2})")
+# A quote-delimited literal with the shape of a Salesforce record id, applied to
+# comment-stripped source that KEEPS string literals (strip_noise with
+# keep_strings=True), because every hardcoded id lives inside one.
+#
+# Shape: a 3-character alphanumeric key prefix (001 Account, 005 User, but also
+# a0X-style custom-object prefixes, which do not start with 0), a 2-character
+# instance/pod segment, the reserved character `0`, and a 9-character
+# identifier; the 18-character form adds a 3-character case-safe checksum drawn
+# from [A-Z0-5]. The reserved `0` and the checksum alphabet are the
+# false-positive guard: an arbitrary 15-character token like 'HelloWorld12345'
+# does not fit the shape, and a quote-delimited literal is still required.
+HARDCODED_ID_RE = re.compile(
+    r"'([a-zA-Z0-9]{3}[a-zA-Z0-9]{2}0[a-zA-Z0-9]{9}(?:[A-Z0-5]{3})?)'"
+)
 
 USER_MODE_RE = re.compile(
     r"\bWITH\s+USER_MODE\b|\bWITH\s+SECURITY_ENFORCED\b"
@@ -303,16 +319,18 @@ def score_apex(path: str, src: str) -> List[Hit]:
             hits.append(Hit("SHARING_NOT_DECLARED", name, line_of(text, decl.start()),
                             "no with/without/inherited sharing on the class"))
 
-    # Reads ORIGINAL source: strip_noise blanks literal contents, and a
-    # hardcoded id only ever appears inside one.
-    for m in HARDCODED_ID_RE.finditer(src):
-        ln = line_of(src, m.start())
-        raw_line = src.splitlines()[ln - 1] if ln - 1 < len(src.splitlines()) else ""
-        if raw_line.strip().startswith("//"):
-            continue
-        literal = m.group(0).strip("'")
-        if ID_PREFIXES.match(literal) and not literal.isalpha():
-            hits.append(Hit("HARDCODED_ID", name, ln, literal))
+    # Reads comment-stripped source with string literals KEPT: a hardcoded id
+    # only ever appears inside a literal, and one mentioned in a comment is
+    # documentation, not code. Skipped in test classes, where a fabricated id
+    # ('001000000000000AAA') is a standard way to build an in-memory record and
+    # flagging it would penalise writing tests.
+    if not is_test:
+        code_with_strings = strip_noise(src, keep_strings=True)
+        for m in HARDCODED_ID_RE.finditer(code_with_strings):
+            literal = m.group(1)
+            if literal.isalpha():
+                continue
+            hits.append(Hit("HARDCODED_ID", name, line_of(code_with_strings, m.start()), literal))
 
     for m in SOQL_FULL_RE.finditer(text):
         q = m.group(0)
@@ -517,6 +535,31 @@ public with sharing class Commented {
 }
 """
 
+# HARDCODED_ID cases: (description, source, expected hit count).
+HARDCODED_ID_CASES = [
+    ("an id in a block comment does not count",
+     "public with sharing class C {\n  /* owner was '005000000000001' */\n  void m() {}\n}", 0),
+    ("an id in a /** */ doc comment does not count",
+     "public with sharing class C {\n  /** Defaults to '00Q5g00000ABCDEFGH'. */\n  void m() {}\n}", 0),
+    ("an id in a trailing // comment does not count",
+     "public with sharing class C {\n  void m() { Integer x = 1; // was '005000000000001'\n  }\n}", 0),
+    ("a fake id inside an @isTest class does not count",
+     "@isTest\nprivate class CTest {\n  @isTest static void t() {\n"
+     "    Account a = new Account(Id = '001000000000000AAA');\n    Assert.isNotNull(a);\n  }\n}", 0),
+    ("a standard 15-char id literal counts",
+     "public with sharing class C {\n  Id o = '005000000000001';\n}", 1),
+    ("an 18-char id literal counts",
+     "public with sharing class C {\n  Id o = '0055g00000ABCDEAAA';\n}", 1),
+    ("a custom-object id not starting with 0 counts",
+     "public with sharing class C {\n  Id r = 'a0X5g00000ABCDE';\n}", 1),
+    ("a // inside a string does not hide a later id on the line",
+     "public with sharing class C {\n  String u = 'https://x'; Id o = '005000000000001';\n}", 1),
+    ("a 15-char token without the id shape does not count",
+     "public with sharing class C {\n  String k = 'HelloWorld12345';\n}", 0),
+    ("an unquoted id-shaped identifier does not count",
+     "public with sharing class C {\n  Integer a0X5g00000ABCDE = 1;\n}", 0),
+]
+
 
 def selftest() -> int:
     failures: List[str] = []
@@ -548,6 +591,11 @@ def selftest() -> int:
     # The rule that makes the scorer usable at all. Without it, documenting an
     # anti-pattern scores worse than committing one.
     check("no hits at all from commented-out anti-patterns", len(trap) == 0)
+
+    print("-- HARDCODED_ID reads code and strings, never comments or test fixtures")
+    for desc, src, expected in HARDCODED_ID_CASES:
+        got = sum(1 for h in score_apex("C.cls", src) if h.rule == "HARDCODED_ID")
+        check("%s (%d hit(s))" % (desc, got), got == expected)
 
     print("-- the ruler is consistent in the direction the harness depends on")
     n_bad = len(score_apex("A.cls", BAD_APEX))

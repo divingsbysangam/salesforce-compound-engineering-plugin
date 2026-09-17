@@ -103,12 +103,23 @@ direction and would silently drag the total toward "no effect".
 
 ## Isolation
 
-Each cell runs in a **disposable clone with its remote removed** — not the live
-checkout and not a worktree. A worktree shares the origin's object store, refs,
-config and remotes, so a session running with `--dangerously-skip-permissions`
-could commit, move a branch, or push against the real repository. `HOME` and
+Each cell runs in a **disposable export** — `git archive HEAD` into a temp
+directory, removals applied, then a fresh single-commit `git init`. Not the live
+checkout, not a worktree, and not a clone. A worktree shares the origin's object
+store, refs, config and remotes, so a session running with
+`--dangerously-skip-permissions` could commit, move a branch, or push against
+the real repository. A clone carries history, so a COLD session could recover
+every deleted learning with `git show HEAD:docs/solutions/...`. `HOME` and
 `XDG_STATE_HOME` are redirected into the same temp tree so feed state and caches
 are disposable too. Everything is removed after each cell.
+
+Removed from **both** arms: `tests/compounding/` (the scorer and each task's
+`primary_rules` are the ruler) and
+`docs/solutions/best-practices/measuring-whether-compounding-works.md` (it names
+the rules, and would otherwise leak them into PRIMED only).
+
+A cell is **invalid**, and excluded rather than scored, when `claude` exits
+non-zero, produces no Apex, or leaves every file byte-identical to its seed.
 
 This mirrors `tests/skill-triggering/run-test.sh`, for the same reasons.
 
@@ -124,6 +135,12 @@ This mirrors `tests/skill-triggering/run-test.sh`, for the same reasons.
 
 ## Honest limits
 
+* **Today the PRIMED arm has no treatment.** No committed learning relates to
+  bulkification, CRUD/FLS, exceptions, or Apex tests, so a null is
+  near-guaranteed and says nothing about compounding. The runner and report
+  print a loud warning when the primed corpus has no Apex-related learning (a
+  keyword check over frontmatter and titles). Learnings were not fabricated to
+  fill the gap.
 * **n is tiny.** Six tasks, one sample per cell by default. No confidence
   interval is printed, because computing one from six single samples would dress
   noise as statistics.

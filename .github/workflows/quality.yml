@@ -67,13 +67,16 @@ jobs:
         # Nobody re-derives a number that took ninety minutes to produce.
         #
         # So the parts that need no model are checked on every commit. This
-        # asserts, among 30 checks: a crashed cell is EXCLUDED rather than
-        # scored zero (a cell that produced nothing has zero violations in the
-        # most misleading sense, and scoring it would make a crash the best
-        # available result); a condition that did not take is flagged from the
-        # learning count rather than trusted from its label; and a negative
-        # result is reported plainly and still exits 0, so the harness cannot
-        # become a gate on its own hypothesis being true.
+        # asserts, among 50 checks: a crashed cell is EXCLUDED rather than
+        # scored -- driven through the real run-ab.sh with a stub `claude` that
+        # exits 1, and one that exits 0 without touching the seed, since an
+        # untouched seed would otherwise score as a "legitimate" null; neither
+        # arm's clone can reach removed learnings or the scorer through git
+        # history; a condition that did not take is excluded from the total,
+        # judged by the learning count rather than the label; --score-only
+        # re-scores rather than trusting stored numbers; and a negative result
+        # is reported plainly and still exits 0, so the harness cannot become a
+        # gate on its own hypothesis being true.
         #
         # It says nothing about whether compounding works. That needs the live
         # runs, which have not been spent -- see
