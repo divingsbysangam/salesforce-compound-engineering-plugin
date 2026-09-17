@@ -87,12 +87,22 @@ const BANNED: RegExp[] = [
 
 const JS_LIKE = new Set([".mjs", ".cjs", ".js", ".ts"]);
 
-/** Drop whole-line comments only; code lines are scanned in full. */
+/**
+ * Drop whole-line comments only; code lines are scanned in full. A JS line that
+ * opens with a block comment is dropped only when nothing but whitespace follows
+ * the comment's close on that line, so `/* why *\/ fetch(url)` is still scanned.
+ */
 function stripCommentLines(relPath: string, body: string): string {
   const isJs = JS_LIKE.has(extname(relPath));
+  const isCommentOnly = (l: string): boolean => {
+    if (!isJs) return /^\s*#/.test(l);
+    if (/^\s*\/\//.test(l)) return true;
+    if (!/^\s*(\/\*|\*)/.test(l)) return false;
+    return !/\*\/\s*\S/.test(l);
+  };
   return body
     .split("\n")
-    .filter((l) => (isJs ? !/^\s*(\/\/|\/\*|\*)/.test(l) : !/^\s*#/.test(l)))
+    .filter((l) => !isCommentOnly(l))
     .join("\n");
 }
 
@@ -188,6 +198,21 @@ describe("no network, ever", () => {
     for (const p of probes) {
       expect(BANNED.some((r) => r.test(p)), `no pattern catches: ${p}`).toBe(true);
     }
+  });
+
+  test("the comment filter drops only comment-only lines", () => {
+    const body = [
+      "// fetch(url) in a line comment",
+      "/* fetch(url) in a block comment */",
+      " * fetch(url) inside a doc block",
+      "/* why */ fetch(url)",
+      " * end of doc */ fetch(url)",
+    ].join("\n");
+    expect(stripCommentLines("x.mjs", body).split("\n")).toEqual([
+      "/* why */ fetch(url)",
+      " * end of doc */ fetch(url)",
+    ]);
+    expect(stripCommentLines("x.sh", "# curl in a comment\ncurl -s x")).toBe("curl -s x");
   });
 
   test("scripts/ contains no symlinks", () => {

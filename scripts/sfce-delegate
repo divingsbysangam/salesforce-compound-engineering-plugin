@@ -448,6 +448,13 @@ REFLIST
 # otherwise add a proxy, extra headers, or a --trace that writes the key to
 # disk -- the user's curl defaults are not this script's to inherit.
 #
+# `--noproxy '*'` for the same reason, one layer out: curl honours http_proxy,
+# https_proxy and ALL_PROXY from the environment, and a proxy would receive the
+# key in cleartext on the loopback path and could relay the validated request
+# anywhere. The endpoint check means nothing if the connection does not go
+# straight to the endpoint. Behind a mandatory proxy the call fails, the script
+# exits non-zero, and the caller generates inline -- the tier is optional.
+#
 # The key is character-checked first because it is interpolated into a quoted
 # config string; a quote or newline in it would let the variable inject curl
 # options. The check never prints the value.
@@ -455,7 +462,7 @@ case "$ANTHROPIC_API_KEY" in
   *[!A-Za-z0-9_-]*) fatal "ANTHROPIC_API_KEY contains characters that cannot appear in an API key; refusing to send it" ;;
 esac
 
-http_code="$(printf 'header = "x-api-key: %s"\n' "$ANTHROPIC_API_KEY" | curl -q -sS -K - \
+http_code="$(printf 'header = "x-api-key: %s"\n' "$ANTHROPIC_API_KEY" | curl -q --noproxy '*' -sS -K - \
   -o "$RESP_FILE" -w '%{http_code}' \
   --max-time "${SFCE_DELEGATE_HTTP_TIMEOUT:-120}" \
   -X POST "$REQUEST_URL" \

@@ -635,6 +635,11 @@ describe("the API key is not exposed on the command line", () => {
     const argv = readFileSync(shim.argvLog, "utf-8").split("\n").filter(Boolean);
     // -q must be FIRST or curl has already read ~/.curlrc.
     expect(argv[0]).toBe("-q");
+    // A proxy from the environment would receive the key and could relay the
+    // validated request anywhere, so every proxy is bypassed.
+    const np = argv.indexOf("--noproxy");
+    expect(np, "curl was not told to bypass environment proxies").toBeGreaterThan(0);
+    expect(argv[np + 1]).toBe("*");
     expect(argv.includes("-K")).toBe(true);
     const keyInArgv = argv.some((a) => a.includes(OFFLINE_FAKE_KEY));
     expect(keyInArgv, "the API key appeared in curl's argv").toBe(false);
