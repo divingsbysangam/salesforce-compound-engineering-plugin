@@ -1,0 +1,9 @@
+{
+  "id": "01-bulkification",
+  "kind": "refactor",
+  "primary_rules": [
+    "SOQL_IN_LOOP",
+    "DML_IN_LOOP"
+  ],
+  "why_this_task": "The canonical governor failure. A per-record query and a per-record update inside the same loop."
+}
