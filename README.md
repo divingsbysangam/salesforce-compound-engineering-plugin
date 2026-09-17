@@ -25,9 +25,12 @@ nothing; you opt in per feature with `/plugin configure`, or by setting
 With both flags unset every one of them exits before reading stdin.
 
 **None of these scripts makes a network call**, and that is enforced rather than
-promised: `cli/tests/hooks/invariants.test.ts` enumerates `scripts/` and fails
-on any network-capable construct. There is exactly one declared exception,
-below.
+promised: `cli/tests/hooks/invariants.test.ts` walks `scripts/` and fails on any
+network-capable construct, and fails if any hook in `hooks/hooks.json` runs a
+script outside that scan. There is exactly one declared runtime exception,
+below, which no hook may invoke. (The CI-only `scripts/check-npm-release.mjs`,
+which asks the npm registry what it serves, is the other declared exception;
+nothing at runtime runs it.)
 
 ### `scripts/sfce-delegate` — optional cheap-worker tier
 
@@ -36,8 +39,8 @@ no `ANTHROPIC_API_KEY` it declines and the caller does the work inline exactly
 as before.** Default behaviour is unchanged.
 
 It exists because pure pattern-matching generation — a `TestDataFactory`, a
-`PermissionSet` XML, the boilerplate half of a service class — costs frontier
-tokens twice: once to produce the code, and again because the produced code then
+custom-object field list, the boilerplate half of a service class — costs
+frontier tokens twice: once to produce the code, and again because the produced code then
 sits in the session's context for the rest of the run. `sfce-delegate` sends the
 spec plus a required reference to a cheaper worker and writes the result
 **straight to disk**. `stdout` carries only the path, never the code. That
@@ -61,10 +64,11 @@ scripts/sfce-delegate ... --dry-run
 | `1` | a real failure — API error, malformed response, failed write |
 | `2` | usage error |
 
-**What it refuses to delegate.** Security, sharing, CRUD/FLS, governor-sensitive
-logic, callouts, credentials, and debugging all stay on the frontier model. The
-denylist scans the spec **and every reference file** — a spec that reads as plain
-boilerplate can point at a reference full of sharing logic — and it is
+**What it refuses to delegate.** Security, sharing, CRUD/FLS, permission
+metadata (profiles, permission sets), governor-sensitive and async logic,
+callouts, credentials and sessions, and debugging all stay on the frontier
+model. Matching is case- and whitespace-insensitive. The denylist scans the spec
+**and every reference file** — a spec that reads as plain boilerplate can point at a reference full of sharing logic — and it is
 deliberately over-broad, because the failure costs are not symmetric: a false
 refusal costs one round-trip, a false accept ships security logic written by a
 weak model. The worker is also instructed to emit `DELEGATION_REFUSED` if the
@@ -80,11 +84,11 @@ In practice the real `test-factory` and `apex-patterns` skills pass the scan;
 | `SFCE_WORKER_MODEL` | `claude-haiku-4-5-20251001` | unset **or empty** selects the default |
 | `SFCE_DELEGATE_MIN_LINES` | `40` | below this, `--expect-lines` declines: the round-trip costs more than it saves |
 | `SFCE_DELEGATE_MAX_TOKENS` | `8000` | output cap |
-| `SFCE_WORKER_API_BASE` | `https://api.anthropic.com` | constrained to Anthropic or **loopback only**, so the offline-test seam is not also an exfiltration path |
+| `SFCE_WORKER_API_BASE` | `https://api.anthropic.com` | constrained to Anthropic or **loopback only** (`http://127.0.0.1:PORT` or `http://localhost:PORT`, parsed rather than prefix-matched), so the offline-test seam is not also an exfiltration path |
 
 **Not yet validated against a real worker.** The full pipeline — gates,
 exclusions, fence stripping, token reporting, exit codes — is tested offline
-against a loopback mock (46 tests in `cli/tests/delegate/`). What a
+against a loopback mock (95 tests in `cli/tests/delegate/`). What a
 Haiku-class model actually produces for a real spec has not been measured. Treat
 the tier as wired up but unproven until it has.
 
@@ -110,8 +114,10 @@ working directory and agent id — never the raw ids, never prompt text, never
 file contents, never org data, never credentials. Directories are created 0700
 and files 0600.
 
-**No network calls.** A test asserts the shipped scripts contain no
-network-capable construct, so the claim survives future edits.
+**No network calls from the hooks or telemetry.** A test asserts the shipped
+scripts contain no network-capable construct, so the claim survives future
+edits. The one exception is the opt-in `scripts/sfce-delegate` above, which is
+not a hook, runs only when explicitly invoked, and declines without an API key.
 
 ### How to turn it off, and how to delete the data
 

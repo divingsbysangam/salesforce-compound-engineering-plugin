@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join, resolve } from "path";
 
@@ -32,9 +32,20 @@ const EXIT_DECLINED = 3;
 
 // --- loopback mock worker --------------------------------------------------
 
+/**
+ * Assembled at runtime rather than written as a literal: a string shaped like a
+ * provider key in source trips secret scanners (plugin-scanner flags it as a
+ * HARDCODED_SECRET), and this value is not a secret -- it only has to be a
+ * non-empty string the mock can recognise.
+ */
+const OFFLINE_FAKE_KEY = ["offline", "fake", "key"].join("-");
+
 let server: ReturnType<typeof Bun.serve>;
 let base = "";
 let lastRequest: any = null;
+// Whether the last request carried the expected x-api-key header. A boolean,
+// so a failing assertion never prints a header value.
+let lastKeyHeaderMatched = false;
 // What the next call returns. Set per test.
 let nextBody: unknown = null;
 let nextStatus = 200;
@@ -44,6 +55,7 @@ beforeAll(() => {
     port: 0,
     hostname: "127.0.0.1",
     async fetch(req) {
+      lastKeyHeaderMatched = req.headers.get("x-api-key") === OFFLINE_FAKE_KEY;
       lastRequest = await req.json().catch(() => null);
       return new Response(JSON.stringify(nextBody), {
         status: nextStatus,
@@ -56,11 +68,12 @@ beforeAll(() => {
 
 afterAll(() => server?.stop(true));
 
-const okResponse = (text: string, inTok = 1234, outTok = 567) => ({
+const okResponse = (text: string, inTok = 1234, outTok = 567, stopReason: string | null = "end_turn") => ({
   id: "msg_test",
   type: "message",
   model: "claude-haiku-4-5-20251001",
   content: [{ type: "text", text }],
+  stop_reason: stopReason,
   usage: { input_tokens: inTok, output_tokens: outTok },
 });
 
@@ -86,7 +99,11 @@ function scratch(): string {
  * already sent. The symptom was a 120s-per-test stall with no error, which
  * reads like a network problem rather than a test-harness one.
  */
-async function run(args: string[], env: Record<string, string | undefined> = {}): Promise<RunResult> {
+async function run(
+  args: string[],
+  env: Record<string, string | undefined> = {},
+  timeoutMs = 0,
+): Promise<RunResult & { timedOut: boolean }> {
   // Start from a deliberately clean environment. Inheriting the developer's
   // real ANTHROPIC_API_KEY would make the "no key declines" test pass or fail
   // depending on whose machine it ran on, and would send a live request from a
@@ -106,12 +123,22 @@ async function run(args: string[], env: Record<string, string | undefined> = {})
     stdout: "pipe",
     stderr: "pipe",
   });
+  // An optional kill timer, so a script that hangs fails its test instead of
+  // stalling the whole suite.
+  let timedOut = false;
+  const timer = timeoutMs > 0
+    ? setTimeout(() => {
+        timedOut = true;
+        proc.kill(9);
+      }, timeoutMs)
+    : null;
   const [stdout, stderr, code] = await Promise.all([
     new Response(proc.stdout).text(),
     new Response(proc.stderr).text(),
     proc.exited,
   ]);
-  return { code, stdout, stderr };
+  if (timer) clearTimeout(timer);
+  return { code, stdout, stderr, timedOut };
 }
 
 // A reference and a spec that are deliberately free of every excluded term, so
@@ -145,7 +172,7 @@ function fixtures(overrides: { spec?: string; reference?: string } = {}) {
 }
 
 const liveEnv = (extra: Record<string, string | undefined> = {}) => ({
-  ANTHROPIC_API_KEY: "sk-ant-test-not-a-real-key",
+  ANTHROPIC_API_KEY: OFFLINE_FAKE_KEY,
   SFCE_WORKER_API_BASE: base,
   ...extra,
 });
@@ -313,6 +340,67 @@ describe("acceptance (c): excluded topics are refused", () => {
     expect(r.stderr).toContain("excluded topic");
   });
 
+  test("whitespace inside a keyword does not slip past the scan", async () => {
+    // Patterns are written with one space. Double spaces, tabs and a line break
+    // between the words all used to pass the gate.
+    for (const text of [
+      "public with  sharing class Foo {}",
+      "public with\tsharing class Foo {}",
+      "public with\nsharing class Foo {}",
+      "public without \t\n sharing class Foo {}",
+      "Use field\nlevel  security on reads.",
+    ]) {
+      const f = fixtures({ reference: text });
+      const r = await run(
+        ["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--expect-lines", "100", "--dry-run"],
+        liveEnv(),
+      );
+      expect(r.code, `not refused: ${JSON.stringify(text)}`).toBe(EXIT_DECLINED);
+      expect(r.stderr).toContain("excluded topic");
+    }
+  });
+
+  const MORE_EXCLUDED: Array<[string, string]> = [
+    ["dynamic query", "String q = 'SELECT Id FROM Account'; Database.query(q);"],
+    ["raw HTTP", "HttpRequest req = new HttpRequest(); new Http().send(req);"],
+    ["async enqueue", "System.enqueueJob(new Foo());"],
+    ["session id", "UserInfo.getSessionId()"],
+    ["user-mode DML", "insert as user acc;"],
+    ["system mode", "Database.insert(recs, AccessLevel.SYSTEM_MODE);"],
+    ["record access", "Organization-wide defaults and record access for the Account object"],
+    ["permissions", "Implement the permissions check for the user"],
+    ["passwords and tokens", "Store the password and token in a custom setting"],
+    ["troubleshooting", "Troubleshoot the NullPointerException in the handler."],
+    ["a fix request", "Fix the failing insert in the handler."],
+    ["injection", "Guard the filter against injection."],
+    ["PermissionSet metadata", "Assign the PermissionSet via PermissionSetAssignment"],
+  ];
+
+  for (const [label, text] of MORE_EXCLUDED) {
+    test(`refuses: ${label}`, async () => {
+      const f = fixtures({ spec: text });
+      const r = await run(
+        ["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--expect-lines", "100", "--dry-run"],
+        liveEnv(),
+      );
+      expect(r.code).toBe(EXIT_DECLINED);
+      expect(r.stderr).toContain("excluded topic");
+    });
+  }
+
+  test("the word-anchored stems do not refuse ordinary boilerplate wording", async () => {
+    // " fix the" and " as user" are anchored to a word start so a factory spec
+    // asking to prefix names, or saying an object has user lookups, still passes.
+    const f = fixtures({
+      spec: "Generate a TestDataFactory. Prefix the account names with Test, and the Case has user lookups.",
+    });
+    const r = await run(
+      ["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--expect-lines", "100", "--dry-run"],
+      liveEnv(),
+    );
+    expect(r.code).toBe(EXIT_OK);
+  });
+
   test("the exclusion scan is case-insensitive", async () => {
     const f = fixtures({ spec: "Generate a class that enforces FIELD-LEVEL SECURITY." });
     const r = await run(
@@ -444,6 +532,145 @@ describe("the endpoint override cannot point anywhere", () => {
     );
     expect(r.code).toBe(EXIT_ERROR);
   });
+
+  // THE BEHAVIOURAL CHECK the no-network invariant relies on for its one
+  // exemption (cli/tests/hooks/invariants.test.ts). An earlier gate was a shell
+  // glob, `http://localhost:*`, and every URL below matched it: curl reads the
+  // part before `@` as userinfo and connects to the host AFTER it, carrying the
+  // key, the spec and every reference. Each case runs with --dry-run, so even a
+  // regression that accepted one would make no request.
+  const REFUSED_ENDPOINTS: Array<[string, string]> = [
+    ["userinfo smuggling a real host", "http://localhost:18081@evil.example:18081"],
+    ["userinfo aimed at cloud metadata", "http://localhost:x@169.254.169.254"],
+    ["a loopback-looking port as userinfo", "http://127.0.0.1:80@attacker.example"],
+    ["a port that is really a hostname", "http://127.0.0.1:1.evil.com"],
+    ["https to a host that is not Anthropic", "https://api.anthropic.com.evil.example"],
+    ["https to Anthropic with userinfo", "https://x@api.anthropic.com"],
+    ["https to loopback", "https://127.0.0.1:8443"],
+    ["loopback with no explicit port", "http://127.0.0.1"],
+    ["loopback with a path", "http://127.0.0.1:8080/proxy"],
+    ["loopback with a query", "http://localhost:8080/?u=evil.example"],
+    ["loopback with a fragment", "http://localhost:8080#frag"],
+    ["an out-of-range port", "http://127.0.0.1:70000"],
+    ["a backslash authority trick", "http://127.0.0.1:8080\\@evil.example"],
+    ["trailing whitespace", "http://127.0.0.1:8080 "],
+    ["an uppercase scheme variant", "HTTP://127.0.0.1:8080"],
+  ];
+
+  for (const [label, url] of REFUSED_ENDPOINTS) {
+    test(`refuses ${label}`, async () => {
+      const f = fixtures();
+      const r = await run(
+        ["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--expect-lines", "60", "--dry-run"],
+        liveEnv({ SFCE_WORKER_API_BASE: url }),
+      );
+      expect(r.code).toBe(EXIT_ERROR);
+      expect(r.stderr).toContain("must be https://api.anthropic.com or a loopback address");
+      expect(r.stderr).not.toContain("every gate passed");
+    });
+  }
+
+  test("a valid loopback URL is accepted and rebuilt, with or without a trailing slash", async () => {
+    for (const url of ["http://127.0.0.1:18081", "http://localhost:18081/"]) {
+      const f = fixtures();
+      const r = await run(
+        ["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--expect-lines", "60", "--dry-run"],
+        liveEnv({ SFCE_WORKER_API_BASE: url }),
+      );
+      expect(r.code).toBe(EXIT_OK);
+      expect(r.stderr).toContain("every gate passed");
+      const host = url.includes("localhost") ? "localhost" : "127.0.0.1";
+      expect(r.stderr).toContain(`endpoint:       http://${host}:18081/v1/messages`);
+    }
+  });
+
+  test("the default Anthropic endpoint is accepted", async () => {
+    const f = fixtures();
+    const r = await run(
+      ["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--expect-lines", "60", "--dry-run"],
+      liveEnv({ SFCE_WORKER_API_BASE: undefined }),
+    );
+    expect(r.code).toBe(EXIT_OK);
+    expect(r.stderr).toContain("endpoint:       https://api.anthropic.com/v1/messages");
+  });
+});
+
+// --- the key never reaches argv --------------------------------------------
+
+describe("the API key is not exposed on the command line", () => {
+  /**
+   * A PATH-shimmed curl records its argv and its stdin, then fails. Anything in
+   * argv is visible to every local user via `ps` for the life of the request.
+   * Assertions are booleans over the recorded text, so a failure never prints
+   * the key -- which is fake here anyway.
+   */
+  function shimCurl(dir: string) {
+    const bin = join(dir, "shim-bin");
+    mkdirSync(bin, { recursive: true });
+    const shim = join(bin, "curl");
+    writeFileSync(
+      shim,
+      [
+        "#!/bin/sh",
+        `for a in "$@"; do printf '%s\\n' "$a"; done > "${join(dir, "curl-argv.log")}"`,
+        `cat > "${join(dir, "curl-stdin.log")}"`,
+        "exit 7",
+        "",
+      ].join("\n"),
+    );
+    chmodSync(shim, 0o755);
+    return { bin, argvLog: join(dir, "curl-argv.log"), stdinLog: join(dir, "curl-stdin.log") };
+  }
+
+  test("curl gets -q first, reads the key header from stdin, and never sees it in argv", async () => {
+    const f = fixtures();
+    const shim = shimCurl(f.dir);
+    const r = await run(
+      ["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--expect-lines", "60"],
+      liveEnv({ PATH: `${shim.bin}:${process.env.PATH ?? ""}` }),
+    );
+    // The shim exits 7, so the script reports a request failure.
+    expect(r.code).toBe(EXIT_ERROR);
+
+    const argv = readFileSync(shim.argvLog, "utf-8").split("\n").filter(Boolean);
+    // -q must be FIRST or curl has already read ~/.curlrc.
+    expect(argv[0]).toBe("-q");
+    expect(argv.includes("-K")).toBe(true);
+    const keyInArgv = argv.some((a) => a.includes(OFFLINE_FAKE_KEY));
+    expect(keyInArgv, "the API key appeared in curl's argv").toBe(false);
+    expect(argv.some((a) => a.toLowerCase().includes("x-api-key")), "x-api-key header passed in argv").toBe(false);
+
+    const stdin = readFileSync(shim.stdinLog, "utf-8");
+    const keyOnStdin = stdin.includes(`header = "x-api-key: ${OFFLINE_FAKE_KEY}"`);
+    expect(keyOnStdin, "the key header was not delivered on stdin").toBe(true);
+  });
+
+  test("the real curl delivers the header to the worker", async () => {
+    const f = fixtures();
+    nextStatus = 200;
+    nextBody = okResponse("public class A {}");
+    lastKeyHeaderMatched = false;
+    const r = await run(["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--expect-lines", "60"], liveEnv());
+    expect(r.code).toBe(EXIT_OK);
+    expect(lastKeyHeaderMatched).toBe(true);
+  });
+
+  test("a key containing a quote or newline is refused before curl runs", async () => {
+    // It is interpolated into a quoted curl config line; a quote or newline
+    // would let the variable inject curl options.
+    for (const bad of [`${OFFLINE_FAKE_KEY}"\nurl = "http://evil.example`, `${OFFLINE_FAKE_KEY} x`]) {
+      const f = fixtures();
+      const shim = shimCurl(f.dir);
+      const r = await run(
+        ["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--expect-lines", "60"],
+        liveEnv({ ANTHROPIC_API_KEY: bad, PATH: `${shim.bin}:${process.env.PATH ?? ""}` }),
+      );
+      expect(r.code).toBe(EXIT_ERROR);
+      expect(r.stderr).toContain("cannot appear in an API key");
+      expect(r.stderr.includes(OFFLINE_FAKE_KEY), "the refusal echoed the key").toBe(false);
+      expect(() => statSync(shim.argvLog)).toThrow();
+    }
+  });
 });
 
 // --- response handling -----------------------------------------------------
@@ -508,6 +735,68 @@ describe("response handling", () => {
     expect(r.stderr).toContain("rate limited");
   });
 
+  test("a max_tokens truncation is an error, and nothing is written", async () => {
+    // A class cut off mid-method looks generated. Writing it as success hands
+    // the caller a file that does not compile and says nothing about why.
+    const f = fixtures();
+    nextStatus = 200;
+    nextBody = okResponse("public class A {\n    public static void x() {\n        Integer i =", 1, 8000, "max_tokens");
+    const r = await run(["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--expect-lines", "60"], liveEnv());
+    expect(r.code).toBe(EXIT_ERROR);
+    expect(r.stderr).toContain("stop_reason=max_tokens");
+    expect(r.stdout).toBe("");
+    expect(() => statSync(f.out)).toThrow();
+  });
+
+  for (const reason of ["stop_sequence", "tool_use", "pause_turn", "refusal", null]) {
+    test(`stop_reason ${reason} is not a finished file`, async () => {
+      const f = fixtures();
+      nextStatus = 200;
+      nextBody = okResponse("public class A {}", 1, 2, reason);
+      const r = await run(["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--expect-lines", "60"], liveEnv());
+      expect(r.code).toBe(EXIT_ERROR);
+      expect(r.stderr).toContain("the worker did not finish");
+      expect(() => statSync(f.out)).toThrow();
+    });
+  }
+
+  test("an existing --out survives a truncated response", async () => {
+    const f = fixtures();
+    writeFileSync(f.out, "PRECIOUS EXISTING CONTENT\n");
+    nextStatus = 200;
+    nextBody = okResponse("public class A {", 1, 8000, "max_tokens");
+    const r = await run(["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--expect-lines", "60"], liveEnv());
+    expect(r.code).toBe(EXIT_ERROR);
+    expect(readFileSync(f.out, "utf-8")).toBe("PRECIOUS EXISTING CONTENT\n");
+  });
+
+  test("an existing --out survives a write that fails part-way, and no temp file is left", async () => {
+    // A lone surrogate decodes from JSON but cannot be encoded as UTF-8, so the
+    // failure happens AT write time. Opening --out with "w" had already
+    // truncated it by then, leaving an empty file where the old one was.
+    const f = fixtures();
+    writeFileSync(f.out, "PRECIOUS EXISTING CONTENT\n");
+    nextStatus = 200;
+    nextBody = okResponse("public class A { \ud800 }");
+    const r = await run(["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--expect-lines", "60"], liveEnv());
+    expect(r.code).toBe(EXIT_ERROR);
+    expect(r.stderr).toContain("could not write");
+    expect(readFileSync(f.out, "utf-8")).toBe("PRECIOUS EXISTING CONTENT\n");
+    expect(readdirSync(f.dir).filter((n) => n.includes("sfce-delegate") && n.endsWith(".tmp"))).toEqual([]);
+  });
+
+  test("a successful write replaces an existing --out and keeps its mode", async () => {
+    const f = fixtures();
+    writeFileSync(f.out, "old\n");
+    chmodSync(f.out, 0o640);
+    nextStatus = 200;
+    nextBody = okResponse("public class Replaced {}");
+    const r = await run(["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--expect-lines", "60"], liveEnv());
+    expect(r.code).toBe(EXIT_OK);
+    expect(readFileSync(f.out, "utf-8")).toBe("public class Replaced {}\n");
+    expect(statSync(f.out).mode & 0o777).toBe(0o640);
+  });
+
   test("HTTP 401 names the credentials rather than the network", async () => {
     const f = fixtures();
     nextStatus = 401;
@@ -542,6 +831,20 @@ describe("usage errors are distinct from declines", () => {
     expect((await run(["--spec", f.spec, "--reference", f.ref, "--out", f.out, "--kind", "nonsense"], liveEnv())).code)
       .toBe(EXIT_USAGE);
   });
+
+  // Each of these used to hang forever: `shift 2` with one argument left fails,
+  // $# never reaches zero, and the loop re-reads the same option. The kill
+  // timer turns a regression into a failure rather than a stalled suite.
+  for (const opt of ["--spec", "--out", "--reference", "--kind", "--expect-lines"]) {
+    test(`${opt} with no value is a usage error, not a hang`, async () => {
+      const f = fixtures();
+      const leading = opt === "--spec" ? ["--out", f.out] : ["--spec", f.spec];
+      const r = await run([...leading, opt], liveEnv(), 5000);
+      expect(r.timedOut, `${opt} with no value hung`).toBe(false);
+      expect(r.code).toBe(EXIT_USAGE);
+      expect(r.stderr).toContain(`${opt} requires a value`);
+    });
+  }
 
   test("a non-numeric --expect-lines is a usage error", async () => {
     const f = fixtures();
