@@ -1,13 +1,13 @@
 ---
 name: sf-lfg
 tier: discipline-gate
-description: "Full autonomous Salesforce delivery pipeline: ideate (if needed) -> brainstorm (if needed) -> plan -> deepen -> work -> review -> resolve feedback -> polish (if UI surface) -> test -> optionally deploy. Use when the user says 'lfg', 'ship this', 'do the whole thing', 'autopilot this Salesforce feature', 'end-to-end this' and wants the full idea-to-deploy flow. Honors Salesforce constraints (governor limits, sharing, deploy targets) and respects deploy-target choice (scratch, sandbox, none)."
-argument-hint: "[feature description or plan path; optionally pass 'deploy=scratch'/'deploy=sandbox'/'deploy=none']"
+description: "Run the full Salesforce pipeline autonomously: plan, work, review, resolve, polish, test, optional deploy, compound. Use for 'lfg', 'ship this end to end', 'autopilot this feature'."
+argument-hint: "[feature description or plan path] [deploy=scratch|sandbox|none]"
 ---
 
 # /sf-lfg
 
-> **Persona dispatch.** This pipeline dispatches personas as isolated subagents — see the `dispatching-parallel-personas` skill for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). The PLAN stage delegates to `/sf-plan` and the REVIEW stage to `/sf-review`, which own their personas (research → `../sf-plan/references/personas/`, review → `../sf-review/references/personas/`).
+> **Persona dispatch.** This pipeline dispatches personas as isolated subagents — see `../sf-work/references/dispatch/guide.md` for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). The PLAN stage delegates to `/sf-plan` and the REVIEW stage to `/sf-review`, which own their personas (research → `../sf-plan/references/personas/`, review → `../sf-review/references/personas/`).
 
 > **Principles enforced:** all seven, but especially 1 (preserve the quality ceiling) and 2 (verifiability). See `PRINCIPLES.md`.
 
@@ -69,7 +69,7 @@ Execute the full compound engineering loop for: `$ARGUMENTS.feature`
 
                         9. COMPOUND  →  capture learnings to docs/solutions/ (runs after, feeds the next loop)
 
- Skills:  /sf-ideate · /sf-brainstorm · /sf-plan · /sf-deepen · /sf-work · /sf-review · /sf-polish · /sf-compound
+ Skills:  /sf-plan mode:ideate · /sf-plan mode:brainstorm · /sf-plan · /sf-plan mode:deepen · /sf-work · /sf-review · /sf-review mode:polish · /sf-compound
  Stage 0 (ideate/brainstorm) and Stage 6 (polish) are human-led and conditional; the middle stages auto-run behind gates.
 ```
 

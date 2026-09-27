@@ -76,7 +76,7 @@ description: Multi-phase research for Salesforce best practices and patterns
 
 ## <span data-proof="authored" data-by="ai:claude">When to Use</span>
 
-<span data-proof="authored" data-by="ai:claude">Dispatch during</span> <span data-proof="authored" data-by="ai:claude">`/sf-plan`</span> <span data-proof="authored" data-by="ai:claude">research phase and</span> <span data-proof="authored" data-by="ai:claude">`/sf-brainstorm`</span> <span data-proof="authored" data-by="ai:claude">exploration phase. Particularly valuable for:</span>
+<span data-proof="authored" data-by="ai:claude">Dispatch during</span> <span data-proof="authored" data-by="ai:claude">`/sf-plan`</span> <span data-proof="authored" data-by="ai:claude">research phase and</span> <span data-proof="authored" data-by="ai:claude">`/sf-plan mode:brainstorm`</span> <span data-proof="authored" data-by="ai:claude">exploration phase. Particularly valuable for:</span>
 
 * <span data-proof="authored" data-by="ai:claude">Features using newer Salesforce capabilities</span>
 

@@ -1,0 +1,1 @@
+Validate my force-app changes against the uat sandbox and tell me if they would deploy cleanly.

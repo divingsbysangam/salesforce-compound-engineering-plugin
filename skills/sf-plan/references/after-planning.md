@@ -13,6 +13,6 @@ Institutional learnings applied: {count}
 Spec flow gaps identified: {count}
 
 Next steps:
-- /sf-deepen docs/plans/<plan>.md — Enhance with deeper research
+- /sf-plan mode:deepen docs/plans/<plan>.md — Enhance with deeper research
 - /sf-work docs/plans/<plan>.md — Begin implementation
 ```

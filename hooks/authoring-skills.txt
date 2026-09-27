@@ -8,9 +8,9 @@
 # "Including personas" is load-bearing. Four personas write files, and each is
 # owned by a skill that does not obviously author metadata by its own name:
 #   sf-bug-reproduction-validator    -> sf-debug
-#   sf-pr-comment-resolver           -> sf-resolve-pr-feedback
+#   sf-pr-comment-resolver           -> sf-ship (mode:resolve-feedback)
 #   sf-deployment-verification-agent -> sf-review
-#   sf-mcp-tool-builder-agent        -> mcp-tool-builder
+#   sf-mcp-tool-builder-agent        -> sf-generate (type:mcp-tool)
 # Derive by "what does the subtree write", never by "does the name say generate".
 #
 # THE LIST IS HAND-MAINTAINED, AND THE LINT IS ONE-DIRECTIONAL.
@@ -18,7 +18,7 @@
 # real skills/<name>/SKILL.md, and that every routing-table target appears here.
 # It CANNOT check the reverse — "a skill that writes metadata but is missing from
 # this file" — because nothing in a SKILL.md mechanically declares that it writes
-# metadata. Implementing that check needs a frontmatter marker on all 69 skills,
+# metadata. Implementing that check needs a frontmatter marker on every skill,
 # which is cross-cutting work deliberately not done here.
 # So: adding a skill that authors metadata means adding it here BY HAND. Nothing
 # will catch the omission for you.
@@ -28,28 +28,11 @@ sf-work
 sf-debug
 sf-lfg
 sf-review
-sf-resolve-pr-feedback
-sf-polish
-sf-simplify-code
-sf-retune
-sf-sweep
+# sf-ship writes metadata through mode:resolve-feedback (pr-comment-resolver).
+sf-ship
 
-# --- metadata generators ----------------------------------------------------
-apex-generate
-apex-trigger-refactor
-flow-generate
-metadata-generate
-permission-set-generate
-validation-rule-generate
-lightning-page-generate
-test-factory
-slds2-uplift
-
-# --- Agentforce and platform extension --------------------------------------
-agentforce-develop
-# agentforce-test writes AiEvaluationDefinition test specs, which are metadata.
-# It is absent from the plan's researched list — found by re-deriving against
-# skills/ rather than adopting that list verbatim.
-agentforce-test
-prompt-builder
-mcp-tool-builder
+# --- generators -------------------------------------------------------------
+# One skill, every type: apex, trigger-refactor, flow, metadata, permission-set,
+# validation-rule, lightning-page, test-data, prompt-template, mcp-tool, agent,
+# agent-test (AiEvaluationDefinition specs are metadata).
+sf-generate

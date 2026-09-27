@@ -1,11 +1,23 @@
 ---
 name: sf-review
 tier: discipline-gate
-description: "Review Salesforce code for quality, governor limits, bulkification, security (CRUD/FLS/SOQL injection), sharing model, performance, and platform best practices using parallel agent dispatch. Use when the user says 'review this Apex', 'review this LWC', 'review this Flow', 'check this trigger', 'audit this SOQL', 'security review', or wants multi-persona review of a PR or local diff. Supports fast, thorough, and comprehensive depth levels."
-argument-hint: "[optional: file path, directory, PR number; defaults to uncommitted changes; pass 'fast'/'thorough'/'comprehensive' for depth]"
+description: "Review Salesforce code or docs: governor limits, bulkification, CRUD/FLS, sharing, LWC, Flow, integrations; UI polish, SLDS 2, browser tests. Use for 'review this', 'security review', 'review the plan'."
+argument-hint: "[mode:doc|polish|slds2|browser] [path, PR number, or depth fast|thorough|comprehensive]"
 ---
 
 # /sf-review
+
+## Modes
+
+First argument `mode:<name>` selects a mode; everything after it passes to that mode's guide. Load only the guide for the chosen mode.
+
+| Mode | Use for | Guide |
+|---|---|---|
+| `(none)` | Code review of a diff, path, or PR | this file |
+| `doc` | Review a plan, brainstorm, or requirements doc | `references/doc/guide.md` |
+| `polish` | UX, accessibility, and copy polish for UI surfaces | `references/polish/guide.md` |
+| `slds2` | Migrate LWC/Aura from SLDS 1 to SLDS 2 | `references/slds2/guide.md` |
+| `browser` | Browser-test UI pages touched by the branch | `references/browser/guide.md` |
 
 > **Principles enforced:** 1 (preserve the quality ceiling), 3 (jagged intelligence), 5 (taste and oversight). See `PRINCIPLES.md`.
 

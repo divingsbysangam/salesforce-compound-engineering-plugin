@@ -1,14 +1,24 @@
 ---
 name: sf-compound
-description: "Document a recently solved Salesforce problem to compound institutional knowledge. Use when the user says 'compound this learning', 'capture this fix', 'document this for later', 'add this to docs/solutions', 'we should remember this', after debugging a tricky governor-limit issue, after fixing a deploy failure, or after resolving a subtle Apex/LWC/Flow bug. Writes structured YAML-frontmatter solution docs to docs/solutions/ that sf-learnings-researcher can find on future work."
-argument-hint: "[optional: scope of what to compound; defaults to recent work in this session]"
+description: "Capture a solved Salesforce problem in docs/solutions/ and refresh stale learnings. Use for 'compound this', 'document this fix', 'remember this', 'refresh learnings'."
+argument-hint: "[mode:refresh|doc-format] [scope; defaults to recent work]"
 ---
 
 # /sf-compound
 
+## Modes
+
+First argument `mode:<name>` selects a mode; everything after it passes to that mode's guide. Load only the guide for the chosen mode.
+
+| Mode | Use for | Guide |
+|---|---|---|
+| `(none)` | Write a solution doc from recent work | this file |
+| `refresh` | Review stale docs/solutions entries against the codebase | `references/refresh/guide.md` |
+| `doc-format` | Reference: solution doc format and schema | `references/doc-format/guide.md` |
+
 > **Principles enforced:** 5 (taste and oversight), 7 (institutional memory). See `PRINCIPLES.md`.
 
-> **Persona dispatch.** This skill dispatches personas as isolated subagents — see the `dispatching-parallel-personas` skill for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). Any reviewer/researcher it invokes (e.g. `sf-learnings-researcher`) is a research persona referenced from `../sf-plan/references/personas/`.
+> **Persona dispatch.** This skill dispatches personas as isolated subagents — see `../sf-work/references/dispatch/guide.md` for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). Any reviewer/researcher it invokes (e.g. `sf-learnings-researcher`) is a research persona referenced from `../sf-plan/references/personas/`.
 
 ## Copy-paste-to-agent
 
@@ -177,5 +187,5 @@ Categories:
 
 The next iteration starts smarter.
 
-Next: /sf-brainstorm or /sf-plan for the next feature
+Next: /sf-plan mode:brainstorm or /sf-plan for the next feature
 ```

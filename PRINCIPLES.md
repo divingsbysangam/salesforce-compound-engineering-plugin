@@ -2,7 +2,7 @@
 
 The seven principles that make this plugin opinionated, in priority order. Every skill in `skills/` and every persona under `skills/<owner>/references/personas/` should be coherent with these. When the implementation drifts from a principle, fix the implementation — don't soften the principle.
 
-This document is the source of truth. `CLAUDE.md`, `README.md`, and the seven core workflow skills (`sf-brainstorm`, `sf-plan`, `sf-deepen`, `sf-work`, `sf-review`, `sf-compound`, `sf-lfg`) all reference these principles by number.
+This document is the source of truth. `CLAUDE.md`, `README.md`, and the seven core workflow skills (`sf-plan mode:brainstorm`, `sf-plan`, `sf-plan mode:deepen`, `sf-work`, `sf-review`, `sf-compound`, `sf-lfg`) all reference these principles by number.
 
 ---
 
@@ -42,7 +42,7 @@ A thin "plan mode" outline is not a spec. The agent is good at filling blanks. Y
 
 **Why it matters.** Most failed Salesforce builds fail at spec, not at code. "Build a Lead auto-assignment flow" is not a spec; "auto-assign Leads to the Owner with the lowest open-Lead count within the Lead's geo Territory, falling back to round-robin within the Territory's queue when no eligible Owner exists, with full bulk safety up to a 200-record import" is a spec. The first one produces 80 lines of plausible Apex that hand-waves the geo lookup; the second one produces working code on the first try.
 
-**How this plugin enforces it.** `sf-plan` produces three sections per plan — `spec.md`, `plan.md`, `tasks.md`. `sf-deepen` is explicitly a *spec-tightening pass*, not a research dump: it adds governor analysis, sharing impact, order-of-execution placement, and API-version constraints to the spec, not generic best-practice prose. The agent fills the blanks the human declared.
+**How this plugin enforces it.** `sf-plan` produces three sections per plan — `spec.md`, `plan.md`, `tasks.md`. `sf-plan mode:deepen` is explicitly a *spec-tightening pass*, not a research dump: it adds governor analysis, sharing impact, order-of-execution placement, and API-version constraints to the spec, not generic best-practice prose. The agent fills the blanks the human declared.
 
 ---
 
@@ -62,7 +62,7 @@ When you write a skill, an agent file, a CLAUDE.md entry, or a solution doc, ask
 
 **Why it matters.** Salesforce's own documentation is the canonical example of human-native docs that strand agents — "open Setup, navigate to Object Manager, click..." None of that helps an agent. The plugin's job is to translate Salesforce's GUI-shaped knowledge into copy-paste blocks an agent can act on directly.
 
-**How this plugin enforces it.** Each of the seven core workflow skills carries a top-of-file "Copy-paste-to-agent" block — the literal prompt or command an agent should receive when the skill triggers. Domain skills (`governor-limits`, `apex-patterns`, `lwc-patterns`, etc.) follow the same pattern in a follow-up pass. `docs/solutions/` entries include a "Resolution" block written for an agent to apply directly, not an admin to follow visually.
+**How this plugin enforces it.** Each of the seven core workflow skills carries a top-of-file "Copy-paste-to-agent" block — the literal prompt or command an agent should receive when the skill triggers. Domain skills (`sf-know mode:limits`, `sf-know mode:apex`, `sf-know mode:lwc`, etc.) follow the same pattern in a follow-up pass. `docs/solutions/` entries include a "Resolution" block written for an agent to apply directly, not an admin to follow visually.
 
 ---
 

@@ -145,15 +145,13 @@ live stream and a replayed fixture.
 | Prompt file | Expected skill | Why |
 | --- | --- | --- |
 | `quick-fix-trigger.txt` | `sf-work` | A "quick fix" must still route through a workflow skill, not raw Apex edits. (`sf-debug` is an acceptable alternative — see note below.) |
-| `build-lead-autoassign.txt` | `sf-brainstorm` | A greenfield "let's build X" should hit brainstorm/plan before code. |
+| `build-lead-autoassign.txt` | `sf-plan` | A greenfield "let's build X" should hit brainstorm/plan before code. |
 | `review-this-pr.txt` | `sf-review` | Direct review request must enter `sf-review`. |
 | `i-know-what-sf-work-means.txt` | `sf-work` | Explicit-request bypass: the user names the skill and points at a plan; it should still enter `sf-work` (not start editing blind). |
-| `tend-salesforce-feed.txt` | `sf-tend` | An ongoing Salesforce responsibility should create/bind a feed before collecting work. |
-| `tend-platform-delivery.txt` | `sf-tend` | Platform-delivery responsibility should bind a feed, not start delivering. |
-| `tend-agentforce-lifecycle.txt` | `sf-tend` | Agentforce lifecycle responsibility should bind a feed. |
-| `tend-org-health.txt` | `sf-tend` | Org-health responsibility should bind a feed. |
-| `tend-mcp-integrations.txt` | `sf-tend` | MCP-integration responsibility should bind a feed. |
-| `tend-knowledge.txt` | `sf-tend` | Knowledge responsibility should bind a feed. |
+| `validate-deploy.txt` | `sf-deploy` | A validate request should go through the deploy skill's target-org safety rules. |
+| `generate-permission-set.txt` | `sf-generate` | Metadata creation should route to the generator, not raw XML edits. |
+| `open-pr.txt` | `sf-ship` | Commit-and-PR requests route to the shipping skill. |
+| `governor-limit-question.txt` | `sf-know` | A platform-fact question loads one knowledge topic. |
 
 Note: for the quick-fix case, both `sf-work` and `sf-debug` are defensible routes.
 The battery pins one expected skill for a deterministic assertion; if you decide the
@@ -196,7 +194,7 @@ other is the intended route, change the expected skill in both `SEED_BATTERY`
  assertion, not another prompt.
 
 * **The battery covers four skills, not the catalogue.** Ten prompts exercising
- `sf-work`, `sf-brainstorm`, `sf-review`, and `sf-tend` — out of roughly 69 skills.
+ `sf-work`, `sf-plan`, `sf-review`, `sf-deploy`, `sf-generate`, `sf-ship`, and `sf-know` — out of 10 skills.
  Treat a green battery as evidence about those four routes only.
 
 * **Fixture staleness is not yet detected.** A fixture records routing as it was on

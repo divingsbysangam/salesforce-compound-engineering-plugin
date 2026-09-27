@@ -3,7 +3,7 @@
 Read with `sf-review/SKILL.md`. Procedure lives here.
 
 ## Step 2: Dispatch Review Personas in Parallel
-Review personas live in `skills/sf-review/references/personas/<name>.md` as **prompt assets — not registered agents** — this skill owns them. Dispatch them as isolated subagents per the `dispatching-parallel-personas` skill (isolated subagents, same-response parallelism, same-file-conflict check); pass each persona file's contents plus the files and code context. Review personas are read-only, so dispatch every applicable one in the same message.
+Review personas live in `skills/sf-review/references/personas/<name>.md` as **prompt assets — not registered agents** — this skill owns them. Dispatch them as isolated subagents per see `../../sf-work/references/dispatch/guide.md` (isolated subagents, same-response parallelism, same-file-conflict check); pass each persona file's contents plus the files and code context. Review personas are read-only, so dispatch every applicable one in the same message.
 
 Based on file classification, dispatch applicable personas (each `Task <name>` below = the persona at `references/personas/<name>.md`):
 

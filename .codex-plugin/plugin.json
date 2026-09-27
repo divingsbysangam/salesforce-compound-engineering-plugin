@@ -40,7 +40,7 @@
     "privacyPolicyURL": "https://github.com/divingsbysangam/salesforce-compound-engineering-plugin/blob/main/SECURITY.md",
     "termsOfServiceURL": "https://github.com/divingsbysangam/salesforce-compound-engineering-plugin/blob/main/LICENSE",
     "defaultPrompt": [
-      "/sf-brainstorm a new Apex feature",
+      "/sf-plan mode:brainstorm a new Apex feature",
       "/sf-plan the LWC implementation",
       "/sf-review my changes"
     ],

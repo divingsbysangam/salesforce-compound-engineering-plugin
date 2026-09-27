@@ -23,7 +23,7 @@ Use the anchored confidence rubric in `../subagent-confidence-rubric.md` (High /
 
 ## Dispatch contract
 
-When dispatched by `sf-review` or `sf-doc-review` (or another orchestration skill), this agent receives:
+When dispatched by `sf-review` or `sf-review mode:doc` (or another orchestration skill), this agent receives:
 
 - The diff, file path, or document to review.
 - The plan or origin requirements when applicable.

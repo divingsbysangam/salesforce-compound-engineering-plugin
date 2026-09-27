@@ -1,13 +1,27 @@
 ---
 name: sf-work
 tier: discipline-gate
-description: "Execute work efficiently against a Salesforce plan or feature description while maintaining quality and finishing complete features. Use when implementing Apex classes, LWC components, Flow automation, integrations, or any planned Salesforce work. Includes a Salesforce-aware system-wide test check (trigger contexts, bulkification, governor limits, sharing scenarios, mock callouts). Trigger phrases: 'work on this plan', 'implement this Salesforce feature', 'build out this Apex', 'execute this trigger plan', 'ship this LWC'."
-argument-hint: "[plan file path under docs/plans/, or feature description for bare-prompt work]"
+description: "Implement Salesforce work from a plan or prompt (Apex, LWC, Flow, metadata). Use for 'build this', 'implement the plan', 'simplify', 'optimize CPU/SOQL', worktrees, todos, handoff."
+argument-hint: "[mode:simplify|optimize|worktree|todos|handoff] [plan path or feature description]"
 ---
 
 # /sf-work
 
-> **Persona dispatch.** This skill dispatches personas as isolated subagents — see the `dispatching-parallel-personas` skill for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). Review personas are referenced from `../sf-review/references/personas/`, research personas from `../sf-plan/references/personas/`.
+## Modes
+
+First argument `mode:<name>` selects a mode; everything after it passes to that mode's guide. Load only the guide for the chosen mode.
+
+| Mode | Use for | Guide |
+|---|---|---|
+| `(none)` | Implement against a plan or prompt, test-first | this file |
+| `simplify` | Simplify recently changed code | `references/simplify/guide.md` |
+| `optimize` | Metric-driven optimization loop (CPU, SOQL, heap) | `references/optimize/guide.md` |
+| `worktree` | Create or manage isolated git worktrees | `references/worktree/guide.md` |
+| `todos` | File-based task tracking in `todos/` | `references/todos/guide.md` |
+| `handoff` | Write or resume a session handoff | `references/handoff/guide.md` |
+| `dispatch` | Reference: how skills dispatch personas/lenses as subagents | `references/dispatch/guide.md` |
+
+> **Persona dispatch.** This skill dispatches personas as isolated subagents — see `references/dispatch/guide.md` for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). Review personas are referenced from `../sf-review/references/personas/`, research personas from `../sf-plan/references/personas/`.
 
 > **Principles enforced:** 1 (preserve the quality ceiling), 2 (verifiability), 3 (jagged intelligence). See `PRINCIPLES.md`.
 

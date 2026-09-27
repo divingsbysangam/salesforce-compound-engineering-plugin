@@ -49,7 +49,7 @@ second part is most of the saving.
 ```bash
 scripts/sfce-delegate \
   --spec /tmp/factory-spec.md \
-  --reference skills/test-factory/SKILL.md \
+  --reference skills/sf-generate/references/test-data/guide.md \
   --out force-app/main/default/classes/TestDataFactory.cls \
   --kind test-factory --expect-lines 120
 
@@ -75,8 +75,8 @@ weak model. The worker is also instructed to emit `DELEGATION_REFUSED` if the
 spec appears to need that judgement, which is honoured as a second, independent
 check.
 
-In practice the real `test-factory` and `apex-patterns` skills pass the scan;
-`governor-limits` is correctly refused.
+In practice the real `sf-generate mode:test-data` and `sf-know mode:apex` skills pass the scan;
+`sf-know mode:limits` is correctly refused.
 
 | Variable | Default | Notes |
 | --- | --- | --- |
@@ -150,7 +150,7 @@ and these are executable scripts that run with your full permissions.
 - Stop and re-plan if U1 finds that no hook event carries skill identity for a description-matched entry. This breaks both halves, not only the reporter. The reporter's claim narrows to explicit invocations and the cold-skill feature is cut. For the gate it is worse: description-based routing is this plugin's primary designed entry path, so a developer who reaches an allowlisted authoring skill that way mints no grant and is denied on their first metadata edit. R4 and KTD1 both assume entry is observable, so U5 stops with U7 rather than proceeding on a narrowed claim.
 - Stop and re-plan if a full `sf-lfg` run cannot complete with the gate enabled after U2.
 - Stop and re-plan if U1's Cursor probe finds that Cursor does not silently ignore a `PreToolUse` entry it cannot honor and U9's file split cannot produce a `hooks/hooks.json` that Cursor accepts. The split is the prescribed remedy, so the probe's negative result redirects U8's config rather than halting the plan; only a failed split is the stop. Cursor receives `hooks/hooks.json` by manifest reference, bypassing the converter layer, so it is the one exception to this plan's inert-elsewhere premise.
-- Tail ownership: This plan ends at a reviewed, tested branch. Shipping is `/sf-commit-push-pr`.
+- Tail ownership: This plan ends at a reviewed, tested branch. Shipping is `/sf-ship mode:pr`.
 - 
 
 ## The Compound Engineering Loop
@@ -159,21 +159,21 @@ and these are executable scripts that run with your full permissions.
   ┌─ HUMAN (taste) ─┐        ┌──────── AI (in the loop) ────────┐        ┌─ HUMAN (taste) ─┐
    Ideate · Brainstorm  →  Plan(40%) · Deepen · Work(20%) · Review · Resolve  →  Polish  →  Compound  →  Repeat
 
-  • Ideate     — decide what's worth building (/sf-ideate)
-  • Brainstorm — explore requirements through collaborative dialogue (/sf-brainstorm)
+  • Ideate     — decide what's worth building (/sf-plan mode:ideate)
+  • Brainstorm — explore requirements through collaborative dialogue (/sf-plan mode:brainstorm)
   • Plan       — research & design using 68 skills + parallel research personas (/sf-plan)
-  • Deepen     — enhance the plan with section-level parallel research (/sf-deepen)
+  • Deepen     — enhance the plan with section-level parallel research (/sf-plan mode:deepen)
   • Work       — implement with pre-research + system-wide test checks (/sf-work)
   • Review     — parallel persona dispatch across 61 specialist personas (/sf-review)
-  • Polish     — taste pass via /sf-polish: SLDS2/UX, accessibility (WCAG), copy (UI surfaces only)
+  • Polish     — taste pass via /sf-review mode:polish: SLDS2/UX, accessibility (WCAG), copy (UI surfaces only)
   • Compound   — capture learnings to docs/solutions/, personas, skills, CLAUDE.md (/sf-compound)
 ```
 
 > **The sandwich.** Humans own the two ends — **Ideate** (what's worth building) and **Polish** (does it feel right) — the "bread". The AI runs the middle "filling" in the loop. As models get better at execution, human attention concentrates where machines are still weak: taste and judgment.
 
-> All nine core entry points (`/sf-ideate`, `/sf-brainstorm`, `/sf-plan`, `/sf-deepen`, `/sf-work`, `/sf-review`, `/sf-polish`, `/sf-compound`, `/sf-lfg`) are **skills** in V3 — they auto-route from natural-language phrases via their `description` frontmatter, and direct slash invocation continues to work.
+> All nine core entry points (`/sf-plan mode:ideate`, `/sf-plan mode:brainstorm`, `/sf-plan`, `/sf-plan mode:deepen`, `/sf-work`, `/sf-review`, `/sf-review mode:polish`, `/sf-compound`, `/sf-lfg`) are **skills** in V3 — they auto-route from natural-language phrases via their `description` frontmatter, and direct slash invocation continues to work.
 
-Above the loop, **`/sf-strategy`** maintains an optional repo-root `STRATEGY.md` (target problem, approach, users, key metrics, tracks) that `sf-ideate`, `sf-brainstorm`, and `sf-plan` read as grounding when it exists. **`/sf-tend`** maintains ongoing Salesforce responsibility feeds with one durable thread per feed, source-backed cards, approval receipts, and reviewed learning.
+Above the loop, **`/sf-plan mode:strategy`** maintains an optional repo-root `STRATEGY.md` (target problem, approach, users, key metrics, tracks) that `sf-plan mode:ideate`, `sf-plan mode:brainstorm`, and `sf-plan` read as grounding when it exists. **`/sf-tend`** maintains ongoing Salesforce responsibility feeds with one durable thread per feed, source-backed cards, approval receipts, and reviewed learning.
 
 **Each iteration starts smarter** because learnings compound into `docs/solutions/`, personas, skills, and CLAUDE.md.
 
@@ -364,19 +364,19 @@ The nine-step compound loop, plus the full-pipeline runner and the strategy grou
 
 | Skill            | Stage      | Purpose                                                              |
 | ---------------- | ---------- | ------------------------------------------------------------------- |
-| `/sf-strategy`   | grounding  | Create/maintain repo-root `STRATEGY.md` read by ideate/brainstorm/plan |
+| `/sf-plan mode:strategy`   | grounding  | Create/maintain repo-root `STRATEGY.md` read by ideate/brainstorm/plan |
 | `/sf-tend`       | workflow   | Operate Salesforce responsibility feeds with cards, approvals, receipts, and reviewed learning |
-| `/sf-ideate`     | bread      | Decide what's worth building — grounded idea generation             |
-| `/sf-brainstorm` | loop       | Explore requirements through collaborative dialogue                 |
+| `/sf-plan mode:ideate`     | bread      | Decide what's worth building — grounded idea generation             |
+| `/sf-plan mode:brainstorm` | loop       | Explore requirements through collaborative dialogue                 |
 | `/sf-plan`       | loop       | Research & design specs with parallel persona research (NO CODE)      |
-| `/sf-deepen`     | loop       | Enhance plan sections with parallel deep research                   |
+| `/sf-plan mode:deepen`     | loop       | Enhance plan sections with parallel deep research                   |
 | `/sf-work`       | loop       | Implement with pre-research, skills routing, and test checks        |
 | `/sf-review`     | loop       | Review with parallel persona dispatch (fast/thorough/comprehensive)   |
-| `/sf-polish`     | bread      | Stack-aware UI polish — SLDS2/UX, WCAG accessibility, copy          |
+| `/sf-review mode:polish`     | bread      | Stack-aware UI polish — SLDS2/UX, WCAG accessibility, copy          |
 | `/sf-compound`   | loop       | Capture learnings to `docs/solutions/` with YAML schema             |
 | `/sf-lfg`        | pipeline   | Full autonomous pipeline — ideate through deploy in one command     |
 
-Plus utility skills: `/sf-simplify-code`, `/sf-product-pulse`, `/sf-debug`, `/sf-doc-review`, `/sf-optimize`, `/sf-resolve-pr-feedback`, `/sf-commit`, `/sf-commit-push-pr`, `/sf-pr-description`, `/sf-release-notes`, `/sf-report-bug`, `/sf-sessions`, `/sf-setup`, and more.
+Plus utility skills: `/sf-work mode:simplify`, `/sf-product-pulse`, `/sf-debug`, `/sf-review mode:doc`, `/sf-work mode:optimize`, `/sf-ship mode:resolve-feedback`, `/sf-ship mode:commit`, `/sf-ship mode:pr`, `/sf-ship mode:pr-description`, `/sf-ship mode:release-notes`, `/sf-report-bug`, `/sf-sessions`, `/sf-deploy mode:setup`, and more.
 
 ### `/sf-lfg` — The Full Pipeline
 
@@ -394,7 +394,7 @@ Each stage has gates that must pass before proceeding. The pipeline aborts and a
 
 ## Specialist Personas (61)
 
-V3.1 is **agentless** — there are no standalone registered agents. The 61 specialist personas are prompt assets under `skills/<owner>/references/personas/<name>.md`, dispatched by the workflow skills as **isolated subagents**: parallel with isolated context on Claude Code, applied inline on harnesses without a subagent primitive. They ship to every platform as ordinary skill files. Primary owners: `sf-review` (code review), `sf-doc-review` (doc review), `sf-plan` (research). Topical groupings:
+V3.1 is **agentless** — there are no standalone registered agents. The 61 specialist personas are prompt assets under `skills/<owner>/references/personas/<name>.md`, dispatched by the workflow skills as **isolated subagents**: parallel with isolated context on Claude Code, applied inline on harnesses without a subagent primitive. They ship to every platform as ordinary skill files. Primary owners: `sf-review` (code review), `sf-review mode:doc` (doc review), `sf-plan` (research). Topical groupings:
 
 | Group                      | Covers                                                                       |
 | -------------------------- | ---------------------------------------------------------------------------- |
@@ -415,36 +415,36 @@ V3.1 is **agentless** — there are no standalone registered agents. The 61 spec
 
 | Skill                  | Scope            | Use When                              |
 | ---------------------- | ---------------- | ------------------------------------- |
-| `governor-limits`      | Universal        | Any Apex, Flow, or trigger work       |
-| `apex-patterns`        | Apex only        | Apex classes, triggers, services      |
-| `flow-patterns`        | Automation only  | Building any type of Flow             |
-| `lwc-patterns`         | LWC only         | Lightning Web Components              |
-| `graphql-patterns`     | LWC only         | LWC GraphQL wire adapter / LDS GraphQL |
-| `security-guide`       | Universal        | CRUD/FLS, sharing, permissions        |
-| `integration-patterns` | Integration only | Callouts, APIs, Platform Events       |
-| `test-factory`         | Apex only        | Test classes, test data factories     |
+| `sf-know mode:limits`      | Universal        | Any Apex, Flow, or trigger work       |
+| `sf-know mode:apex`        | Apex only        | Apex classes, triggers, services      |
+| `sf-know mode:flow`        | Automation only  | Building any type of Flow             |
+| `sf-know mode:lwc`         | LWC only         | Lightning Web Components              |
+| `sf-know mode:graphql`     | LWC only         | LWC GraphQL wire adapter / LDS GraphQL |
+| `sf-know mode:security`       | Universal        | CRUD/FLS, sharing, permissions        |
+| `sf-know mode:integration` | Integration only | Callouts, APIs, Platform Events       |
+| `sf-generate mode:test-data`         | Apex only        | Test classes, test data factories     |
 
 ### Generating Skills (from `forcedotcom/afv-library`, Apache-2.0)
 
 | Skill                     | Generates                                                       |
 | ------------------------- | -------------------------------------------------------------- |
-| `apex-generate`           | Apex class + tests as one unit                                 |
-| `flow-generate`           | Flow via 3-step MCP pipeline                                   |
-| `validation-rule-generate`| Validation rules with user-friendly errors                    |
-| `apex-trigger-refactor`   | One-trigger-per-object handler refactors                      |
-| `slds2-uplift`            | SLDS2 styling hooks / design-token uplift                     |
-| `metadata-generate`       | `--type`-dispatched object / field / app / tab / list-view / lightning-type |
-| `lightning-page-generate` | FlexiPage or full LEX app orchestration                       |
-| `permission-set-generate` | Least-privilege permission sets                               |
+| `sf-generate mode:apex`           | Apex class + tests as one unit                                 |
+| `sf-generate mode:flow`           | Flow via 3-step MCP pipeline                                   |
+| `sf-generate mode:validation-rule`| Validation rules with user-friendly errors                    |
+| `sf-generate mode:trigger-refactor`   | One-trigger-per-object handler refactors                      |
+| `sf-review mode:slds2`            | SLDS2 styling hooks / design-token uplift                     |
+| `sf-generate mode:metadata`       | `--type`-dispatched object / field / app / tab / list-view / lightning-type |
+| `sf-generate mode:lightning-page` | FlexiPage or full LEX app orchestration                       |
+| `sf-generate mode:permission-set` | Least-privilege permission sets                               |
 
 ### Agentforce & Prompt Builder
 
 | Skill                | Use When                                                                |
 | -------------------- | ----------------------------------------------------------------------- |
-| `agentforce-develop` | Build, modify, debug, deploy Agentforce agents — Agent Spec gate, `.agent` authoring, publish/activate |
-| `agentforce-test`    | Smoke + batch testing — `sf agent preview` traces, Testing Center YAML, fix loop |
-| `agentforce-observe` | Production observation — STDM session traces in Data Cloud (with fallback) |
-| `prompt-builder`     | Prompt templates — metadata XML, merge fields, grounding, deployment    |
+| `sf-generate mode:agent` | Build, modify, debug, deploy Agentforce agents — Agent Spec gate, `.agent` authoring, publish/activate |
+| `sf-generate mode:agent-test`    | Smoke + batch testing — `sf agent preview` traces, Testing Center YAML, fix loop |
+| `sf-debug mode:agent-observe` | Production observation — STDM session traces in Data Cloud (with fallback) |
+| `sf-generate mode:prompt-template`     | Prompt templates — metadata XML, merge fields, grounding, deployment    |
 
 > **⚠️ Agentforce DX Critical Notes (April–May 2026):**
 > - **`topic` is deprecated.** Use `subagent`, `start_agent agent_router:`, and `@subagent.name` everywhere.
@@ -457,17 +457,17 @@ V3.1 is **agentless** — there are no standalone registered agents. The 61 spec
 
 | Skill                | Use When                                                                |
 | -------------------- | ----------------------------------------------------------------------- |
-| `hosted-mcp-servers` | Hosted MCP setup, ECA configuration, URL patterns, security model, troubleshooting |
-| `mcp-tool-builder`   | Building custom MCP tools — Apex `@InvocableMethod`, Flows, Named Queries, prompt templates |
+| `sf-know mode:hosted-mcp` | Hosted MCP setup, ECA configuration, URL patterns, security model, troubleshooting |
+| `sf-generate mode:mcp-tool`   | Building custom MCP tools — Apex `@InvocableMethod`, Flows, Named Queries, prompt templates |
 
 ### Tooling
 
 | Skill                 | Use When                                       |
 | --------------------- | ---------------------------------------------- |
-| `sf-cli`              | Deploy, retrieve, test, org management         |
-| `compound-docs`       | Writing solution documents with YAML schema    |
-| `file-todos`          | File-based task tracking                        |
-| `git-worktree`        | Isolated parallel development branches          |
+| `sf-deploy mode:cli`              | Deploy, retrieve, test, org management         |
+| `sf-compound mode:doc-format`       | Writing solution documents with YAML schema    |
+| `sf-work mode:todos`          | File-based task tracking                        |
+| `sf-work mode:worktree`        | Isolated parallel development branches          |
 | `create-agent-skills` | Creating new agents and skills for the plugin   |
 
 ***
@@ -523,7 +523,7 @@ salesforce-compound-engineering-plugin/
 ├── skills/                   # 68 skills — each owns the personas it dispatches
 │   ├── index.md              # Skill routing map
 │   ├── sf-review/references/personas/      # ~40 code-review personas
-│   ├── sf-doc-review/references/personas/  #  8 doc-review personas
+│   ├── sf-review mode:doc/references/personas/  #  8 doc-review personas
 │   ├── sf-plan/references/personas/        #  9 research personas
 │   └── …                     # 61 personas total — agentless, no standalone agents/ dir
 └── docs/
@@ -582,7 +582,7 @@ Contributions welcome! Key areas:
 * Improve index files for better routing
 * Add solution documents to `docs/solutions/`
 
-See `skills/create-agent-skills/SKILL.md` for agent/skill authoring guidance, and read `PRINCIPLES.md` before non-trivial changes to workflow skills.
+See `.claude/skills/create-agent-skills/SKILL.md` for agent/skill authoring guidance, and read `PRINCIPLES.md` before non-trivial changes to workflow skills.
 
 ***
 
