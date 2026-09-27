@@ -16,7 +16,7 @@ nothing; you opt in per feature with `/plugin configure`, or by setting
 
 | Script | Event | Runs when |
 | --- | --- | --- |
-| `scripts/session-start` | `SessionStart` (startup) | always — prints the discipline primer |
+| `scripts/session-start` | `SessionStart` (startup) | always — prints the discipline primer, plus a few lines of project facts (API version, packages, default org and its type, source counts, trigger framework) inside a Salesforce DX project, from local files only |
 | `scripts/sfce-gate-selfcheck` | `SessionStart` (startup) | gate enabled |
 | `scripts/sfce-metadata-gate` | `PreToolUse` / `PostToolUse` on `Edit`, `Write`, `NotebookEdit` | gate enabled |
 | `scripts/sfce-skill-observer` | `PostToolUse` on `Skill`, `UserPromptExpansion`, `SessionStart` (clear/resume), `SessionEnd` | either feature enabled |
@@ -486,7 +486,7 @@ Configured in `.mcp.json`:
     },
     "salesforce-dx": {
       "command": "npx",
-      "args": ["-y", "@salesforce/mcp", "--orgs", "DEFAULT_TARGET_ORG", "--toolsets", "all"]
+      "args": ["-y", "@salesforce/mcp", "--orgs", "DEFAULT_TARGET_ORG", "--toolsets", "orgs,metadata,data,testing,code-analysis,lwc-experts"]
     }
   }
 }
@@ -495,6 +495,8 @@ Configured in `.mcp.json`:
 **Context7** — framework documentation, used by research personas as the second tier after local skills, before falling back to web search.
 
 **Salesforce DX MCP** — the local `@salesforce/mcp` server for developer workflows such as SOQL, deploy, retrieve, code analysis, and testing. The current Salesforce CLI/MCP setup supports selecting orgs, toolsets, and tools; keep the package selector aligned with the [Salesforce DX MCP documentation](https://github.com/salesforcecli/mcp) rather than copying an old tool list.
+
+The plugin enables only the toolsets its skills use (`orgs,metadata,data,testing,code-analysis,lwc-experts`; `core` is always on) rather than `all`, which registers 60+ tools and their schemas in every session. Add `devops`, `users`, `aura-experts`, or `mobile` to the list if you need them.
 
 **Salesforce Hosted MCP** — a separate Salesforce-managed, OAuth/PKCE-connected surface for org data and automation. Hosted MCP servers are now generally available; configure them through [Salesforce Hosted MCP documentation](https://developer.salesforce.com/docs/platform/hosted-mcp-servers/guide/hosted-mcp-servers-overview.html), starting with a read-only server and an External Client App. 
 

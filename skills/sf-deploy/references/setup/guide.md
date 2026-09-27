@@ -10,7 +10,9 @@ Verify prerequisites, surface missing pieces, and walk the user through installi
 
 - Check `sf --version` (Salesforce CLI v2+) and report install command if missing.
 - Check for `sfdx-project.json` in the project root (current dir or first ancestor with one).
-- Check `.mcp.json` for Context7 and `@salesforce/mcp` entries; offer to add the Salesforce DX MCP server.
+- Check `.mcp.json` for Context7 and `@salesforce/mcp` entries; offer to add the Salesforce DX MCP server. Its `--toolsets` should list only what is used (default `orgs,metadata,data,testing,code-analysis,lwc-experts`), not `all`.
+- Check a default org is set (`sf config get target-org --json`) and say whether it is scratch, sandbox, or production (`sf org display --json`).
+- Optional, Claude Code only: offer Salesforce's `salesforce-development` plugin (`/plugin install salesforce-development@claude-plugins-official`) for the schema and Apex/SOQL language-server tools that `../../../sf-know/references/org-context/guide.md` prefers. Mention that its telemetry is on by default (`SF_DISABLE_TELEMETRY=1` turns it off).
 - Verify Claude Code plugin install: `claude /plugin list` includes `sf-compound-engineering`.
 - Optional: check `ast-grep` CLI presence (used by review agents for structural Apex/LWC analysis).
 
@@ -33,6 +35,8 @@ When asking the user a question, use the platform's blocking question tool (`Ask
 | Project | read `sfdx-project.json` walking ancestors | none | path or `project=unavailable: no sfdx-project.json` |
 | MCP | read `.mcp.json` | none | servers listed or `mcp=unavailable` |
 | Plugin | `claude /plugin list` | none | plugin present or `plugin=unavailable` |
+| Default org | `sf config get target-org --json` | read `.sf/config.json` | alias + type or `org=unset` |
+| Org-context tools | tool list contains `validate_soql` / `get_metadata_type_fields` | none | `present` or `absent (CLI fallback)` |
 
 ## Cross-skill integration
 

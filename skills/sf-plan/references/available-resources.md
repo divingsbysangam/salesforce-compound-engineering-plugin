@@ -3,9 +3,13 @@
 Read with `sf-plan/SKILL.md`. Procedure lives here.
 
 ## Available Resources
-### Agents (Expertise)
+### Review lenses
 
-Read `../sf-review/references/personas/` to route to relevant review personas.
+`../../sf-review/references/lenses/` lists what review will check; design the plan to pass them.
+
+### Org context
+
+Confirm objects, fields, and metadata types against the org with `../../sf-know/references/org-context/guide.md` before the plan names them.
 
 ### Skills (Domain Knowledge)
 

@@ -31,6 +31,7 @@ Ten skills. Each has modes; a mode's guide loads only when that mode runs. Invok
 | integration | `sf-know/references/integration/guide.md` | Callouts, APIs, events |
 | hosted-mcp | `sf-know/references/hosted-mcp/guide.md` | Salesforce Hosted MCP servers |
 | agent-native | `sf-know/references/agent-native/guide.md` | Features agents must also operate |
+| org-context | `sf-know/references/org-context/guide.md` | Before naming any object, field, or metadata type |
 
 ## Which skill owns which metadata
 

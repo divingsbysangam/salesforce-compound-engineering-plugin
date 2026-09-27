@@ -4,7 +4,7 @@ Every lens is a checklist run by one subagent over the files it is given. The di
 
 ## Procedure
 
-1. **Tools first.** Run the lens's "Tools first" commands when they are available (Code Analyzer, `sf project deploy validate --dry-run`, grep). A tool result is evidence; do not re-derive by reading what a tool already proved.
+1. **Tools first.** Run the lens's "Tools first" commands when they are available (Code Analyzer, `sf project deploy validate --dry-run`, grep), and the org-context tools in `../../../sf-know/references/org-context/guide.md` (e.g. `validate_soql`, `apex.diagnostics`) when loaded. A tool result is evidence; do not re-derive by reading what a tool already proved.
 2. **Check.** Walk the lens checklist against the changed lines and the code they call. Skip items that do not apply to the files given.
 3. **Report only real findings.** No praise, no summaries, no restating the checklist. If nothing is wrong, return `NO FINDINGS`.
 

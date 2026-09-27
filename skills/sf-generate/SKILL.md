@@ -29,7 +29,7 @@ First argument `type:<name>` (or `mode:<name>`) picks the generator. If absent, 
 
 ## Rules for every type
 
-1. **Read the org's shape before writing.** Use the project's existing source (`force-app/`) as the pattern, and query the org (describe, SOQL, retrieve) when a field or object name is uncertain. Never invent API names.
+1. **Read the org's shape before writing.** Use the project's existing source (`force-app/`) as the pattern, and confirm uncertain field, object, or metadata-type names with the tools in `../sf-know/references/org-context/guide.md` (Salesforce's schema and LSP tools when loaded, otherwise the `sf` CLI). Never invent API names.
 2. **Follow the project's framework.** Reuse the existing trigger framework, selector layer, and test factory if present.
 3. **Generate the test with the code.** Apex without a test class is incomplete.
 4. **Verify before handing back.** Run `sf project deploy validate --dry-run` (or `/sf-deploy mode:validate`) on the generated files and fix every error.

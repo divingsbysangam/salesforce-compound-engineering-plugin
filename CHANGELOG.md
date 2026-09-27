@@ -6,6 +6,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Project context at session start.** Inside a Salesforce DX project, `scripts/session-start` appends up to ~500 bytes of facts: project name, API version, package directories, default org and whether it is scratch/sandbox/production, source counts, and the trigger framework detected. Local files only; no network, no tokens read into output.
+- **`/sf-know topic:org-context`.** One table of where to get org facts: Salesforce's `salesforce-development` plugin tools when loaded (`validate_soql`, `apex.diagnostics`, `get_metadata_type_fields`, `execute_metadata_action`), then `@salesforce/mcp` (`run_soql_query`, `run_apex_test`), then the `sf` CLI. `sf-generate`, the review lens contract, `sf-plan`, and `sf-deploy mode:setup` now use it.
+
+### Changed
+
+- `@salesforce/mcp` now starts with `--toolsets orgs,metadata,data,testing,code-analysis,lwc-experts` instead of `all` (60+ tool schemas in every session). `core` is always on.
+
 ## [4.0.0] - 2026-09-27
 
 Breaking: the catalog is rebuilt for token cost. Only ten short skill descriptions load per session (down from 68), and a typical review dispatches 2–4 subagents instead of 10–15.

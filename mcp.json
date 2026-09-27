@@ -12,7 +12,7 @@
         "--orgs",
         "DEFAULT_TARGET_ORG",
         "--toolsets",
-        "all"
+        "orgs,metadata,data,testing,code-analysis,lwc-experts"
       ]
     }
   }
