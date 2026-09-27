@@ -1,7 +1,7 @@
 # Flow Patterns
 
 **SCOPE: AUTOMATION_ONLY** - This skill applies ONLY to Flows (Record-Triggered, Screen, Scheduled, Platform Event-Triggered).
-**DO NOT** use this skill for Apex code or LWC components. For Apex patterns, use `sf-know mode:apex` instead.
+**DO NOT** use this skill for Apex code or LWC components. For Apex patterns, use `sf-know topic:apex` instead.
 
 ---
 

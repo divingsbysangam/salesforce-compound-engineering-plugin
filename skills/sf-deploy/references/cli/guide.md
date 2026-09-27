@@ -6,13 +6,13 @@ Reference for common `sf` CLI commands used in Salesforce development workflows.
 
 | Need | Delegate to | Reason |
 | --- | --- | --- |
-| New Apex / tests | `sf-generate mode:apex` | Author before deploy |
-| New Flow XML | `sf-generate mode:flow` | Pipeline before deploy |
-| New object / field / tab / app | `sf-generate mode:metadata` | Schema before deploy |
-| New FlexiPage / LEX app | `sf-generate mode:lightning-page` | Page orchestration |
-| New permission set | `sf-generate mode:permission-set` | Least privilege |
+| New Apex / tests | `sf-generate type:apex` | Author before deploy |
+| New Flow XML | `sf-generate type:flow` | Pipeline before deploy |
+| New object / field / tab / app | `sf-generate type:metadata` | Schema before deploy |
+| New FlexiPage / LEX app | `sf-generate type:lightning-page` | Page orchestration |
+| New permission set | `sf-generate type:permission-set` | Least privilege |
 | CLI / project / MCP missing | `sf-deploy mode:setup` | Prerequisites |
-| Agentforce publish | `sf-generate mode:agent` | Agent CLI, not `sf project deploy` |
+| Agentforce publish | `sf-generate type:agent` | Agent CLI, not `sf project deploy` |
 
 ## Fail-closed deploy
 

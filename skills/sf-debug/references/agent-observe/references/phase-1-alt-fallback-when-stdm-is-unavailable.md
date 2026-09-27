@@ -20,7 +20,7 @@ sf agent test results --json --job-id "$JOB_ID" --result-format json -o <org>
 
 ### <span data-proof="authored" data-by="ai:claude">1-ALT.2 Derive utterances from the</span> <span data-proof="authored" data-by="ai:claude">`.agent`</span> <span data-proof="authored" data-by="ai:claude">file</span>
 
-<span data-proof="authored" data-by="ai:claude">Use the same derivation rules as</span> <span data-proof="authored" data-by="ai:claude">`/sf-generate mode:agent-test`</span> <span data-proof="authored" data-by="ai:claude">Step 0: subagent-based, action-based, guardrail, multi-turn, safety probes.</span>
+<span data-proof="authored" data-by="ai:claude">Use the same derivation rules as</span> <span data-proof="authored" data-by="ai:claude">`/sf-generate type:agent-test`</span> <span data-proof="authored" data-by="ai:claude">Step 0: subagent-based, action-based, guardrail, multi-turn, safety probes.</span>
 
 > **<span data-proof="authored" data-by="ai:claude">⚠️ Debug logs must be on the Agent User, not the admin user.</span>**<span data-proof="authored" data-by="ai:claude">
 > When using</span> <span data-proof="authored" data-by="ai:claude">`--use-live-actions`, Apex runs as the Einstein Agent User (the</span> <span data-proof="authored" data-by="ai:claude">`@agentforce.com`</span> <span data-proof="authored" data-by="ai:claude">scoped user), not your admin. If you set debug logs on your admin user, you will see zero Apex logs even when actions are being called. In Setup → Debug Logs, add the</span> **<span data-proof="authored" data-by="ai:claude">agent user</span>** <span data-proof="authored" data-by="ai:claude">specifically. Check the agent user's email in Setup → Users, filtered by "Einstein Agent".</span>

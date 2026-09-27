@@ -11,7 +11,7 @@ Read with `validation-rule-generate/SKILL.md`. Procedure lives here.
 
 * <span data-proof="authored" data-by="ai:claude">Generate the matching</span> <span data-proof="authored" data-by="ai:claude">`.validationRule-meta.xml`</span> <span data-proof="authored" data-by="ai:claude">file</span>
 
-<span data-proof="authored" data-by="ai:claude">If the validation needs to</span> *<span data-proof="authored" data-by="ai:claude">modify</span>* <span data-proof="authored" data-by="ai:claude">a record (not just block it), this is the wrong skill — use</span> <span data-proof="authored" data-by="ai:claude">`sf-generate mode:flow`</span> <span data-proof="authored" data-by="ai:claude">(before-save flow) or</span> <span data-proof="authored" data-by="ai:claude">`sf-generate mode:apex`</span> <span data-proof="authored" data-by="ai:claude">(before-update trigger).</span>
+<span data-proof="authored" data-by="ai:claude">If the validation needs to</span> *<span data-proof="authored" data-by="ai:claude">modify</span>* <span data-proof="authored" data-by="ai:claude">a record (not just block it), this is the wrong skill — use</span> <span data-proof="authored" data-by="ai:claude">`sf-generate type:flow`</span> <span data-proof="authored" data-by="ai:claude">(before-save flow) or</span> <span data-proof="authored" data-by="ai:claude">`sf-generate type:apex`</span> <span data-proof="authored" data-by="ai:claude">(before-update trigger).</span>
 
 ***
 

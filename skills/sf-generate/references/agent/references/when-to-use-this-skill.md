@@ -3,7 +3,7 @@
 Read with `agentforce-develop/SKILL.md`. Procedure lives here.
 
 ## <span data-proof="authored" data-by="ai:claude">When to use this skill</span>
-<span data-proof="authored" data-by="ai:claude">Use</span> <span data-proof="authored" data-by="ai:claude">`sf-generate mode:agent`</span> <span data-proof="authored" data-by="ai:claude">for the</span> **<span data-proof="authored" data-by="ai:claude">authoring lifecycle</span>** <span data-proof="authored" data-by="ai:claude">of an Agentforce agent:</span>
+<span data-proof="authored" data-by="ai:claude">Use</span> <span data-proof="authored" data-by="ai:claude">`sf-generate type:agent`</span> <span data-proof="authored" data-by="ai:claude">for the</span> **<span data-proof="authored" data-by="ai:claude">authoring lifecycle</span>** <span data-proof="authored" data-by="ai:claude">of an Agentforce agent:</span>
 
 * <span data-proof="authored" data-by="ai:claude">Designing the subagent graph and Agent Spec</span>
 
@@ -15,7 +15,7 @@ Read with `agentforce-develop/SKILL.md`. Procedure lives here.
 
 <span data-proof="authored" data-by="ai:claude">Sister skills:</span>
 
-* <span data-proof="authored" data-by="ai:claude">`/sf-generate mode:agent-test`</span> <span data-proof="authored" data-by="ai:claude">— once the agent compiles, write or run test suites against it</span>
+* <span data-proof="authored" data-by="ai:claude">`/sf-generate type:agent-test`</span> <span data-proof="authored" data-by="ai:claude">— once the agent compiles, write or run test suites against it</span>
 
 * <span data-proof="authored" data-by="ai:claude">`/sf-debug mode:agent-observe`</span> <span data-proof="authored" data-by="ai:claude">— once the agent is in production, analyze STDM session traces and reproduce issues</span>
 

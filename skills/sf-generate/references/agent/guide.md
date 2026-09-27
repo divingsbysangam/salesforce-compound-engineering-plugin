@@ -54,8 +54,8 @@ after the fallback. Empty or skipped validation is not a pass.
 
 | Need                                  | Delegate to                                          | Reason                                   |
 | ------------------------------------- | ---------------------------------------------------- | ---------------------------------------- |
-| Smoke / batch / safety tests          | `sf-generate mode:agent-test`                                    | This skill authors; that skill verifies  |
+| Smoke / batch / safety tests          | `sf-generate type:agent-test`                                    | This skill authors; that skill verifies  |
 | Production session diagnosis          | `sf-debug mode:agent-observe`                                 | STDM / preview reproduction              |
-| Invocable / Flow / prompt backing     | `sf-generate mode:apex` / `sf-generate mode:flow` / `sf-generate mode:prompt-template` | Stubs this skill names, others implement |
-| Hosted MCP tool the agent should call | `sf-generate mode:mcp-tool`                                   | Tool contract                            |
+| Invocable / Flow / prompt backing     | `sf-generate type:apex` / `sf-generate type:flow` / `sf-generate type:prompt-template` | Stubs this skill names, others implement |
+| Hosted MCP tool the agent should call | `sf-generate type:mcp-tool`                                   | Tool contract                            |
 | Capture an Agent Script gotcha        | `sf-compound`                                        | Institutional memory                     |

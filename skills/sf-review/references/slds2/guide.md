@@ -35,8 +35,8 @@ until zero linter errors.
 
 | Need                                    | Delegate to               | Reason                   |
 | --------------------------------------- | ------------------------- | ------------------------ |
-| LWC conventions / wire / a11y reference | `sf-know mode:lwc`            | Reference, not migration |
+| LWC conventions / wire / a11y reference | `sf-know topic:lwc`            | Reference, not migration |
 | Taste / copy / WCAG polish after tokens | `sf-review mode:polish`               | Uplift is linter-driven  |
 | New component, not a migration          | `sf-work`                 | Feature implementation   |
-| FlexiPage / app UI shell                | `sf-generate mode:lightning-page` | Metadata, not CSS tokens |
+| FlexiPage / app UI shell                | `sf-generate type:lightning-page` | Metadata, not CSS tokens |
 | Capture a hook-selection judgment       | `sf-compound`             | Institutional memory     |

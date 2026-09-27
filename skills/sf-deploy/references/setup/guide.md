@@ -40,7 +40,7 @@ When asking the user a question, use the platform's blocking question tool (`Ask
 | --- | --- | --- |
 | Deploy / retrieve / test / org CLI | `sf-deploy mode:cli` | This skill only verifies install |
 | Generate Apex / Flow / metadata | matching `*-generate` skill | Authoring is not setup |
-| Agentforce authoring | `sf-generate mode:agent` | Different toolchain |
+| Agentforce authoring | `sf-generate type:agent` | Different toolchain |
 
 ## Related
 

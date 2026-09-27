@@ -39,8 +39,8 @@ attempting the fallback. Never treat a skipped or empty tool result as a pass.
 | Need                              | Delegate to                | Reason                            |
 | --------------------------------- | -------------------------- | --------------------------------- |
 | Flow vs Apex decision still open  | `sf-plan mode:brainstorm`            | Declarative-vs-code matrix        |
-| Pattern lookup                    | `sf-know mode:flow`            | Reference, not generation         |
-| Invocable Apex the Flow will call | `sf-generate mode:apex`            | Backing code                      |
-| Validation rule instead of a Flow | `sf-generate mode:validation-rule` | Save-time formula, not automation |
+| Pattern lookup                    | `sf-know topic:flow`            | Reference, not generation         |
+| Invocable Apex the Flow will call | `sf-generate type:apex`            | Backing code                      |
+| Validation rule instead of a Flow | `sf-generate type:validation-rule` | Save-time formula, not automation |
 | Deploy / retrieve                 | `sf-deploy mode:cli`                   | Fail-closed deploy                |
 | Capture a Flow gotcha             | `sf-compound`              | Institutional memory              |

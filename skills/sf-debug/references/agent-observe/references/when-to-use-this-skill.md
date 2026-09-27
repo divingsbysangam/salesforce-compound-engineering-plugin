@@ -7,9 +7,9 @@ Read with `agentforce-observe/SKILL.md`. Procedure lives here.
 
 <span data-proof="authored" data-by="ai:claude">Sister skills:</span>
 
-* <span data-proof="authored" data-by="ai:claude">`/sf-generate mode:agent`</span> <span data-proof="authored" data-by="ai:claude">— making code changes to the</span> <span data-proof="authored" data-by="ai:claude">`.agent`</span> <span data-proof="authored" data-by="ai:claude">file lives there</span>
+* <span data-proof="authored" data-by="ai:claude">`/sf-generate type:agent`</span> <span data-proof="authored" data-by="ai:claude">— making code changes to the</span> <span data-proof="authored" data-by="ai:claude">`.agent`</span> <span data-proof="authored" data-by="ai:claude">file lives there</span>
 
-* <span data-proof="authored" data-by="ai:claude">`/sf-generate mode:agent-test`</span> <span data-proof="authored" data-by="ai:claude">— Mode A preview testing is the engine this skill uses for reproduction</span>
+* <span data-proof="authored" data-by="ai:claude">`/sf-generate type:agent-test`</span> <span data-proof="authored" data-by="ai:claude">— Mode A preview testing is the engine this skill uses for reproduction</span>
 
 ***
 

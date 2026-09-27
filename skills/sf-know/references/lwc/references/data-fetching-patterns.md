@@ -19,7 +19,7 @@ Before writing any data-access code, pick the right tool. Default to **GraphQL**
 
 > **⚠️ Metadata access permission gotcha**: Apex *bridges* permissions — an `@AuraEnabled` method can read Custom Metadata Types without the running user having direct permset access. GraphQL **does not bridge** — it runs the user's session against UI API directly. If you migrate Custom Metadata Type or Custom Settings reads to GraphQL, **every end user must be assigned a permission set granting Read on those metadata objects**, otherwise the query returns empty data silently (no error, no toast). Audit FLS and CRUD for every running profile before shipping a GraphQL migration of metadata reads.
 
-For full GraphQL syntax, mutations, refresh patterns, error handling, and the metadata-permission deep-dive, use the **`sf-know mode:graphql`** skill.
+For full GraphQL syntax, mutations, refresh patterns, error handling, and the metadata-permission deep-dive, use the **`sf-know topic:graphql`** skill.
 
 ### Wire Service
 

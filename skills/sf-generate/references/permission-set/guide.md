@@ -41,7 +41,7 @@ Generate a Salesforce Permission Set (PermissionSet XML) with the minimum permis
 needed to do the job. Default to least privilege: allowDelete=false, modifyAllRecords=false,
 viewAllRecords=false unless the user explicitly asked for a wider grant. Always set
 description with the intended audience. Fail-closed: sf code-analyzer, then a PermissionSet
-dry-run. Dispatch `metadata lens`. Consult `sf-know mode:security` for sharing.
+dry-run. Dispatch `metadata lens`. Consult `sf-know topic:security` for sharing.
 Place at force-app/main/default/permissionsets/<Name>.permissionset-meta.xml. Paste actual
 tool output on Analyzer / Compile lines, or `<check>=unavailable: <reason>` after the fallback.
 ```
@@ -50,8 +50,8 @@ tool output on Analyzer / Compile lines, or `<check>=unavailable: <reason>` afte
 
 | Need | Delegate to | Reason |
 | --- | --- | --- |
-| Missing objects / fields / tabs / apps | `sf-generate mode:metadata` | Perm set cannot reference absent metadata |
-| Sharing / OWD / CRUD-FLS policy | `sf-know mode:security` | Reference |
-| Lightning app that needs this perm set | `sf-generate mode:lightning-page` | App orchestration |
+| Missing objects / fields / tabs / apps | `sf-generate type:metadata` | Perm set cannot reference absent metadata |
+| Sharing / OWD / CRUD-FLS policy | `sf-know topic:security` | Reference |
+| Lightning app that needs this perm set | `sf-generate type:lightning-page` | App orchestration |
 | Deploy / assign perm set | `sf-deploy mode:cli` | Fail-closed deploy and `sf org assign permset` |
 | Capture a least-privilege judgment | `sf-compound` | Institutional memory |

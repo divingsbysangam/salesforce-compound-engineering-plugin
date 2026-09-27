@@ -1,7 +1,7 @@
 # Salesforce Integration Patterns
 
 **SCOPE: INTEGRATION_ONLY** - This skill applies ONLY to external integrations (REST, SOAP, Platform Events, Callouts).
-**DO NOT** use this skill for internal Flows, LWC frontend, or standard Apex triggers. For internal Apex, use `sf-know mode:apex`.
+**DO NOT** use this skill for internal Flows, LWC frontend, or standard Apex triggers. For internal Apex, use `sf-know topic:apex`.
 
 ---
 

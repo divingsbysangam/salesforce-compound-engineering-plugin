@@ -20,7 +20,7 @@ Place the persona in the `references/personas/` directory of its **primary ownin
 | Bug reproduction                                     | `sf-debug`               | `skills/sf-debug/references/personas/`               |
 | PR-thread resolution                                 | `sf-ship mode:resolve-feedback` | `skills/sf-ship/references/resolve-feedback/references/personas/` |
 | Org pulse (business lens)                            | `sf-product-pulse`       | `skills/sf-product-pulse/references/personas/`       |
-| Custom MCP tooling                                   | `sf-generate mode:mcp-tool`       | `skills/sf-generate/references/mcp-tool/references/personas/`       |
+| Custom MCP tooling                                   | `sf-generate type:mcp-tool`       | `skills/sf-generate/references/mcp-tool/references/personas/`       |
 
 ### How personas get dispatched
 

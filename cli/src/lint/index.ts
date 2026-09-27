@@ -7,6 +7,7 @@
  *                              description (auto-routing frontmatter).
  *   - `rubric-resolvable`    — confidence-rubric / subagent-template references
  *                              that do not resolve to a real file (Gap-11).
+ *   - `budget`               — description / SKILL.md / lens size ceilings.
  *   - `authoring-allowlist`  — `hooks/authoring-skills.txt` names a skill that
  *                              does not exist, or `hooks/metadata-path-routing.txt`
  *                              routes to a skill absent from the allowlist.
@@ -19,17 +20,19 @@ import { parseMarkdown } from "../parser/markdown.js";
 import { lintDescription, type DescriptionLintResult } from "./description-sdo.js";
 import { lintRubricReferences, type RubricLintResult } from "./rubric-resolvable.js";
 import { lintConsistency, type ConsistencyLintResult } from "./consistency.js";
+import { lintBudgets, type BudgetLintResult } from "./budget.js";
 import {
   lintAuthoringAllowlist,
   type AuthoringAllowlistLintResult,
 } from "./authoring-allowlist.js";
 
-export { lintDescription, lintRubricReferences, lintConsistency, lintAuthoringAllowlist };
+export { lintDescription, lintRubricReferences, lintConsistency, lintAuthoringAllowlist, lintBudgets };
 export type {
   DescriptionLintResult,
   RubricLintResult,
   ConsistencyLintResult,
   AuthoringAllowlistLintResult,
+  BudgetLintResult,
 };
 
 export interface LintReport {
@@ -41,6 +44,8 @@ export interface LintReport {
    * check whose remit reaches outside `skills/`.
    */
   authoringAllowlist: AuthoringAllowlistLintResult;
+  /** Size budgets for descriptions, SKILL.md files, and review lenses. */
+  budgets: BudgetLintResult;
   /** Flattened, human-readable violation strings across every check. */
   violations: string[];
   ok: boolean;
@@ -90,11 +95,13 @@ export function lint(pluginDir: string): LintReport {
 
   const consistency = lintConsistency(pluginDir);
   const authoringAllowlist = lintAuthoringAllowlist(pluginDir);
+  const budgets = lintBudgets(pluginDir);
   const violations = [
     ...descriptions.flatMap((d) => d.violations),
     ...rubrics.flatMap((r) => r.violations),
     ...consistency.violations,
     ...authoringAllowlist.violations,
+    ...budgets.violations,
   ];
 
   return {
@@ -102,6 +109,7 @@ export function lint(pluginDir: string): LintReport {
     rubrics,
     consistency,
     authoringAllowlist,
+    budgets,
     violations,
     ok: violations.length === 0,
   };

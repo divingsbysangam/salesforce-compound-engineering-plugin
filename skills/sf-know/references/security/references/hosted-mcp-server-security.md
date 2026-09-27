@@ -31,7 +31,7 @@ Salesforce Hosted MCP Servers enforce security automatically, but configuration 
 
 * Monitor API quota consumption (MCP calls count against daily limit)
 
-> **Full reference:** See `sf-know mode:hosted-mcp` skill for complete setup, URL patterns, and troubleshooting.
+> **Full reference:** See `sf-know topic:hosted-mcp` skill for complete setup, URL patterns, and troubleshooting.
 
 ***
 

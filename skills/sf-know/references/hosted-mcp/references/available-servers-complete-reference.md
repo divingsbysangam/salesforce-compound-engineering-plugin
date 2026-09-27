@@ -29,7 +29,7 @@ Read with `hosted-mcp-servers/SKILL.md`. Procedure lives here.
 - **Start with `platform/sobject-reads`** for evaluation — zero data modification risk
 - **Use `platform/sobject-mutations`** for create/update without delete capability
 - **Use `platform/sobject-all`** for production — includes prompt templates
-- **Build custom servers** for domain-specific tool sets (see `sf-generate mode:mcp-tool` skill)
+- **Build custom servers** for domain-specific tool sets (see `sf-generate type:mcp-tool` skill)
 
 ---
 

@@ -14,7 +14,7 @@ Read with `metadata-generate/SKILL.md`. Procedure lives here.
 | <span data-proof="authored" data-by="ai:claude">`listview`</span>       | <span data-proof="authored" data-by="ai:claude">`ListView`</span>            | <span data-proof="authored" data-by="ai:claude">`objects/<Object>/listViews/<View>.listView-meta.xml`</span> |
 | <span data-proof="authored" data-by="ai:claude">`lightning-type`</span> | <span data-proof="authored" data-by="ai:claude">`CustomLightningType`</span> | <span data-proof="authored" data-by="ai:claude">`lightningTypes/<Type>.lightningType-meta.xml`</span>        |
 
-<span data-proof="authored" data-by="ai:claude">If the user is asking for an entire Lightning app (object + fields + tabs + flexipage + perm set), use</span> <span data-proof="authored" data-by="ai:claude">`/sf-generate mode:lightning-page`</span> <span data-proof="authored" data-by="ai:claude">instead — it orchestrates this skill across multiple types.</span>
+<span data-proof="authored" data-by="ai:claude">If the user is asking for an entire Lightning app (object + fields + tabs + flexipage + perm set), use</span> <span data-proof="authored" data-by="ai:claude">`/sf-generate type:lightning-page`</span> <span data-proof="authored" data-by="ai:claude">instead — it orchestrates this skill across multiple types.</span>
 
 ***
 

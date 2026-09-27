@@ -37,8 +37,8 @@ or `<check>=unavailable: <reason>` after attempting the fallback.
 
 | Need                                    | Delegate to         | Reason                                   |
 | --------------------------------------- | ------------------- | ---------------------------------------- |
-| Object / field does not exist yet       | `sf-generate mode:metadata` | Rule XML cannot reference missing schema |
-| Record-triggered Flow instead of a rule | `sf-generate mode:flow`     | Automation, not save-blocking formula    |
-| Apex `addError` / domain validation     | `sf-generate mode:apex`     | Code-path validation                     |
+| Object / field does not exist yet       | `sf-generate type:metadata` | Rule XML cannot reference missing schema |
+| Record-triggered Flow instead of a rule | `sf-generate type:flow`     | Automation, not save-blocking formula    |
+| Apex `addError` / domain validation     | `sf-generate type:apex`     | Code-path validation                     |
 | Deploy the rule                         | `sf-deploy mode:cli`            | Fail-closed deploy                       |
 | Capture a formula gotcha                | `sf-compound`       | Institutional memory                     |

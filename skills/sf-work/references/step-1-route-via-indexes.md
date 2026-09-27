@@ -11,7 +11,7 @@ Classify the implementation, then route:
 
 * Include `skills/sf-know/references/limits/guide.md` for limit-sensitive backend work
 
-* For metadata or code generation, dispatch the matching action-shaped skill: `/sf-generate mode:apex` (Apex class + tests), `/sf-generate mode:flow` (Flow XML via MCP pipeline), `/sf-generate mode:validation-rule`, `/sf-generate mode:trigger-refactor`, `/sf-review mode:slds2` (LWC), `/sf-generate mode:metadata` (object / field / app / tab / listview / lightning-type), `/sf-generate mode:lightning-page` (FlexiPage or full LEX app), `/sf-generate mode:permission-set`. Reference skills (`sf-know mode:apex`, `sf-know mode:flow`, `sf-know mode:lwc`, etc.) describe the shape; generation skills produce the artifact.
+* For metadata or code generation, dispatch the matching action-shaped skill: `/sf-generate type:apex` (Apex class + tests), `/sf-generate type:flow` (Flow XML via MCP pipeline), `/sf-generate type:validation-rule`, `/sf-generate type:trigger-refactor`, `/sf-review mode:slds2` (LWC), `/sf-generate type:metadata` (object / field / app / tab / listview / lightning-type), `/sf-generate type:lightning-page` (FlexiPage or full LEX app), `/sf-generate type:permission-set`. Reference skills (`sf-know topic:apex`, `sf-know topic:flow`, `sf-know topic:lwc`, etc.) describe the shape; generation skills produce the artifact.
 
 ***
 

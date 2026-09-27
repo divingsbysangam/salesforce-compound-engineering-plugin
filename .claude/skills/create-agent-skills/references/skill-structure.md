@@ -42,6 +42,6 @@ argument-hint: "[optional argument hint]"
 2. **<span data-proof="authored" data-by="ai:claude">A Cross-skill integration table</span>** <span data-proof="authored" data-by="ai:claude">in</span> <span data-proof="authored" data-by="ai:claude">`SKILL.md`</span> <span data-proof="authored" data-by="ai:claude">with columns Need / Delegate to / Reason. The next verb belongs to a named skill, not improvisation.</span>
 3. **<span data-proof="authored" data-by="ai:claude">Fail-closed validation</span>** <span data-proof="authored" data-by="ai:claude">in the validate/report reference (not only in copy-paste text). Each named check lists preferred command, fallback, and report line. Skipped, timed-out, empty, or missing tools become</span> <span data-proof="authored" data-by="ai:claude">`<check>=unavailable: <reason>`. Empty success output is not a pass.</span>
 
-<span data-proof="authored" data-by="ai:claude">Domain/reference skills (`sf-know mode:apex`,</span> <span data-proof="authored" data-by="ai:claude">`sf-know mode:limits`, and similar) skip this trio. Do not bolt deploy gates onto a lookup skill.</span>
+<span data-proof="authored" data-by="ai:claude">Domain/reference skills (`sf-know topic:apex`,</span> <span data-proof="authored" data-by="ai:claude">`sf-know topic:limits`, and similar) skip this trio. Do not bolt deploy gates onto a lookup skill.</span>
 
 ***

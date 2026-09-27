@@ -37,9 +37,9 @@ Fail-closed: dry-run deploy the generated metadata. Paste actual output on Compi
 
 | Need | Delegate to | Reason |
 | --- | --- | --- |
-| Object, field, tab, list view, app XML | `sf-generate mode:metadata` | This skill orchestrates; that skill writes schema |
-| Permission set for the app | `sf-generate mode:permission-set` | Least-privilege access |
-| Validation rules on new objects | `sf-generate mode:validation-rule` | Formula metadata |
-| LWC that sits on the page | `sf-work` / `sf-know mode:lwc` | Component implementation |
+| Object, field, tab, list view, app XML | `sf-generate type:metadata` | This skill orchestrates; that skill writes schema |
+| Permission set for the app | `sf-generate type:permission-set` | Least-privilege access |
+| Validation rules on new objects | `sf-generate type:validation-rule` | Formula metadata |
+| LWC that sits on the page | `sf-work` / `sf-know topic:lwc` | Component implementation |
 | Deploy | `sf-deploy mode:cli` | Fail-closed deploy |
 | Capture a FlexiPage gotcha | `sf-compound` | Institutional memory |

@@ -41,9 +41,9 @@ Paste actual tool output on Compile / Analyzer / Testing lines, or `<check>=unav
 
 | Need                                 | Delegate to     | Reason                                |
 | ------------------------------------ | --------------- | ------------------------------------- |
-| New Apex class with no trigger       | `sf-generate mode:apex` | This skill owns trigger modernization |
-| Trigger handler pattern lookup       | `sf-know mode:apex` | Reference                             |
-| TestDataFactory                      | `sf-generate mode:test-data`  | Bulk test data                        |
-| Record-triggered Flow instead        | `sf-generate mode:flow` | Declarative alternative               |
+| New Apex class with no trigger       | `sf-generate type:apex` | This skill owns trigger modernization |
+| Trigger handler pattern lookup       | `sf-know topic:apex` | Reference                             |
+| TestDataFactory                      | `sf-generate type:test-data`  | Bulk test data                        |
+| Record-triggered Flow instead        | `sf-generate type:flow` | Declarative alternative               |
 | Deploy                               | `sf-deploy mode:cli`        | Fail-closed deploy                    |
 | Capture an order-of-execution gotcha | `sf-compound`   | Institutional memory                  |

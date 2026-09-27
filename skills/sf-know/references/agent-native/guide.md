@@ -1,4 +1,4 @@
-# sf-know mode:agent-native
+# sf-know topic:agent-native
 
 Apply agent-native design principles to Salesforce features: every human-affordance has an agent-affordance.
 

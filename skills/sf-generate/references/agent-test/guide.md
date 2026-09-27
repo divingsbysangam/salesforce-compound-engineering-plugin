@@ -45,7 +45,7 @@ implied pass. Safety verdict is still mandatory after any completed run.
 
 | Need | Delegate to | Reason |
 | --- | --- | --- |
-| Agent does not exist / Spec not approved | `sf-generate mode:agent` | Author first |
+| Agent does not exist / Spec not approved | `sf-generate type:agent` | Author first |
 | Production-only failure, no local repro | `sf-debug mode:agent-observe` | Session traces |
-| Apex unit tests | `sf-generate mode:apex` | Not Agentforce evals |
+| Apex unit tests | `sf-generate type:apex` | Not Agentforce evals |
 | Capture a probe that should be standard | `sf-compound` | Institutional memory |

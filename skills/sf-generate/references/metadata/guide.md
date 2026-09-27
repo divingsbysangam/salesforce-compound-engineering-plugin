@@ -45,8 +45,8 @@ after attempting the fallback.
 
 | Need                              | Delegate to                | Reason                          |
 | --------------------------------- | -------------------------- | ------------------------------- |
-| FlexiPage or complete LEX app     | `sf-generate mode:lightning-page`  | Orchestrates pages + this skill |
-| Permission set for the new schema | `sf-generate mode:permission-set`  | Access grant, not schema        |
-| Validation rule on the new object | `sf-generate mode:validation-rule` | Formula metadata                |
+| FlexiPage or complete LEX app     | `sf-generate type:lightning-page`  | Orchestrates pages + this skill |
+| Permission set for the new schema | `sf-generate type:permission-set`  | Access grant, not schema        |
+| Validation rule on the new object | `sf-generate type:validation-rule` | Formula metadata                |
 | Deploy                            | `sf-deploy mode:cli`                   | Fail-closed deploy              |
 | Capture a sharing-model gotcha    | `sf-compound`              | Institutional memory            |

@@ -1,6 +1,6 @@
 # GraphQL Patterns for LWC
 
-**SCOPE: LWC_ONLY** — This skill applies to Lightning Web Components that talk to the Salesforce UI API via GraphQL (`lightning/uiGraphQLApi` and `lightning/graphql`). For pure Apex data access, use `sf-know mode:apex`. For component-level state/comm patterns, use `sf-know mode:lwc`. For integration with external GraphQL servers, use `sf-know mode:integration`.
+**SCOPE: LWC_ONLY** — This skill applies to Lightning Web Components that talk to the Salesforce UI API via GraphQL (`lightning/uiGraphQLApi` and `lightning/graphql`). For pure Apex data access, use `sf-know topic:apex`. For component-level state/comm patterns, use `sf-know topic:lwc`. For integration with external GraphQL servers, use `sf-know topic:integration`.
 
 ---
 

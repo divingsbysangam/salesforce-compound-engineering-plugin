@@ -42,7 +42,7 @@ evidence. If preview also cannot run, stop; do not mark the issue reproduced.
 
 | Need                                  | Delegate to                       | Reason                              |
 | ------------------------------------- | --------------------------------- | ----------------------------------- |
-| Author or republish the `.agent` file | `sf-generate mode:agent`              | Observe proposes; develop publishes |
-| Add a regression suite for the fix    | `sf-generate mode:agent-test`                 | Repeatable probes                   |
-| Apex/Flow backing bug                 | `sf-generate mode:apex` / `sf-generate mode:flow` | Code, not script                    |
+| Author or republish the `.agent` file | `sf-generate type:agent`              | Observe proposes; develop publishes |
+| Add a regression suite for the fix    | `sf-generate type:agent-test`                 | Repeatable probes                   |
+| Apex/Flow backing bug                 | `sf-generate type:apex` / `sf-generate type:flow` | Code, not script                    |
 | Capture a production misroute pattern | `sf-compound`                     | Institutional memory                |

@@ -1,7 +1,7 @@
 # Apex Design Patterns
 
 **SCOPE: APEX_ONLY** - This skill applies ONLY to Apex classes, triggers, and Apex architecture.
-**DO NOT** use this skill for Flows, LWC frontend code, or declarative automation. For Flow patterns, use `sf-know mode:flow` instead.
+**DO NOT** use this skill for Flows, LWC frontend code, or declarative automation. For Flow patterns, use `sf-know topic:flow` instead.
 
 ---
 

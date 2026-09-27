@@ -1,7 +1,7 @@
 # LWC Design Patterns
 
 **SCOPE: LWC_ONLY** - This skill applies ONLY to Lightning Web Components (JavaScript, HTML, CSS).
-**DO NOT** use this skill for Flows or backend Apex logic. For Apex patterns, use `sf-know mode:apex`. For Flow patterns, use `sf-know mode:flow`.
+**DO NOT** use this skill for Flows or backend Apex logic. For Apex patterns, use `sf-know topic:apex`. For Flow patterns, use `sf-know topic:flow`.
 
 ---
 

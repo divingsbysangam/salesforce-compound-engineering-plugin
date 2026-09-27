@@ -34,9 +34,9 @@ after attempting the fallback. Never treat a skipped or empty tool result as a p
 
 | Need | Delegate to | Reason |
 | --- | --- | --- |
-| Trigger body / handler extraction | `sf-generate mode:trigger-refactor` | This skill does not own `.trigger` files |
-| Pattern lookup (selector/service/domain) | `sf-know mode:apex` | Reference, not generation |
-| TestDataFactory shape | `sf-generate mode:test-data` | Reference for TDF helpers |
-| Flow instead of Apex | `sf-generate mode:flow` | Declarative automation |
+| Trigger body / handler extraction | `sf-generate type:trigger-refactor` | This skill does not own `.trigger` files |
+| Pattern lookup (selector/service/domain) | `sf-know topic:apex` | Reference, not generation |
+| TestDataFactory shape | `sf-generate type:test-data` | Reference for TDF helpers |
+| Flow instead of Apex | `sf-generate type:flow` | Declarative automation |
 | Deploy / retrieve / org CLI | `sf-deploy mode:cli` | Syntax and fail-closed deploy |
 | Capture a non-obvious pattern | `sf-compound` | Institutional memory |
