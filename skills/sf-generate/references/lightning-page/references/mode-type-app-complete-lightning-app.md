@@ -53,7 +53,7 @@ If any deploy fails, **stop** and diagnose before generating more (Principle 3 �
 
 After all metadata is deployed:
 
-- Dispatch `metadata-consistency-checker` — cross-metadata coherence (every field referenced exists, every tab references a real object, every flexipage references real fields, etc.)
+- Dispatch `metadata lens` — cross-metadata coherence (every field referenced exists, every tab references a real object, every flexipage references real fields, etc.)
 - Run any tests that exercise the new objects.
 - Manually open the app in the org and walk the Verification Strategy from Step 0.
 
@@ -78,7 +78,7 @@ Metadata produced:
 
 Deploy:      All steps PASS
 Reviews:
-- metadata-consistency-checker:    {findings count}
+- metadata lens:    {findings count}
 
 Verification Strategy: {one paragraph — how a user exercises this app end-to-end}
 ```

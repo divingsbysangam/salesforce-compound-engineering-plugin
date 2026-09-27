@@ -10,7 +10,7 @@ Read with `validation-rule-generate/SKILL.md`. Procedure lives here.
 4. **<span data-proof="authored" data-by="ai:claude">Choose CDATA wrap if needed.</span>**
 5. **<span data-proof="authored" data-by="ai:claude">Write the file.</span>** <span data-proof="authored" data-by="ai:claude">Path + extension as above.</span>
 6. **<span data-proof="authored" data-by="ai:claude">Validate</span>** <span data-proof="authored" data-by="ai:claude">with</span> <span data-proof="authored" data-by="ai:claude">`sf code-analyzer run --target <path>`</span> <span data-proof="authored" data-by="ai:claude">and remediate findings.</span>
-7. **<span data-proof="authored" data-by="ai:claude">Dispatch review</span>** <span data-proof="authored" data-by="ai:claude">—</span> <span data-proof="authored" data-by="ai:claude">`validation-rule-reviewer`</span> <span data-proof="authored" data-by="ai:claude">agent for formula quality, message UX, edge cases.</span>
+7. **<span data-proof="authored" data-by="ai:claude">Dispatch review</span>** <span data-proof="authored" data-by="ai:claude">—</span> <span data-proof="authored" data-by="ai:claude">`flow lens`</span> <span data-proof="authored" data-by="ai:claude">agent for formula quality, message UX, edge cases.</span>
 8. **<span data-proof="authored" data-by="ai:claude">Report.</span>**
 
 ### Fail-closed contract

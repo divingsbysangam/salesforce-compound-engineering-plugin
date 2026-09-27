@@ -16,8 +16,8 @@ Type-specific:
 Analyzer:    {sev0=0, sev1=0, sev2=0} or "unavailable: <reason>"
 Compile:     {dry-run deploy JSON summary} or "unavailable: <reason>"
 Reviews:
-- metadata-consistency-checker:    {findings count}
-- pattern-recognition-specialist:  {findings count}
+- metadata lens:    {findings count}
+- architecture lens:  {findings count}
 
 Cross-references verified: {object exists | parent field exists | utility bar exists | ...}
 ```

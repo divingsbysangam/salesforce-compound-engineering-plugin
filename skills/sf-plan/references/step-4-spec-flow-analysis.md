@@ -5,7 +5,7 @@ Read with `sf-plan/SKILL.md`. Procedure lives here.
 ## Step 4: Spec Flow Analysis
 Dispatch the spec flow analyzer to validate the design:
 
-* Task sf-spec-flow-analyzer(feature_spec, research_findings)
+* Task doc lens(feature_spec, research_findings)
 
 Review the permutation matrix and address any gaps identified.
 

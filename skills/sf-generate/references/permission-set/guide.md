@@ -41,7 +41,7 @@ Generate a Salesforce Permission Set (PermissionSet XML) with the minimum permis
 needed to do the job. Default to least privilege: allowDelete=false, modifyAllRecords=false,
 viewAllRecords=false unless the user explicitly asked for a wider grant. Always set
 description with the intended audience. Fail-closed: sf code-analyzer, then a PermissionSet
-dry-run. Dispatch `metadata-consistency-checker`. Consult `sf-know mode:security` for sharing.
+dry-run. Dispatch `metadata lens`. Consult `sf-know mode:security` for sharing.
 Place at force-app/main/default/permissionsets/<Name>.permissionset-meta.xml. Paste actual
 tool output on Analyzer / Compile lines, or `<check>=unavailable: <reason>` after the fallback.
 ```

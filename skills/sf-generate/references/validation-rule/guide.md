@@ -29,7 +29,7 @@ the save, an errorMessage under 255 characters, and CDATA-wrapped formula if the
 contains XML special characters. Place under
 force-app/main/default/objects/<Object>/validationRules/<fullName>.validationRule-meta.xml.
 After generation, fail-closed validate with sf code-analyzer then a metadata dry-run.
-Dispatch `validation-rule-reviewer`. Paste actual tool output on Analyzer / Compile lines,
+Dispatch `flow lens`. Paste actual tool output on Analyzer / Compile lines,
 or `<check>=unavailable: <reason>` after attempting the fallback.
 ```
 

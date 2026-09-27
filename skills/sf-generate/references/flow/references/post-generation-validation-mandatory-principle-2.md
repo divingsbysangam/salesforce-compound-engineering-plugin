@@ -10,11 +10,11 @@
 2. **<span data-proof="authored" data-by="ai:claude">Static analysis.</span>** <span data-proof="authored" data-by="ai:claude">Run</span> <span data-proof="authored" data-by="ai:claude">`sf code-analyzer run --target <path> --json`</span> <span data-proof="authored" data-by="ai:claude">and remediate sev0/sev1/sev2.</span>
 3. **<span data-proof="authored" data-by="ai:claude">Parallel review agents</span>** <span data-proof="authored" data-by="ai:claude">(Principle 1):</span>
 
-   * <span data-proof="authored" data-by="ai:claude">Task</span> <span data-proof="authored" data-by="ai:claude">`flow-governor-monitor(flow_xml)`</span> <span data-proof="authored" data-by="ai:claude">— verifies no DML/SOQL in loops, fault paths present</span>
+   * <span data-proof="authored" data-by="ai:claude">Task</span> <span data-proof="authored" data-by="ai:claude">`flow lens(flow_xml)`</span> <span data-proof="authored" data-by="ai:claude">— verifies no DML/SOQL in loops, fault paths present</span>
 
-   * <span data-proof="authored" data-by="ai:claude">Task</span> <span data-proof="authored" data-by="ai:claude">`flow-complexity-analyzer(flow_xml)`</span> <span data-proof="authored" data-by="ai:claude">— flags excessive branching, unbounded loops</span>
+   * <span data-proof="authored" data-by="ai:claude">Task</span> <span data-proof="authored" data-by="ai:claude">`flow lens(flow_xml)`</span> <span data-proof="authored" data-by="ai:claude">— flags excessive branching, unbounded loops</span>
 
-   * <span data-proof="authored" data-by="ai:claude">Task</span> <span data-proof="authored" data-by="ai:claude">`process-automation-strategist(flow_xml)`</span> <span data-proof="authored" data-by="ai:claude">— confirms Flow vs Apex was the right call</span>
+   * <span data-proof="authored" data-by="ai:claude">Task</span> <span data-proof="authored" data-by="ai:claude">`flow lens(flow_xml)`</span> <span data-proof="authored" data-by="ai:claude">— confirms Flow vs Apex was the right call</span>
 4. **<span data-proof="authored" data-by="ai:claude">Bulk-safe entry.</span>** <span data-proof="authored" data-by="ai:claude">For record-triggered flows, confirm entry conditions filter early to avoid wasted invocations across 200-record bulk imports.</span>
 5. **<span data-proof="authored" data-by="ai:claude">Fault handling.</span>** <span data-proof="authored" data-by="ai:claude">Every flow with DML or callouts must have a fault path that captures and surfaces errors (Principle 1 — failures cannot be silent).</span>
 

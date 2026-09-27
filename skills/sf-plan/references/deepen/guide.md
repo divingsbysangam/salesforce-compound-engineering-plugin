@@ -69,35 +69,33 @@ For each section, launch the appropriate research agent **in parallel**:
 
 ### Architecture sections:
 
-* Task sf-best-practices-researcher(architecture_context)
-
-* Task sf-framework-docs-researcher(architecture_context)
+* Task sf-external-researcher(architecture_context)
 
 ### Governor Limit sections:
 
 * Task sf-learnings-researcher("governor limits" + feature_context)
 
-* Task sf-framework-docs-researcher("governor limits" + specific_operations)
+* Task sf-external-researcher("governor limits" + specific_operations)
 
 ### Security sections:
 
-* Task sf-best-practices-researcher("salesforce security" + feature_context)
+* Task sf-external-researcher("salesforce security" + feature_context)
 
 * Task sf-learnings-researcher("security" + feature_context)
 
 ### Integration sections:
 
-* Task sf-framework-docs-researcher(integration_apis)
+* Task sf-external-researcher(integration_apis)
 
-* Task sf-best-practices-researcher(integration_pattern)
+* Task sf-external-researcher(integration_pattern)
 
 ### Testing sections:
 
-* Task sf-best-practices-researcher("salesforce testing" + feature_context)
+* Task sf-external-researcher("salesforce testing" + feature_context)
 
 ### Deployment sections:
 
-* Task sf-best-practices-researcher("salesforce deployment" + component_types)
+* Task sf-external-researcher("salesforce deployment" + component_types)
 
 ***
 

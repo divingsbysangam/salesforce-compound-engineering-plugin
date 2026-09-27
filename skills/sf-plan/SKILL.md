@@ -45,8 +45,8 @@ Procedure lives in sibling files, not only in this orchestrator:
 Plan a Salesforce feature without writing code. Produce three artifacts: spec.md (business
 requirements + acceptance criteria), plan.md (architecture + governor/sharing/security analysis),
 and tasks.md (ordered implementation checklist). Before writing the plan, dispatch
-sf-learnings-researcher, sf-repo-research-analyst, sf-best-practices-researcher, and
-sf-framework-docs-researcher in parallel. The plan MUST include a "Verification Strategy"
+sf-learnings-researcher, sf-repo-research-analyst, sf-external-researcher, and
+sf-external-researcher in parallel. The plan MUST include a "Verification Strategy"
 section that names the test, assertion, or dry-run that proves the feature works — no
 verification, no plan. Save under docs/plans/YYYY-MM-DD-<type>-<slug>-plan.md.
 ```

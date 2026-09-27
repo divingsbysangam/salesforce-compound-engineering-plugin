@@ -36,7 +36,7 @@ CustomTab, ListView, CustomLightningType. Read the type-specific section below f
 attributes, sharing-model rules, and forbidden elements. Always write to the canonical
 project path (force-app/main/default/<type>/...). Always include description and
 inlineHelpText for fields. Fail-closed validate with sf code-analyzer then a metadata
-dry-run. Dispatch `metadata-consistency-checker`. Hard-stop on any forbidden element.
+dry-run. Dispatch `metadata lens`. Hard-stop on any forbidden element.
 Paste actual tool output on Analyzer / Compile lines, or `<check>=unavailable: <reason>`
 after attempting the fallback.
 ```

@@ -16,9 +16,7 @@ Pipeline:
 Analyzer:    {sev0=0, sev1=0, sev2=0, sev3=N}    or "unavailable: <reason>"
 Compile:     {dry-run deploy JSON summary}       or "unavailable: <reason>"
 Reviews:
-- flow-governor-monitor:        {findings count}
-- flow-complexity-analyzer:     {findings count}
-- process-automation-strategist:{verdict}
+- flow lens:        {findings count}
 
 Verification Strategy: {how this flow will be tested — sf agent test, manual run, or recordTrigger fire}
 ```

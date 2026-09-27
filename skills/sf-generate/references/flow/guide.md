@@ -29,8 +29,7 @@ Generate a Salesforce Flow by running the strict 3-step MCP pipeline. The pipeli
 contract: fetchGroundedObjectMetadata → flowElementSelection → flowElementGeneration.
 Loop on flowElementGeneration with the same operationId until isComplete=true. Never
 hand-write Flow XML. Never skip steps. After XML is returned, validate with
-sf code-analyzer, then a dry-run deploy of the Flow. Dispatch flow-governor-monitor +
-flow-complexity-analyzer in parallel. Bulkify: no DML/SOQL inside loops. Paste actual
+sf code-analyzer, then a dry-run deploy of the Flow. Dispatch flow lens in parallel. Bulkify: no DML/SOQL inside loops. Paste actual
 tool output on Analyzer / Compile report lines, or `<check>=unavailable: <reason>` after
 attempting the fallback. Never treat a skipped or empty tool result as a pass.
 ```

@@ -27,7 +27,7 @@ Procedure lives in sibling files, not only in this orchestrator:
 
 - **Review Depth Levels** — read `references/review-depth-levels.md` before acting on this section.
 - **Step 1: Identify and Classify Files** — read `references/step-1-identify-and-classify-files.md` before acting on this section.
-- **Step 2: Dispatch Review Personas in Parallel** — read `references/step-2-dispatch-review-personas-in-parallel.md` before acting on this section.
+- **Step 2: Dispatch Review Lenses in Parallel** — read `references/step-2-dispatch-review-personas-in-parallel.md` before acting on this section.
 - **Step 3: Parallel Research (comprehensive depth only)** — read `references/step-3-parallel-research-comprehensive-depth-only.md` before acting on this section.
 - **Step 4: Consolidate Findings** — read `references/step-4-consolidate-findings.md` before acting on this section.
 - **Output Format** — read `references/output-format.md` before acting on this section.
@@ -35,8 +35,8 @@ Procedure lives in sibling files, not only in this orchestrator:
 ## Copy-paste-to-agent
 
 ```
-Review Salesforce code by dispatching parallel review agents based on file type
-(Apex / LWC / Flow / Integration / Architecture). Output findings categorized as
+Review Salesforce code by dispatching one subagent per review lens
+(Apex / Security / Flow / LWC / Integration / Metadata / Tests / Architecture). Output findings categorized as
 Critical / High / Medium / Low. Critical and High findings are non-negotiable
 abort triggers — see "Non-Negotiable Gates" below. If the target isn't specified,
 review the current git diff.
@@ -56,13 +56,13 @@ If no target specified, review uncommitted changes (`git diff`).
 
 The following findings are **abort triggers**, not warnings. They block the review from passing regardless of how minor the surrounding diff is. They exist because vibe coding does not exempt the diff from production-grade Salesforce constraints.
 
-| Gate                    | What it catches                                                                                                                                                 | Owning agent                                                                                                                                                                                     |
+| Gate                    | What it catches                                                                                                                                                 | Owning lens                                                                                                                                                                                     |
 | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Security regression** | CRUD/FLS bypass, SOQL injection, sharing-model violation, hardcoded credential, unsafe `without sharing` | `apex-security-sentinel`, `lwc-security-reviewer`, `integration-security-sentinel` |
-| **Governor regression** | SOQL/DML inside loops, missing bulkification, non-selective query on >100k-row object                                                                           | `apex-governor-guardian`, `apex-bulkification-reviewer`, `flow-governor-monitor`   |
-| **Test coverage regression**                                                   | Production class without test class, test class with no `assertEquals`/`assertTrue`, bulk path untested at 200+ records                                                                                                | `apex-test-coverage-analyst`                                                                                                                                                                                                                            |
-| **Trigger context regression**                                                 | Recursion guard missing, mixed-DML violation, handler bypassing the project's trigger framework                                                                                                                        | `apex-trigger-architect`                                                                                                                                                                                                                                |
-| **Sharing regression**                                                         | `without sharing` introduced without justification, sharing-recalculation skipped on owner change        | `sharing-security-analyst` (when present)                                                                                                 |
+| **Security regression** | CRUD/FLS bypass, SOQL injection, sharing-model violation, hardcoded credential, unsafe `without sharing` | `security` lens (+ `integration` for callout credentials) |
+| **Governor regression** | SOQL/DML inside loops, missing bulkification, non-selective query on >100k-row object                                                                           | `apex` and `flow` lenses   |
+| **Test coverage regression**                                                   | Production class without test class, test class with no `assertEquals`/`assertTrue`, bulk path untested at 200+ records                                                                                                | `tests` lens                                                                                                                                                                                                                            |
+| **Trigger context regression**                                                 | Recursion guard missing, mixed-DML violation, handler bypassing the project's trigger framework                                                                                                                        | `apex` lens                                                                                                                                                                                                                                |
+| **Sharing regression**                                                         | `without sharing` introduced without justification, sharing-recalculation skipped on owner change        | `security` lens                                                                                                 |
 
 If any gate fires, the review output must include the gate name in the Critical section, and `/sf-lfg` must abort the pipeline. Do not route gate findings to "warnings."
 

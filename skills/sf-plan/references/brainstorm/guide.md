@@ -90,9 +90,7 @@ For each viable approach, evaluate Salesforce-specific trade-offs:
 
 If approaches are unclear, dispatch research personas:
 
-* Task sf-best-practices-researcher(idea\_context)
-
-* Task sf-framework-docs-researcher(idea\_context)
+* Task sf-external-researcher(idea\_context)
 
 ***
 

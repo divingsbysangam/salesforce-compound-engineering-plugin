@@ -17,7 +17,7 @@ Error message:
 
 Analyzer:    {sev0=0, sev1=0, sev2=0}     or "unavailable: <reason>"
 Compile:     {dry-run deploy JSON summary} or "unavailable: <reason>"
-Review:      {validation-rule-reviewer findings count}
+Review:      {flow lens findings count}
 
 Update semantics: {replace|append}     ← only when modifying an existing rule
 ```

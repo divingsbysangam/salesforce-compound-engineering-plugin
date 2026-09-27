@@ -1,6 +1,6 @@
 # /sf-review mode:polish
 
-> **Persona dispatch.** This skill dispatches personas as isolated subagents — see `../../../sf-work/references/dispatch/guide.md` for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). The reviewers it dispatches (e.g. `sf-lwc-accessibility-guardian`, `sf-aura-migration-advisor`) are review personas referenced from `../personas/`.
+> **Persona dispatch.** This skill dispatches personas as isolated subagents — see `../../../sf-work/references/dispatch/guide.md` for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). The reviewers it dispatches (e.g. `lwc lens`) are review personas referenced from `../personas/`.
 
 > **Principles enforced:** especially 1 (preserve the quality ceiling — the finished thing must feel right, not merely compile) and 5 (taste over typing — UX and copy are human-judgment calls). See `PRINCIPLES.md`.
 
@@ -30,10 +30,10 @@ Each profile names the lens, the design system, and which existing personas/skil
 
 | Profile | Design system & lens | Dispatch |
 | -------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **LWC** | SLDS2 design tokens & styling hooks, Lightning Design Guidelines, Locker/LWS constraints | `/sf-review mode:slds2` (token/styling-hook uplift) · `Task sf-lwc-accessibility-guardian` · `Task sf-lwc-architecture-strategist` (composition) · `Task sf-lwc-performance-oracle` (perceived performance) |
-| **Aura** | Same SLDS lens, plus migration debt | `Task sf-lwc-accessibility-guardian` · `Task sf-aura-migration-advisor` (flag what should move to LWC) |
-| **Experience Cloud (LWR)** | SLDS2 + branding sets / theme tokens, responsive + guest-user states | `/sf-review mode:slds2` · `Task sf-lwc-accessibility-guardian` · `Task sf-lwc-performance-oracle` |
-| **React / headless** | Design-system-agnostic visual quality + WCAG; respect the app's own design system if one exists | `Task sf-lwc-accessibility-guardian` (WCAG heuristics) — apply the cross-cutting checks below directly |
+| **LWC** | SLDS2 design tokens & styling hooks, Lightning Design Guidelines, Locker/LWS constraints | `/sf-review mode:slds2` (token/styling-hook uplift) · `Task lwc lens` · `Task lwc lens` (composition) · `Task lwc lens` (perceived performance) |
+| **Aura** | Same SLDS lens, plus migration debt | `Task lwc lens` · `Task lwc lens` (flag what should move to LWC) |
+| **Experience Cloud (LWR)** | SLDS2 + branding sets / theme tokens, responsive + guest-user states | `/sf-review mode:slds2` · `Task lwc lens` · `Task lwc lens` |
+| **React / headless** | Design-system-agnostic visual quality + WCAG; respect the app's own design system if one exists | `Task lwc lens` (WCAG heuristics) — apply the cross-cutting checks below directly |
 
 > **Adding a profile:** when Salesforce ships a new front-end stack, add a row here naming its design system, its accessibility baseline, and the personas/skills to dispatch. Do not branch the skill logic — the cross-cutting checks in Step 3 stay the same.
 

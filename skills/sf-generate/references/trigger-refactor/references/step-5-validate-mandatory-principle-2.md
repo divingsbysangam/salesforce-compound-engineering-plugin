@@ -14,7 +14,7 @@ sf apex run test --tests <HandlerClassName>Test --code-coverage --result-format 
 
 <span data-proof="authored" data-by="ai:claude">Remediate every sev0/sev1/sev2. Coverage target:</span> **<span data-proof="authored" data-by="ai:claude">90%+</span>** <span data-proof="authored" data-by="ai:claude">on the handler class.</span>
 
-<span data-proof="authored" data-by="ai:claude">Dispatch</span> <span data-proof="authored" data-by="ai:claude">`apex-trigger-architect`</span> <span data-proof="authored" data-by="ai:claude">review agent for a pattern review.</span>
+<span data-proof="authored" data-by="ai:claude">Dispatch</span> <span data-proof="authored" data-by="ai:claude">`apex lens`</span> <span data-proof="authored" data-by="ai:claude">review agent for a pattern review.</span>
 
 ### <span data-proof="authored" data-by="ai:claude">Fail-closed contract</span>
 

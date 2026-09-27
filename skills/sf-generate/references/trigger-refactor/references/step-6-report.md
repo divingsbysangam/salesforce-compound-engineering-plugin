@@ -31,7 +31,7 @@ Files changed:
 Compile:  {dry-run deploy JSON summary} or "unavailable: <reason>"
 Analyzer: {sev0=0, sev1=0, sev2=0} or "unavailable: <reason>"
 Testing:  {pass=N, fail=0, coverage=NN%} or "unavailable: <reason>"
-Review:   apex-trigger-architect — {findings count}
+Review:   apex lens — {findings count}
 
 Before/After diff: {one paragraph summary of the most important behavioral guarantees preserved}
 ```

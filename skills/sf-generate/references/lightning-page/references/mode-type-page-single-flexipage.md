@@ -45,7 +45,7 @@ Edit the generated XML to add components inside `<flexiPageRegions>`. Each compo
 sf code-analyzer run --target force-app/main/default/flexipages/<PageName>.flexipage-meta.xml --json
 ```
 
-Dispatch `metadata-consistency-checker` — verifies referenced components exist, fields exist on the SObject, etc.
+Dispatch `metadata lens` — verifies referenced components exist, fields exist on the SObject, etc.
 
 ### Output
 
@@ -59,7 +59,7 @@ Components:  {count}
 Visibility filters: {count}
 
 Analyzer:    {sev0=0, sev1=0, sev2=0}
-Review:      metadata-consistency-checker — {findings count}
+Review:      metadata lens — {findings count}
 ```
 
 ---

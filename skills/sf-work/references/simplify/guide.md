@@ -20,9 +20,8 @@ If none produces a non-empty scope, stop and ask what to simplify rather than gu
 
 Spawn these existing agents in a single message via the platform's subagent primitive (`Task`/`Agent` in Claude Code, `spawn_agent` in Codex). Pass each the full diff / resolved file set. **Permission mode:** omit the `mode` parameter so the user's settings apply.
 
-- **`sf-code-simplicity-reviewer`** — YAGNI, over-engineering, and **platform-native alternatives**: custom Apex where a Flow/formula/standard component would do, premature frameworks (fflib, hand-rolled Selector/UoW layers, custom permission engines) with one caller, abstract types with one implementation, dead code, unnecessary null checks the platform guarantees.
-- **`sf-maintainability-reviewer`** — reuse and clarity: duplicated logic that should be a shared method, parameter sprawl, leaky abstractions, naming that obscures intent, coupling between unrelated modules, comments that narrate *what* instead of non-obvious *why*.
-- **`sf-performance-reviewer`** — efficiency that is *also* a simplification: redundant SOQL/DML that collapses into one query, verbose field-by-field loops that a relationship query or `SObject.clone()` replaces, repeated work that hoists out of a loop. (Flag only where the simpler form is also clearer; leave deeper performance work to `/sf-review`.)
+- **`architecture lens`** — YAGNI, over-engineering, and **platform-native alternatives**: custom Apex where a Flow/formula/standard component would do, premature frameworks (fflib, hand-rolled Selector/UoW layers, custom permission engines) with one caller, abstract types with one implementation, dead code, unnecessary null checks the platform guarantees.
+- **`apex lens`** — efficiency that is *also* a simplification: redundant SOQL/DML that collapses into one query, verbose field-by-field loops that a relationship query or `SObject.clone()` replaces, repeated work that hoists out of a loop. (Flag only where the simpler form is also clearer; leave deeper performance work to `/sf-review`.)
 
 ## Step 3: Apply behavior-preserving fixes
 

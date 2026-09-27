@@ -28,7 +28,7 @@ Broad-grant flags (audit these explicitly):
 
 Analyzer:    {sev0=0, sev1=0, sev2=0} or "unavailable: <reason>"
 Compile:     {dry-run deploy JSON summary} or "unavailable: <reason>"
-Review:      metadata-consistency-checker — {findings count}
+Review:      metadata lens — {findings count}
 
 Cross-references verified: every object, field, tab, app, class, page exists.
 ```

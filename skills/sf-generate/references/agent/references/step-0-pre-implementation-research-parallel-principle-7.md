@@ -9,7 +9,7 @@ Read with `agentforce-develop/SKILL.md`. Procedure lives here.
 
 * <span data-proof="authored" data-by="ai:claude">Task</span> <span data-proof="authored" data-by="ai:claude">`sf-repo-research-analyst(agent_description)`</span> <span data-proof="authored" data-by="ai:claude">— what</span> <span data-proof="authored" data-by="ai:claude">`@InvocableMethod`</span> <span data-proof="authored" data-by="ai:claude">classes,</span> <span data-proof="authored" data-by="ai:claude">`AutoLaunchedFlow`s,</span> <span data-proof="authored" data-by="ai:claude">`PromptTemplate`s, and custom objects already exist in</span> <span data-proof="authored" data-by="ai:claude">`sfdx-project.json`</span> <span data-proof="authored" data-by="ai:claude">package directories? Existing backing logic should be reused, not regenerated.</span>
 
-* <span data-proof="authored" data-by="ai:claude">Task</span> <span data-proof="authored" data-by="ai:claude">`sf-framework-docs-researcher("Agentforce Agent Script")`</span> <span data-proof="authored" data-by="ai:claude">— confirm API version, license, and any platform constraints.</span>
+* <span data-proof="authored" data-by="ai:claude">Task</span> <span data-proof="authored" data-by="ai:claude">`sf-external-researcher("Agentforce Agent Script")`</span> <span data-proof="authored" data-by="ai:claude">— confirm API version, license, and any platform constraints.</span>
 
 ***
 

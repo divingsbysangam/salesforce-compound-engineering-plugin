@@ -1,67 +1,30 @@
-# Step 2: Dispatch Review Personas in Parallel
+# Step 2: Dispatch Review Lenses in Parallel
 
 Read with `sf-review/SKILL.md`. Procedure lives here.
 
-## Step 2: Dispatch Review Personas in Parallel
-Review personas live in `skills/sf-review/references/personas/<name>.md` as **prompt assets — not registered agents** — this skill owns them. Dispatch them as isolated subagents per see `../../sf-work/references/dispatch/guide.md` (isolated subagents, same-response parallelism, same-file-conflict check); pass each persona file's contents plus the files and code context. Review personas are read-only, so dispatch every applicable one in the same message.
+Review lenses are checklists at `references/lenses/<name>.md`, not registered agents. Dispatch **one subagent per applicable lens**, all in the same response, per `../../sf-work/references/dispatch/guide.md`. On a harness without subagents, apply the lenses inline one after another.
 
-Based on file classification, dispatch applicable personas (each `Task <name>` below = the persona at `references/personas/<name>.md`):
+Each subagent gets: the lens file path, `references/lenses/contract.md`, and the **list of changed file paths** (not their contents). It returns finding lines per the contract.
 
-### For APEX files — dispatch in parallel:
+## Which lenses run
 
-* Task apex-governor-guardian(files, code\_context)
+Pick lenses from the file classes found in Step 1. A lens runs once, over all of its files.
 
-* Task apex-security-sentinel(files, code\_context)
+| Lens | Runs when the diff contains |
+|---|---|
+| `apex` | `*.cls`, `*.trigger` |
+| `security` | Apex, LWC, Aura, Visualforce, sharing/profile/permission-set/site metadata |
+| `flow` | `*.flow-meta.xml`, validation rules, workflow/process metadata |
+| `lwc` | `lwc/**`, `aura/**` |
+| `integration` | Callouts, `@RestResource`, Named/External Credentials, Platform Events, CDC, MCP config |
+| `metadata` | Any other `*-meta.xml`, `sfdx-project.json`, destructive manifests |
+| `tests` | Every review with code changes (tests, correctness, prior review comments) |
+| `architecture` | `comprehensive` depth only |
 
-* Task apex-bulkification-reviewer(files, code\_context)
+Typical dispatch: Apex-only diff → `apex`, `security`, `tests` (3 subagents). LWC + Apex → add `lwc`.
 
-* Task apex-trigger-architect(files, code\_context) — if triggers present
+## Depth
 
-* Task apex-exception-handler(files, code\_context)
-
-* Task apex-test-coverage-analyst(files, code\_context) — if test classes present
-
-### For AUTOMATION files — dispatch in parallel:
-
-* Task flow-governor-monitor(files, code\_context)
-
-* Task flow-complexity-analyzer(files, code\_context)
-
-* Task process-automation-strategist(files, code\_context)
-
-* Task validation-rule-reviewer(files, code\_context) — if validation rules
-
-### For LWC files — dispatch in parallel:
-
-* Task lwc-architecture-strategist(files, code\_context)
-
-* Task lwc-performance-oracle(files, code\_context)
-
-* Task lwc-security-reviewer(files, code\_context)
-
-* Task lwc-accessibility-guardian(files, code\_context)
-
-### For INTEGRATION files — dispatch in parallel:
-
-* Task rest-api-architect(files, code\_context)
-
-* Task callout-pattern-reviewer(files, code\_context)
-
-* Task integration-security-sentinel(files, code\_context)
-
-### Always include (ARCHITECTURE — universal):
-
-* Task pattern-recognition-specialist(files, code\_context)
-
-* Task metadata-consistency-checker(files, code\_context)
-
-### Additional agents for "comprehensive" depth:
-
-* Task sf-code-simplicity-reviewer(files, code\_context)
-
-* Task sf-deployment-verification-agent(files, code\_context)
-
-* Task sf-git-history-analyzer(files, code\_context)
-
-***
-
+- `fast`: only the lenses for the file classes present; skip `tests` when no logic changed.
+- `thorough` (default): the table above.
+- `comprehensive`: add `architecture`, Step 3 research, and the deployment verification writer at `references/personas/sf-deployment-verification-agent.md`.

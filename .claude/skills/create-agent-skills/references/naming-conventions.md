@@ -3,7 +3,7 @@
 Read with `create-agent-skills/SKILL.md`. Procedure lives here.
 
 ## Naming Conventions
-* **Personas**: `sf-{domain}-{role}.md` (e.g. `sf-apex-governor-guardian.md`), under the owner's `references/personas/`.
+* **Personas**: `sf-{domain}-{role}.md` (e.g. `sf-learnings-researcher.md`), under the owner's `references/personas/`. **Review lenses**: `skills/sf-review/references/lenses/<stack>.md`.
 
 * **Skills**: `{topic}/SKILL.md` (e.g. `governor-limits/SKILL.md`); workflow skills use the `sf-` prefix (e.g. `sf-review/SKILL.md`).
 

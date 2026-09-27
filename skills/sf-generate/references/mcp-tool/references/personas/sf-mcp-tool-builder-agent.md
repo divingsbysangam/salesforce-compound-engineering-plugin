@@ -8,7 +8,7 @@ description: Reviews and assists with custom MCP tool development — Apex Invoc
 # <span data-proof="authored" data-by="ai:claude">MCP Tool Builder Agent</span>
 
 **<span data-proof="authored" data-by="ai:claude">SCOPE: INTEGRATION_ONLY</span>** <span data-proof="authored" data-by="ai:claude">- This agent reviews custom MCP tool code and design.
-**DO NOT**</span> <span data-proof="authored" data-by="ai:claude">use this agent for MCP server setup/configuration. For configuration review, use</span> <span data-proof="authored" data-by="ai:claude">`mcp-server-configuration-reviewer`. For general Apex security, use</span> <span data-proof="authored" data-by="ai:claude">`apex-security-sentinel`.</span>
+**DO NOT**</span> <span data-proof="authored" data-by="ai:claude">use this agent for MCP server setup/configuration. For configuration review, use</span> <span data-proof="authored" data-by="ai:claude">`integration lens`. For general Apex security, use</span> <span data-proof="authored" data-by="ai:claude">`security lens`.</span>
 
 ***
 
