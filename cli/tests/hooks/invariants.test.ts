@@ -13,6 +13,7 @@ const HOOK_SCRIPTS = [
   "sfce-skill-observer",
   "sfce-bash-observer",
   "sfce-gate-selfcheck",
+  "sfce-deploy-gate",
 ];
 const ALL_SHIPPED = [...HOOK_SCRIPTS, "skill-usage", "session-start"];
 
