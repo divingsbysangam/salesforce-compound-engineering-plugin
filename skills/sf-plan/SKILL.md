@@ -1,13 +1,25 @@
 ---
 name: sf-plan
 tier: discipline-gate
-description: "Create structured implementation plans for Salesforce features. Use when planning Apex changes, LWC components, Flow automation, integrations, metadata deployments, or any multi-step Salesforce build. Also deepen existing plans. Use when the user says 'plan this Apex feature', 'how should I build this LWC', 'plan the integration', 'break down this Salesforce requirement', 'plan a trigger refactor', 'plan the deployment', or when a brainstorm/requirements document is ready for planning. For exploratory or ambiguous requests, prefer sf-brainstorm first."
-argument-hint: "[optional: feature description, requirements doc path, plan path to deepen, or Salesforce work to plan]"
+description: "Plan Salesforce work: ideate, brainstorm, strategy, plan, deepen. Use for 'plan this', 'how should I build', 'brainstorm', 'what should we improve', 'deepen the plan', STRATEGY.md."
+argument-hint: "[mode:ideate|brainstorm|strategy|deepen] [feature, requirements doc, or plan path]"
 ---
 
 # /sf-plan
 
-> **Persona dispatch.** This skill dispatches its research personas as isolated subagents — see the `dispatching-parallel-personas` skill for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). This skill owns the research personas under `references/personas/`.
+## Modes
+
+First argument `mode:<name>` selects a mode; everything after it passes to that mode's guide. Load only the guide for the chosen mode.
+
+| Mode | Use for | Guide |
+|---|---|---|
+| `(none)` | Write an implementation plan under `docs/plans/` | this file |
+| `ideate` | Generate and rank grounded improvement ideas | `references/ideate/guide.md` |
+| `brainstorm` | Explore a feature before planning; writes `docs/brainstorms/` | `references/brainstorm/guide.md` |
+| `strategy` | Create or update repo-root `STRATEGY.md` | `references/strategy/guide.md` |
+| `deepen` | Add parallel research depth to an existing plan | `references/deepen/guide.md` |
+
+> **Persona dispatch.** This skill dispatches its research personas as isolated subagents — see `../sf-work/references/dispatch/guide.md` for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). This skill owns the research personas under `references/personas/`.
 
 > **Principles enforced:** 2 (verifiability), 4 (spec is the artifact), 7 (institutional knowledge). See `PRINCIPLES.md`.
 
@@ -33,8 +45,8 @@ Procedure lives in sibling files, not only in this orchestrator:
 Plan a Salesforce feature without writing code. Produce three artifacts: spec.md (business
 requirements + acceptance criteria), plan.md (architecture + governor/sharing/security analysis),
 and tasks.md (ordered implementation checklist). Before writing the plan, dispatch
-sf-learnings-researcher, sf-repo-research-analyst, sf-best-practices-researcher, and
-sf-framework-docs-researcher in parallel. The plan MUST include a "Verification Strategy"
+sf-learnings-researcher, sf-repo-research-analyst, sf-external-researcher, and
+sf-external-researcher in parallel. The plan MUST include a "Verification Strategy"
 section that names the test, assertion, or dry-run that proves the feature works — no
 verification, no plan. Save under docs/plans/YYYY-MM-DD-<type>-<slug>-plan.md.
 ```

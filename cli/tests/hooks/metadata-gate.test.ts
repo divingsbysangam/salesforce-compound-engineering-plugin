@@ -114,7 +114,7 @@ describe("the gate denies", () => {
     // displayed path contains that word too, so a looser assertion passes even
     // when the force-app predicate is disabled entirely. (Found by mutation.)
     expect(reason).toContain("(rule **/force-app/**)");
-    expect(reason).toContain("/apex-generate"); // the owning skill
+    expect(reason).toContain("/sf-generate"); // the owning skill
   });
 
   test("the matched rule reported is the most specific one, not a fallback", async () => {
@@ -161,7 +161,7 @@ describe("the gate denies", () => {
       tool_input: { file_path: FLOW },
     });
     expect(decisionOf(out)).toBe("deny");
-    expect(reasonOf(out)).toContain("/flow-generate");
+    expect(reasonOf(out)).toContain("/sf-generate");
     expect(reasonOf(out)).not.toContain("/sf-work");
   });
 

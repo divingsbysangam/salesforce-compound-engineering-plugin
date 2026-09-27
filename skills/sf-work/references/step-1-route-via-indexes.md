@@ -9,9 +9,9 @@ Classify the implementation, then route:
 
 * Read `skills/index.md` to decide applicable skills
 
-* Include `skills/governor-limits/SKILL.md` for limit-sensitive backend work
+* Include `skills/sf-know/references/limits/guide.md` for limit-sensitive backend work
 
-* For metadata or code generation, dispatch the matching action-shaped skill: `/apex-generate` (Apex class + tests), `/flow-generate` (Flow XML via MCP pipeline), `/validation-rule-generate`, `/apex-trigger-refactor`, `/slds2-uplift` (LWC), `/metadata-generate` (object / field / app / tab / listview / lightning-type), `/lightning-page-generate` (FlexiPage or full LEX app), `/permission-set-generate`. Reference skills (`apex-patterns`, `flow-patterns`, `lwc-patterns`, etc.) describe the shape; generation skills produce the artifact.
+* For metadata or code generation, dispatch the matching action-shaped skill: `/sf-generate type:apex` (Apex class + tests), `/sf-generate type:flow` (Flow XML via MCP pipeline), `/sf-generate type:validation-rule`, `/sf-generate type:trigger-refactor`, `/sf-review mode:slds2` (LWC), `/sf-generate type:metadata` (object / field / app / tab / listview / lightning-type), `/sf-generate type:lightning-page` (FlexiPage or full LEX app), `/sf-generate type:permission-set`. Reference skills (`sf-know topic:apex`, `sf-know topic:flow`, `sf-know topic:lwc`, etc.) describe the shape; generation skills produce the artifact.
 
 ***
 

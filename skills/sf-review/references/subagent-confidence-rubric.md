@@ -5,7 +5,7 @@ description: Shared confidence scale and merge/dedup rule that review and resear
 
 # Subagent Confidence Rubric
 
-This is the shared rubric that review and research personas reference when assigning a confidence level to a finding. Every finding a persona reports carries one of the three tiers below, so the dispatching skill (`sf-review`, `sf-doc-review`, `sf-plan`, `sf-lfg`) can consolidate results from parallel subagents deterministically. Anchor confidence to evidence strength, not to how strongly you feel about the finding.
+This is the shared rubric that review and research personas reference when assigning a confidence level to a finding. Every finding a persona reports carries one of the three tiers below, so the dispatching skill (`sf-review`, `sf-review mode:doc`, `sf-plan`, `sf-lfg`) can consolidate results from parallel subagents deterministically. Anchor confidence to evidence strength, not to how strongly you feel about the finding.
 
 ## Confidence tiers
 

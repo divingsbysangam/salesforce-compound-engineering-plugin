@@ -6,6 +6,89 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Project context at session start.** Inside a Salesforce DX project, `scripts/session-start` appends up to ~500 bytes of facts: project name, API version, package directories, default org and whether it is scratch/sandbox/production, source counts, and the trigger framework detected. Local files only; no network, no tokens read into output.
+- **`/sf-know topic:org-context`.** One table of where to get org facts: Salesforce's `salesforce-development` plugin tools when loaded (`validate_soql`, `apex.diagnostics`, `get_metadata_type_fields`, `execute_metadata_action`), then `@salesforce/mcp` (`run_soql_query`, `run_apex_test`), then the `sf` CLI. `sf-generate`, the review lens contract, `sf-plan`, and `sf-deploy mode:setup` now use it.
+
+### Changed
+
+- `@salesforce/mcp` now starts with `--toolsets orgs,metadata,data,testing,code-analysis,lwc-experts` instead of `all` (60+ tool schemas in every session). `core` is always on.
+
+## [4.0.0] - 2026-09-27
+
+Breaking: the catalog is rebuilt for token cost. Only ten short skill descriptions load per session (down from 68), and a typical review dispatches 2–4 subagents instead of 10–15.
+
+### Changed
+
+- **68 skills → 10.** `sf-plan`, `sf-work`, `sf-generate`, `sf-review`, `sf-debug`, `sf-deploy`, `sf-ship`, `sf-compound`, `sf-lfg`, `sf-know`. Former skills are modes at `skills/<skill>/references/<mode>/guide.md`, loaded only when used. Skill descriptions are capped at 250 characters.
+- **61 personas → 9 review lenses** under `skills/sf-review/references/lenses/` (apex, security, flow, lwc, integration, metadata, tests, architecture, doc) sharing one finding contract. `sf-review` dispatches one subagent per applicable lens and passes file paths, not contents. Framework-docs, best-practices, and web researchers merged into `sf-external-researcher`.
+- Metadata gate routing and the authoring allowlist now name `sf-generate` / `sf-work` / `sf-ship`.
+- `create-agent-skills` moved to `.claude/skills/` (maintainer-only, not shipped).
+
+### Added
+
+- **`sf-deploy`** with guides for validate → quick deploy, retrieve, manifests, destructive changes, Apex tests, orgs, and test data.
+- **Deploy gate** (`scripts/sfce-deploy-gate`, PreToolUse on Bash, on by default). Asks before a direct production deploy or a destructive change on a non-scratch org; denies `NoTestRun` on production. Reads local `sf` auth files only. `SFCE_DEPLOY_GATE=0` disables it.
+- **Budget lint** (`cli/src/lint/budget.ts`): description ≤ 250 chars, `SKILL.md` ≤ 8KB, lens ≤ 3.5KB.
+
+### Removed
+
+- `sf-sweep`, `sf-retune`, `sf-tend`, `sf-sessions`, `sf-session-extract`, `sf-session-inventory`, `sf-demo-reel`, `sf-slack-research`, `sf-product-pulse`, `sf-update`, `sf-report-bug`, `sf-proof`, `sf-agent-native-audit`. The Tend runtime remains in the CLI.
+
+### Name map
+
+| Before | After |
+|---|---|
+| `sf-ideate` | `/sf-plan mode:ideate` |
+| `sf-brainstorm` | `/sf-plan mode:brainstorm` |
+| `sf-strategy` | `/sf-plan mode:strategy` |
+| `sf-deepen` | `/sf-plan mode:deepen` |
+| `sf-simplify-code` | `/sf-work mode:simplify` |
+| `sf-optimize` | `/sf-work mode:optimize` |
+| `git-worktree` | `/sf-work mode:worktree` |
+| `file-todos` | `/sf-work mode:todos` |
+| `sf-handoff` | `/sf-work mode:handoff` |
+| `dispatching-parallel-personas` | `/sf-work mode:dispatch` |
+| `sf-doc-review` | `/sf-review mode:doc` |
+| `sf-polish` | `/sf-review mode:polish` |
+| `slds2-uplift` | `/sf-review mode:slds2` |
+| `sf-test-browser` | `/sf-review mode:browser` |
+| `sf-explain` | `/sf-debug mode:explain` |
+| `agentforce-observe` | `/sf-debug mode:agent-observe` |
+| `apex-generate` | `/sf-generate type:apex` |
+| `apex-trigger-refactor` | `/sf-generate type:trigger-refactor` |
+| `flow-generate` | `/sf-generate type:flow` |
+| `lightning-page-generate` | `/sf-generate type:lightning-page` |
+| `metadata-generate` | `/sf-generate type:metadata` |
+| `permission-set-generate` | `/sf-generate type:permission-set` |
+| `validation-rule-generate` | `/sf-generate type:validation-rule` |
+| `test-factory` | `/sf-generate type:test-data` |
+| `prompt-builder` | `/sf-generate type:prompt-template` |
+| `mcp-tool-builder` | `/sf-generate type:mcp-tool` |
+| `agentforce-develop` | `/sf-generate type:agent` |
+| `agentforce-test` | `/sf-generate type:agent-test` |
+| `sf-cli` | `/sf-deploy mode:cli` |
+| `sf-setup` | `/sf-deploy mode:setup` |
+| `sf-commit` | `/sf-ship mode:commit` |
+| `sf-commit-push-pr` | `/sf-ship mode:pr` |
+| `sf-pr-description` | `/sf-ship mode:pr-description` |
+| `sf-release-notes` | `/sf-ship mode:release-notes` |
+| `sf-babysit-pr` | `/sf-ship mode:babysit` |
+| `sf-resolve-pr-feedback` | `/sf-ship mode:resolve-feedback` |
+| `sf-clean-gone-branches` | `/sf-ship mode:clean-branches` |
+| `sf-compound-refresh` | `/sf-compound mode:refresh` |
+| `compound-docs` | `/sf-compound mode:doc-format` |
+| `apex-patterns` | `/sf-know topic:apex` |
+| `lwc-patterns` | `/sf-know topic:lwc` |
+| `flow-patterns` | `/sf-know topic:flow` |
+| `governor-limits` | `/sf-know topic:limits` |
+| `security-guide` | `/sf-know topic:security` |
+| `integration-patterns` | `/sf-know topic:integration` |
+| `graphql-patterns` | `/sf-know topic:graphql` |
+| `hosted-mcp-servers` | `/sf-know topic:hosted-mcp` |
+| `sf-agent-native-architecture` | `/sf-know topic:agent-native` |
+
 ## [3.2.0] - 2026-09-14
 
 ### Added — hook layer (opt-in, both features OFF by default)

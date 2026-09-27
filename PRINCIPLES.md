@@ -1,8 +1,8 @@
 # Principles
 
-The seven principles that make this plugin opinionated, in priority order. Every skill in `skills/` and every persona under `skills/<owner>/references/personas/` should be coherent with these. When the implementation drifts from a principle, fix the implementation — don't soften the principle.
+The seven principles that make this plugin opinionated, in priority order. Every skill in `skills/`, every review lens under `skills/sf-review/references/lenses/`, and every persona under `skills/<owner>/references/personas/` should be coherent with these. When the implementation drifts from a principle, fix the implementation — don't soften the principle.
 
-This document is the source of truth. `CLAUDE.md`, `README.md`, and the seven core workflow skills (`sf-brainstorm`, `sf-plan`, `sf-deepen`, `sf-work`, `sf-review`, `sf-compound`, `sf-lfg`) all reference these principles by number.
+This document is the source of truth. `CLAUDE.md`, `README.md`, and the core workflow skills (`sf-plan`, `sf-work`, `sf-review`, `sf-compound`, `sf-lfg`) all reference these principles by number.
 
 ---
 
@@ -12,7 +12,7 @@ Vibe coding raises the floor for what anyone can produce. Agentic engineering pr
 
 **Why it matters.** The same model that refactors a 100k-line codebase will also confidently tell a Salesforce admin that an unbulkified trigger is fine because "it works on this test record." The model is jagged; the org is not. A vulnerability is a vulnerability regardless of which keyboard typed it.
 
-**How this plugin enforces it.** `sf-review` runs security and governor agents on every diff. `sf-lfg` aborts the pipeline on Critical/High security findings rather than routing them to a "warnings" bucket. The non-negotiable gates are listed at the top of `skills/sf-review/SKILL.md`.
+**How this plugin enforces it.** `sf-review` runs the `security` lens and the governor-limit checks of the `apex` and `flow` lenses on every diff they apply to. `sf-lfg` aborts the pipeline on Critical/High security findings rather than routing them to a "warnings" bucket. The non-negotiable gates are listed at the top of `skills/sf-review/SKILL.md`.
 
 ---
 
@@ -42,7 +42,7 @@ A thin "plan mode" outline is not a spec. The agent is good at filling blanks. Y
 
 **Why it matters.** Most failed Salesforce builds fail at spec, not at code. "Build a Lead auto-assignment flow" is not a spec; "auto-assign Leads to the Owner with the lowest open-Lead count within the Lead's geo Territory, falling back to round-robin within the Territory's queue when no eligible Owner exists, with full bulk safety up to a 200-record import" is a spec. The first one produces 80 lines of plausible Apex that hand-waves the geo lookup; the second one produces working code on the first try.
 
-**How this plugin enforces it.** `sf-plan` produces three sections per plan — `spec.md`, `plan.md`, `tasks.md`. `sf-deepen` is explicitly a *spec-tightening pass*, not a research dump: it adds governor analysis, sharing impact, order-of-execution placement, and API-version constraints to the spec, not generic best-practice prose. The agent fills the blanks the human declared.
+**How this plugin enforces it.** `sf-plan` produces three sections per plan — `spec.md`, `plan.md`, `tasks.md`. `sf-plan mode:deepen` is explicitly a *spec-tightening pass*, not a research dump: it adds governor analysis, sharing impact, order-of-execution placement, and API-version constraints to the spec, not generic best-practice prose. The agent fills the blanks the human declared.
 
 ---
 
@@ -52,7 +52,7 @@ Models produce code that "works but is gross" — bloaty, copy-pasted, awkwardly
 
 **Why it matters.** A trigger handler that works on first run but duplicates 40 lines of CRUD/FLS boilerplate across three handlers will pass every test and fail the next refactor. A "works but gross" Salesforce metadata bundle compounds: each new feature pays the tax. Aesthetic debt is real debt.
 
-**How this plugin enforces it.** `sf-review` includes `sf-code-simplicity-reviewer` and `pattern-recognition-specialist` for exactly this reason. `sf-compound` captures *aesthetic and taste learnings* (e.g., "we standardized on the `fflib_SObjectDomain` pattern because three handlers had reinvented selector logic") alongside bug-fix learnings. The capture is structured; the judgment is yours.
+**How this plugin enforces it.** `sf-review` includes the `architecture` lens (simplicity, pattern fit, duplication) at comprehensive depth for exactly this reason. `sf-compound` captures *aesthetic and taste learnings* (e.g., "we standardized on the `fflib_SObjectDomain` pattern because three handlers had reinvented selector logic") alongside bug-fix learnings. The capture is structured; the judgment is yours.
 
 ---
 
@@ -62,7 +62,7 @@ When you write a skill, an agent file, a CLAUDE.md entry, or a solution doc, ask
 
 **Why it matters.** Salesforce's own documentation is the canonical example of human-native docs that strand agents — "open Setup, navigate to Object Manager, click..." None of that helps an agent. The plugin's job is to translate Salesforce's GUI-shaped knowledge into copy-paste blocks an agent can act on directly.
 
-**How this plugin enforces it.** Each of the seven core workflow skills carries a top-of-file "Copy-paste-to-agent" block — the literal prompt or command an agent should receive when the skill triggers. Domain skills (`governor-limits`, `apex-patterns`, `lwc-patterns`, etc.) follow the same pattern in a follow-up pass. `docs/solutions/` entries include a "Resolution" block written for an agent to apply directly, not an admin to follow visually.
+**How this plugin enforces it.** Each core workflow skill carries a top-of-file "Copy-paste-to-agent" block — the literal prompt or command an agent should receive when the skill triggers. Knowledge topics (`/sf-know topic:limits`, `topic:apex`, `topic:lwc`, etc.) follow the same pattern in a follow-up pass. `docs/solutions/` entries include a "Resolution" block written for an agent to apply directly, not an admin to follow visually.
 
 ---
 

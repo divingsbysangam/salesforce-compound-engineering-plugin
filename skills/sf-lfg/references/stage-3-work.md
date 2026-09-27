@@ -35,7 +35,7 @@ Implement the plan:
 ls todos/*-active-p0-*.md todos/*-blocked-p0-*.md 2>/dev/null
 ```
 
-If that command lists any file, resolve those p0 todos (move them to `done`, or explicitly downgrade/defer with human sign-off) before Review runs. See the `file-todos` skill for the `{issue}-{status}-{priority}-{description}.md` naming convention.
+If that command lists any file, resolve those p0 todos (move them to `done`, or explicitly downgrade/defer with human sign-off) before Review runs. See the `sf-work mode:todos` skill for the `{issue}-{status}-{priority}-{description}.md` naming convention.
 
 ***
 

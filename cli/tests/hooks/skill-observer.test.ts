@@ -314,11 +314,11 @@ describe("grant rules", () => {
   test("a skill that is not allowlisted is logged but grants nothing", async () => {
     await run(
       "PostToolUse",
-      modelPayload({ tool_input: { skill: "sf-compound-engineering:sf-explain" } }),
+      modelPayload({ tool_input: { skill: "sf-compound-engineering:sf-know" } }),
       BOTH,
     );
     expect(logRows().length).toBe(1);
-    expect(JSON.parse(logRows()[0] as string).skill).toBe("sf-explain");
+    expect(JSON.parse(logRows()[0] as string).skill).toBe("sf-know");
     expect(existsSync(grantFile("session-aaa"))).toBe(false);
   });
 

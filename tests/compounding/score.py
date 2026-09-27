@@ -56,8 +56,8 @@ stated rather than hidden:
   applied identically to both conditions, which is what makes the delta mean
   something even where an absolute count would not.
 
-Rules are grounded in this repo's own domain skills -- `governor-limits`,
-`security-guide`, `apex-patterns`, `test-factory` -- so the scorer and the
+Rules are grounded in this repo's own domain skills -- `sf-know` topics `limits`,
+`security`, `apex`, and `sf-generate type:test-data` -- so the scorer and the
 plugin's advice cannot drift into disagreeing about what "good" means.
 """
 
@@ -260,21 +260,21 @@ class Hit(NamedTuple):
 # Each entry: rule id -> one-line statement of what a hit means. Printed in the
 # report so a reader never has to open this file to interpret a count.
 RULE_DOCS: Dict[str, str] = {
-    "SOQL_IN_LOOP": "a SOQL query appears inside a for/while body (governor-limits)",
-    "DML_IN_LOOP": "a DML statement appears inside a for/while body (governor-limits)",
-    "DYNAMIC_SOQL": "Database.query/countQuery is used, which no static check can validate (security-guide)",
-    "MISSING_FLS_ON_QUERY": "the class queries but never enforces field access (security-guide)",
-    "MISSING_CRUD_ON_DML": "the class writes but never checks object permissions (security-guide)",
-    "WITHOUT_SHARING": "a class is declared `without sharing` (security-guide)",
-    "SHARING_NOT_DECLARED": "a class touching data declares no sharing model at all (security-guide)",
-    "HARDCODED_ID": "a record id is hardcoded as a literal (apex-patterns)",
-    "SOQL_UNBOUNDED": "a query has neither WHERE nor LIMIT (governor-limits)",
-    "TRIGGER_LOGIC_INLINE": "a trigger contains SOQL/DML directly instead of delegating to a handler (apex-patterns)",
-    "EMPTY_CATCH": "an exception is caught and discarded (apex-patterns)",
-    "DEBUG_ONLY_CATCH": "an exception is caught and only System.debug'd (apex-patterns)",
-    "TEST_WITHOUT_ASSERT": "an @isTest method makes no assertion (test-factory)",
-    "TEST_SEE_ALL_DATA": "a test uses SeeAllData=true (test-factory)",
-    "TEST_NOT_BULK": "a test class never exercises more than one record (test-factory)",
+    "SOQL_IN_LOOP": "a SOQL query appears inside a for/while body (sf-know limits)",
+    "DML_IN_LOOP": "a DML statement appears inside a for/while body (sf-know limits)",
+    "DYNAMIC_SOQL": "Database.query/countQuery is used, which no static check can validate (sf-know security)",
+    "MISSING_FLS_ON_QUERY": "the class queries but never enforces field access (sf-know security)",
+    "MISSING_CRUD_ON_DML": "the class writes but never checks object permissions (sf-know security)",
+    "WITHOUT_SHARING": "a class is declared `without sharing` (sf-know security)",
+    "SHARING_NOT_DECLARED": "a class touching data declares no sharing model at all (sf-know security)",
+    "HARDCODED_ID": "a record id is hardcoded as a literal (sf-know apex)",
+    "SOQL_UNBOUNDED": "a query has neither WHERE nor LIMIT (sf-know limits)",
+    "TRIGGER_LOGIC_INLINE": "a trigger contains SOQL/DML directly instead of delegating to a handler (sf-know apex)",
+    "EMPTY_CATCH": "an exception is caught and discarded (sf-know apex)",
+    "DEBUG_ONLY_CATCH": "an exception is caught and only System.debug'd (sf-know apex)",
+    "TEST_WITHOUT_ASSERT": "an @isTest method makes no assertion (sf-generate test-data)",
+    "TEST_SEE_ALL_DATA": "a test uses SeeAllData=true (sf-generate test-data)",
+    "TEST_NOT_BULK": "a test class never exercises more than one record (sf-generate test-data)",
 }
 
 

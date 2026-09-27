@@ -309,10 +309,20 @@ describe("hooks.json registration", () => {
 
   test("the deny matcher is narrow: no Bash, no MultiEdit", () => {
     const pre = HOOKS.hooks.PreToolUse;
-    expect(pre.length).toBe(1);
-    expect(pre[0].matcher).toBe("Edit|Write|NotebookEdit");
-    expect(pre[0].matcher).not.toContain("Bash");
-    expect(pre[0].matcher).not.toContain("MultiEdit");
+    const metadata = pre.filter((g: any) =>
+      g.hooks.some((h: any) => h.command.includes("sfce-metadata-gate")),
+    );
+    expect(metadata.length).toBe(1);
+    expect(metadata[0].matcher).toBe("Edit|Write|NotebookEdit");
+    expect(metadata[0].matcher).not.toContain("Bash");
+    expect(metadata[0].matcher).not.toContain("MultiEdit");
+  });
+
+  test("the only Bash PreToolUse hook is the deploy gate", () => {
+    const bash = HOOKS.hooks.PreToolUse.filter((g: any) => g.matcher.includes("Bash"));
+    expect(bash.length).toBe(1);
+    expect(bash[0].matcher).toBe("Bash");
+    for (const h of bash[0].hooks) expect(h.command).toContain("sfce-deploy-gate");
   });
 
   test("both skill-entry paths are registered", () => {

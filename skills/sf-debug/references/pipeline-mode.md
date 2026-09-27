@@ -1,6 +1,6 @@
 # sf-debug — pipeline mode (non-interactive)
 
-Loaded when `sf-debug` is invoked with `mode:pipeline` by `sf-babysit-pr` or `sf-lfg`. Investigation rigor is unchanged; only interaction and fix authority change.
+Loaded when `sf-debug` is invoked with `mode:pipeline` by `sf-ship mode:babysit` or `sf-lfg`. Investigation rigor is unchanged; only interaction and fix authority change.
 
 ## Authority
 

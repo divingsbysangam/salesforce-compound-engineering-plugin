@@ -8,7 +8,7 @@ describe("readPlugin", () => {
   test("reads plugin manifest from project root", () => {
     const plugin = readPlugin(PLUGIN_ROOT);
     expect(plugin.name).toBe("sf-compound-engineering");
-    expect(plugin.version).toMatch(/^3\./);
+    expect(plugin.version).toMatch(/^4\./);
   });
 
   test("has no standalone commands (V3 retired commands/ for skills)", () => {

@@ -9,13 +9,11 @@ Launch these research personas **in parallel** as isolated subagents (see the co
 
 * Task sf-repo-research-analyst(feature_description) — Understand project patterns
 
-* Task sf-best-practices-researcher(feature_description) — Research best practices
-
-* Task sf-framework-docs-researcher(feature_description) — Platform documentation
+* Task sf-external-researcher(feature_description) — Research best practices
 
 ### Conditional agents:
 
-* Task sf-git-history-analyzer(feature_description) — If modifying existing code
+* Task architecture lens(feature_description) — If modifying existing code
 
 ***
 

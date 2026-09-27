@@ -11,13 +11,22 @@
 # The payload is kept well under ~1KB on purpose: it points at skills/index.md
 # and names the three gate clusters rather than restating their full contents.
 #
+# PROJECT CONTEXT (after the primer, never inside it): when the working
+# directory is inside a Salesforce DX project, a few lines of facts follow —
+# project name, API version, package directories, default org and its type,
+# source counts, and the trigger framework in use. Local files only: no network,
+# no `sf` call, org type read from the sf auth files' instanceUrl/isSandbox/
+# isScratch fields (never tokens). Capped at ~500 bytes; silent outside a DX
+# project or without python3. The org classification mirrors
+# scripts/sfce-deploy-gate — keep the two in sync.
+#
 # Output contract: Claude Code adds a SessionStart hook's stdout to the session
 # context verbatim, so plain text is emitted here — no jq dependency, works on
 # any machine.
 set -euo pipefail
 
 cat <<'SFCE_PRIMER'
-SF compound-engineering plugin active. Route Salesforce work through a workflow skill before raw edits — skills/index.md is the map. For ongoing work, bind one responsibility to one sf-tend feed and durable thread. For a quick fix, enter sf-work or sf-debug rather than editing Apex/LWC/Flow directly.
+SF compound-engineering plugin active. Route Salesforce work through a workflow skill before raw edits. Skills: sf-plan, sf-work, sf-generate, sf-review, sf-debug, sf-deploy, sf-ship, sf-compound, sf-lfg, sf-know (map: skills/index.md). For a quick fix, enter sf-work or sf-debug rather than editing Apex/LWC/Flow directly.
 
 Three non-negotiable discipline gates apply:
 - sf-plan — Verification Strategy (acceptance assertion, bulk threshold, governor boundary, sharing scenario, integration mock)
@@ -26,5 +35,109 @@ Three non-negotiable discipline gates apply:
 
 Raw metadata edits are the drift this plugin exists to prevent: reach force-app Apex, LWC, Aura, or Flow through an authoring skill, never by editing the file directly. On Claude Code that intent is also enforced by an opt-in gate; everywhere else it is this instruction, and the absence of a refusal is never evidence that an edit was authorised.
 SFCE_PRIMER
+
+# --- project context (best effort; any failure prints nothing) --------------
+set +e
+PY="$(command -v python3 || true)"
+if [ -n "$PY" ]; then
+  export SFCE_CWD="${CLAUDE_PROJECT_DIR:-$PWD}"
+  "$PY" -I - <<'PYCTX' 2>/dev/null
+import json, os, sys, time
+
+def read_json(path):
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception:
+        return None
+
+d = os.environ.get("SFCE_CWD") or os.getcwd()
+root = None
+while True:
+    if os.path.isfile(os.path.join(d, "sfdx-project.json")):
+        root = d
+        break
+    parent = os.path.dirname(d)
+    if parent == d:
+        break
+    d = parent
+if not root:
+    sys.exit(0)
+
+proj = read_json(os.path.join(root, "sfdx-project.json")) or {}
+home = os.path.expanduser("~")
+name = proj.get("name") or os.path.basename(root)
+api = proj.get("sourceApiVersion") or "unset"
+pkgs = [p.get("path") for p in proj.get("packageDirectories", []) if p.get("path")]
+ns = proj.get("namespace") or ""
+
+target = None
+for base in (root, home):
+    for rel, key in ((".sf/config.json", "target-org"), (".sfdx/sfdx-config.json", "defaultusername")):
+        cfg = read_json(os.path.join(base, rel))
+        if cfg and cfg.get(key):
+            target = cfg[key]
+            break
+    if target:
+        break
+
+def classify(target):
+    aliases = (read_json(os.path.join(home, ".sfdx", "alias.json")) or {}).get("orgs", {})
+    auth = read_json(os.path.join(home, ".sfdx", f"{aliases.get(target, target)}.json"))
+    if not isinstance(auth, dict):
+        return "not authorized here"
+    url = (auth.get("instanceUrl") or "").lower()
+    login = (auth.get("loginUrl") or "").lower()
+    if auth.get("isScratch") or ".scratch." in url:
+        return "scratch"
+    if auth.get("isSandbox") or ".sandbox." in url or "--" in url.split("//")[-1] or "test.salesforce.com" in login:
+        return "sandbox"
+    if ".develop." in url or ".trailblaze." in url:
+        return "developer"
+    if auth.get("isSandbox") is False or url.endswith(".my.salesforce.com") or "login.salesforce.com" in login:
+        return "PRODUCTION"
+    return "unknown type"
+
+counts = {"cls": 0, "trigger": 0, "lwc": 0, "flow": 0}
+framework = set()
+deadline = time.monotonic() + 1.5
+seen = 0
+for pkg in pkgs or ["force-app"]:
+    for dirpath, dirnames, filenames in os.walk(os.path.join(root, pkg)):
+        dirnames[:] = [x for x in dirnames if not x.startswith(".") and x != "node_modules"]
+        if os.path.basename(dirpath) == "lwc":
+            counts["lwc"] += len([x for x in dirnames if not x.startswith("_")])
+        for f in filenames:
+            seen += 1
+            if f.endswith(".cls"):
+                counts["cls"] += 1
+                if f == "fflib_SObjectDomain.cls":
+                    framework.add("fflib")
+                elif f in ("TriggerBase.cls", "MetadataTriggerHandler.cls"):
+                    framework.add("Trigger Actions Framework")
+                elif f.endswith("TriggerHandler.cls"):
+                    framework.add("TriggerHandler classes")
+            elif f.endswith(".trigger"):
+                counts["trigger"] += 1
+            elif f.endswith(".flow-meta.xml"):
+                counts["flow"] += 1
+        if seen > 20000 or time.monotonic() > deadline:
+            break
+
+lines = ["", "Salesforce project context (local files, no org call):"]
+head = f"- {name} · API {api} · packages: {', '.join(pkgs[:3]) or 'none'}"
+if len(pkgs) > 3:
+    head += f" (+{len(pkgs) - 3})"
+if ns:
+    head += f" · namespace {ns}"
+lines.append(head)
+lines.append(f"- Default org: {target} ({classify(target)})" if target
+             else "- Default org: not set — /sf-deploy mode:org to connect one")
+lines.append(f"- Source: {counts['cls']} Apex classes, {counts['trigger']} triggers, "
+             f"{counts['lwc']} LWC, {counts['flow']} Flows"
+             + (f" · trigger framework: {', '.join(sorted(framework))}" if framework else ""))
+print("\n".join(lines)[:500])
+PYCTX
+fi
 
 exit 0

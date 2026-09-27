@@ -1,7 +1,7 @@
 # 03-governor-trigger
 
 `OpportunityRollup.trigger` puts all its logic inline and queries once per
-record. Restructure it to the handler pattern this repo's `apex-patterns`
+record. Restructure it to the handler pattern this repo's `sf-know topic:apex`
 guidance describes, and make it bulk-safe.
 
 Behaviour to preserve: when an Opportunity is closed-won, its Account's

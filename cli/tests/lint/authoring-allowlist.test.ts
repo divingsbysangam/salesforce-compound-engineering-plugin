@@ -156,9 +156,9 @@ describe("the derivation rule, not a fixed pair of names", () => {
   // gives no hint that its subtree writes files.
   const PERSONA_OWNERS: Array<[string, string]> = [
     ["sf-bug-reproduction-validator", "sf-debug"],
-    ["sf-pr-comment-resolver", "sf-resolve-pr-feedback"],
+    ["sf-pr-comment-resolver", "sf-ship"],
     ["sf-deployment-verification-agent", "sf-review"],
-    ["sf-mcp-tool-builder-agent", "mcp-tool-builder"],
+    ["sf-mcp-tool-builder-agent", "sf-generate"],
   ];
 
   test("every skill owning a file-writing persona is on the allowlist", () => {

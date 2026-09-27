@@ -74,8 +74,8 @@ stays re-scorable even after the rules change.
 | `sf-review` finding count | collected, never scored | `sf-review` is inside the system under test; it cannot grade itself |
 | Tests pass on first deploy | reported `unavailable` | needs a scratch org. Reported unavailable rather than scored `0` — a `0` meaning "not measured" reads as a pass |
 
-Fifteen rules, grounded in this repo's own `governor-limits`, `security-guide`,
-`apex-patterns`, and `test-factory` skills, so the scorer and the plugin's
+Fifteen rules, grounded in this repo's own `sf-know topic:limits`, `sf-know topic:security`,
+`sf-know topic:apex`, and `sf-generate type:test-data` skills, so the scorer and the plugin's
 advice cannot drift apart. Rules are **not weighted**; per-rule counts are
 printed so a reader can apply their own weights and see what that does.
 

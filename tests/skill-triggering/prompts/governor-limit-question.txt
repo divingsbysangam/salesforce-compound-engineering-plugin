@@ -1,0 +1,1 @@
+What is the synchronous SOQL query limit per transaction, and how do I stay under it in a trigger?

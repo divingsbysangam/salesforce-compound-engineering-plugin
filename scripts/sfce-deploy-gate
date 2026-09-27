@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+# Deploy gate for the SF compound-engineering plugin.
+#
+# PreToolUse on Bash. Looks at `sf project deploy ...` and `sf project delete
+# source ...` commands and asks the human to confirm before anything risky
+# reaches an org:
+#
+#   production + deploy start/quick (not --dry-run)   -> ask  (validate first)
+#   production + --test-level NoTestRun               -> deny
+#   destructive changes on a non-scratch org          -> ask  (names the org)
+#   everything else                                   -> no opinion
+#
+# ON BY DEFAULT, because it only ever asks the human; it never blocks routine
+# work on scratch orgs or sandboxes. Turn it off with SFCE_DEPLOY_GATE=0 (or the
+# deploy_gate plugin option set to false).
+#
+# NO NETWORK (see cli/tests/hooks/invariants.test.ts). The org type is read from
+# the local `sf` auth files: alias.json maps alias -> username, and
+# <username>.json carries isScratch / isSandbox / instanceUrl. Only those fields
+# are read; tokens are never read into output or logs.
+#
+# FAIL-OPEN: any unexpected error allows the call with a warning on stderr.
+#
+# Usage: sfce-deploy-gate PreToolUse   (payload on stdin)
+
+set -u
+
+for _v in "${SFCE_DEPLOY_GATE:-}" "${CLAUDE_PLUGIN_OPTION_DEPLOY_GATE:-}" \
+          "${CLAUDE_PLUGIN_OPTION_deploy_gate:-}"; do
+  case "$_v" in 0|false|no|off) exit 0 ;; esac
+done
+
+trap 'printf "sfce-deploy-gate: unexpected failure; allowing the call\n" >&2; exit 0' ERR
+
+PAYLOAD="$(cat)" || exit 0
+
+# Cheap pre-filter: nothing to do unless the text mentions a deploy or delete.
+case "$PAYLOAD" in
+  *"project deploy"*|*"project delete"*|*"force:source:deploy"*|*"force:mdapi:deploy"*) ;;
+  *) exit 0 ;;
+esac
+
+PY="$(command -v python3 || true)"
+[ -n "$PY" ] || exit 0
+export SFCE_PAYLOAD="$PAYLOAD"
+
+"$PY" -I - <<'PYEOF' || exit 0
+import json, os, re, shlex, sys
+
+def out(decision, reason):
+    print(json.dumps({"hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": decision,
+        "permissionDecisionReason": reason}}))
+    sys.exit(0)
+
+try:
+    payload = json.loads(os.environ.get("SFCE_PAYLOAD", ""))
+except Exception:
+    sys.exit(0)
+if payload.get("tool_name") != "Bash":
+    sys.exit(0)
+cmd = (payload.get("tool_input") or {}).get("command") or ""
+cwd = payload.get("cwd") or os.getcwd()
+home = os.path.expanduser("~")
+
+def read_json(path):
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception:
+        return None
+
+def default_target():
+    d = cwd
+    while True:
+        for rel, key in ((".sf/config.json", "target-org"),
+                         (".sfdx/sfdx-config.json", "defaultusername")):
+            cfg = read_json(os.path.join(d, rel))
+            if cfg and cfg.get(key):
+                return cfg[key]
+        parent = os.path.dirname(d)
+        if parent == d:
+            break
+        d = parent
+    for rel, key in ((".sf/config.json", "target-org"),
+                     (".sfdx/sfdx-config.json", "defaultusername")):
+        cfg = read_json(os.path.join(home, rel))
+        if cfg and cfg.get(key):
+            return cfg[key]
+    return None
+
+def classify(target):
+    """Return (kind, label): kind in production|sandbox|scratch|developer|unknown."""
+    if not target:
+        return "unknown", "the default org (not set)"
+    aliases = (read_json(os.path.join(home, ".sfdx", "alias.json")) or {}).get("orgs", {})
+    username = aliases.get(target, target)
+    label = target if username == target else f"{target} ({username})"
+    auth = read_json(os.path.join(home, ".sfdx", f"{username}.json"))
+    if not isinstance(auth, dict):
+        return "unknown", label
+    url = (auth.get("instanceUrl") or "").lower()
+    login = (auth.get("loginUrl") or "").lower()
+    if auth.get("isScratch") or ".scratch." in url:
+        return "scratch", label
+    if auth.get("isSandbox") or ".sandbox." in url or "--" in url.split("//")[-1] \
+            or "test.salesforce.com" in login:
+        return "sandbox", label
+    if ".develop." in url or ".trailblaze." in url:
+        return "developer", label
+    if auth.get("isSandbox") is False or url.endswith(".my.salesforce.com") \
+            or "login.salesforce.com" in login:
+        return "production", label
+    return "unknown", label
+
+def segments(text):
+    for part in re.split(r"&&|\|\||;|\n|\|", text):
+        try:
+            toks = shlex.split(part)
+        except ValueError:
+            toks = part.split()
+        if toks:
+            yield toks
+
+def flag(toks, *names):
+    for i, t in enumerate(toks):
+        for n in names:
+            if t == n and i + 1 < len(toks):
+                return toks[i + 1]
+            if t.startswith(n + "="):
+                return t.split("=", 1)[1]
+    return None
+
+for toks in segments(cmd):
+    # strip leading env assignments / npx
+    while toks and ("=" in toks[0] and not toks[0].startswith("-")):
+        toks = toks[1:]
+    if toks[:1] == ["npx"]:
+        toks = toks[1:]
+    if not toks or toks[0] not in ("sf", "sfdx"):
+        continue
+    words = [t for t in toks[1:4] if not t.startswith("-")]
+    verb = " ".join(words[:3])
+    is_delete = verb.startswith("project delete source")
+    is_deploy = verb.startswith("project deploy") or verb.startswith("force:source:deploy") \
+        or verb.startswith("force:mdapi:deploy")
+    if not (is_delete or is_deploy):
+        continue
+    sub = words[2] if len(words) > 2 else ""
+    if verb.startswith("project deploy") and sub in ("preview", "report", "resume", "cancel", "validate"):
+        if sub != "validate":
+            continue
+    target = flag(toks, "-o", "--target-org", "-u", "--targetusername") or default_target()
+    kind, label = classify(target)
+    legacy = verb.startswith("force:")
+    dry = "--dry-run" in toks or sub == "validate" or (legacy and ("-c" in toks or "--checkonly" in toks))
+    destructive = is_delete or any(t.startswith(("--pre-destructive-changes", "--post-destructive-changes"))
+                                   for t in toks)
+    test_level = (flag(toks, "-l", "--test-level", "--testlevel") or "").lower()
+
+    if kind == "production" and test_level == "notestrun":
+        out("deny", f"{label} is a PRODUCTION org. Deploys to production must run tests; "
+                    "remove --test-level NoTestRun (use RunLocalTests or RunSpecifiedTests).")
+    if destructive and kind != "scratch":
+        out("ask", f"Destructive change against {label} ({kind}). Confirm the components being "
+                   "deleted are intended before approving.")
+    if kind == "production" and not dry:
+        out("ask", f"{label} is a PRODUCTION org. Preferred path: `sf project deploy validate` "
+                   "then `sf project deploy quick --job-id <id>`. Approve only if this deploy is intended.")
+sys.exit(0)
+PYEOF
+exit 0

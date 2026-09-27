@@ -6,15 +6,15 @@
   },
   "metadata": {
     "description": "Salesforce-focused compound engineering plugin marketplace for Claude Code, Cursor, and Codex",
-    "version": "3.2.0",
+    "version": "4.0.0",
     "homepage": "https://github.com/divingsbysangam/salesforce-compound-engineering-plugin"
   },
   "plugins": [
     {
       "name": "sf-compound-engineering",
       "source": "./",
-      "description": "Salesforce-focused compound engineering plugin (V3 skills-first architecture) with parallel agent dispatch, institutional knowledge compounding, and Apex/LWC/Flow/Integration coverage.",
-      "version": "3.2.0",
+      "description": "Salesforce compound engineering: ten skills (plan, work, generate, review, debug, deploy, ship, compound, lfg, know) with on-demand modes, stack review lenses, and institutional knowledge compounding for Apex, LWC, Flow, integrations, and Agentforce.",
+      "version": "4.0.0",
       "author": {
         "name": "Gella Sangamesh Gupta",
         "url": "https://github.com/divingsbysangam"

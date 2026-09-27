@@ -1,8 +1,8 @@
 {
   "name": "sf-compound-engineering",
   "displayName": "Salesforce Compound Engineering",
-  "version": "3.2.0",
-  "description": "Salesforce-focused compound engineering plugin for Cursor. Skills-first V3 architecture with parallel agent dispatch, institutional knowledge compounding, and Apex/LWC/Flow/Integration coverage.",
+  "version": "4.0.0",
+  "description": "Salesforce compound engineering: ten skills (plan, work, generate, review, debug, deploy, ship, compound, lfg, know) with on-demand modes, stack review lenses, and institutional knowledge compounding for Apex, LWC, Flow, integrations, and Agentforce.",
   "author": {
     "name": "Gella Sangamesh Gupta",
     "url": "https://github.com/divingsbysangam"

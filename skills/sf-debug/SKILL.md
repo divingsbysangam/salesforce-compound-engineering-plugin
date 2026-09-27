@@ -1,15 +1,25 @@
 ---
 name: sf-debug
 tier: discipline-gate
-description: "Systematically find root causes and fix Salesforce bugs. Use when debugging Apex test failures, trigger fires, LWC runtime errors, deploy failures, governor limit exceptions, sharing/permission errors, integration callout failures, or metadata deploy validation errors. Trigger phrases: 'debug this trigger', 'why is this Apex test failing', 'trace this LWC error', 'investigate this deploy failure', 'why did this validate fail', 'fix this governor limit error'."
-argument-hint: "[issue reference, error message, test path, log file, or description of broken behavior]"
+description: "Find root causes of Salesforce bugs and explain code: failing tests, governor-limit errors, deploy failures, LWC errors, sharing issues, Agentforce traces. Use for 'debug', 'why is this failing', 'explain this'."
+argument-hint: "[mode:explain|agent-observe] [error, test path, log, or subject]"
 ---
 
 # sf-debug
 
+## Modes
+
+First argument `mode:<name>` selects a mode; everything after it passes to that mode's guide. Load only the guide for the chosen mode.
+
+| Mode | Use for | Guide |
+|---|---|---|
+| `(none)` | Reproduce, find the root cause, fix | this file |
+| `explain` | Explain how or why code works, or recap work | `references/explain/guide.md` |
+| `agent-observe` | Analyze production Agentforce sessions (STDM traces) | `references/agent-observe/guide.md` |
+
 > **Principles enforced:** 2 (verifiability), 3 (jagged intelligence). See `PRINCIPLES.md`.
 
-> **Persona dispatch.** This skill dispatches personas as isolated subagents — see the `dispatching-parallel-personas` skill for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). The `sf-bug-reproduction-validator` (a writer) and any reviewers it spawns live under `references/personas/`; research personas are referenced from `../sf-plan/references/personas/`.
+> **Persona dispatch.** This skill dispatches personas as isolated subagents — see `../sf-work/references/dispatch/guide.md` for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). The `sf-bug-reproduction-validator` (a writer) and any reviewers it spawns live under `references/personas/`; research personas are referenced from `../sf-plan/references/personas/`.
 
 Investigate Salesforce-specific bugs systematically — tracing the full causal chain (UI → Flow → trigger → Apex → DML → callback) before proposing a fix — and optionally implement the fix with test-first discipline.
 
@@ -31,7 +41,7 @@ Procedure lives in sibling files, not only in this orchestrator:
 
 ## Mode
 
-Default is interactive. **`mode:pipeline`** (set by `sf-babysit-pr` or `sf-lfg`) is non-interactive: never ask the user; fix only convergent bugs; return the structured JSON in `references/pipeline-mode.md`. Status spellings are fixed: `fixed-and-pushed | fixed-not-pushed | diagnosed-no-fix | flaky-infra | needs-human`.
+Default is interactive. **`mode:pipeline`** (set by `sf-ship mode:babysit` or `sf-lfg`) is non-interactive: never ask the user; fix only convergent bugs; return the structured JSON in `references/pipeline-mode.md`. Status spellings are fixed: `fixed-and-pushed | fixed-not-pushed | diagnosed-no-fix | flaky-infra | needs-human`.
 
 ## Salesforce Angle
 
