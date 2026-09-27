@@ -4,7 +4,7 @@ Before writing or reviewing anything that names an object, field, metadata type,
 
 | Need | 1. Salesforce plugin tools (if loaded) | 2. `@salesforce/mcp` | 3. `sf` CLI fallback |
 |---|---|---|---|
-| Object fields, types, picklists | — | `run_soql_query` on `FieldDefinition` | `sf sobject describe --sobject Account --target-org <a> --json` |
+| Object fields, types, picklists, indexed? | — | `run_soql_query` on `FieldDefinition` (`DataType`, `IsNillable`, `IsIndexed`) — see the compound-field caveat below | `sf sobject describe --sobject Account --target-org <a> --json` |
 | Metadata type shape (what XML elements are valid) | `search_metadata_types`, `get_metadata_type_fields`, `get_metadata_type_context` | — | Retrieve one real example: `sf project retrieve start --metadata <Type>:<Name>` and follow it |
 | Is this SOQL valid / selective? | `validate_soql`, `check_soql_selectivity` | `run_soql_query` with `LIMIT 1` | `sf data query --query "<soql> LIMIT 1" --target-org <a> --json`; query plan: `sf api request rest "/services/data/v66.0/query?explain=<url-encoded soql>" --target-org <a>` (beta command) |
 | Apex compile errors before deploy | `apex.diagnostics` | — | `sf project deploy start --dry-run --source-dir <paths>` |
@@ -13,6 +13,10 @@ Before writing or reviewing anything that names an object, field, metadata type,
 | What exists in the org | — | — | `sf org list metadata --metadata-type ApexClass --target-org <a> --json` |
 
 The "Salesforce plugin tools" are the `salesforce-api-context`, `salesforce-metadata-experts`, and `salesforce-lsp` MCP servers shipped by Salesforce's `salesforce-development` Claude Code plugin (`/plugin install salesforce-development@claude-plugins-official`). They are optional: `salesforce-api-context` is a beta endpoint and needs `sfdx-project.json` plus an authorized org; `salesforce-lsp` runs locally. This plugin does not bundle them.
+
+## Caveat: compound fields
+
+`FieldDefinition` lists compound fields (`Name`, `BillingAddress`) but **not their components** (`FirstName`, `LastName`, `BillingCity`, …), which are valid in SOQL and DML. A missing row is not proof a field does not exist: confirm with `SELECT Id, <Field> FROM <Object> LIMIT 1` (an invalid field fails with `INVALID_FIELD` and the column position) or with `sf sobject describe`, which lists components. Verified against a Developer Edition org on API v67.0.
 
 ## Rules
 
