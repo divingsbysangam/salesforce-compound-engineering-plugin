@@ -22,6 +22,10 @@ Before dispatching personas that may **write** files, check whether two of them 
 
 Give each persona a **bounded packet**: the persona file's contents + the specific target files or diff + exactly what to return. Do not tell a persona to "read the whole repo" — scope it to what it needs.
 
+## Worker scope (one unit per handle)
+
+When implementation is split across subagents or workers, bind each handle to **one** implementation unit only: spawn fresh for that unit, integrate its result, then retire the handle. Never retask or reuse an idle worker for a later unit. In a parallel batch, commit (or otherwise integrate) and retire each unit before starting the next wave. Cleanup of orphaned workers is the caller's job only when the harness assigns that responsibility to the caller.
+
 ## After dispatch
 
 Collect the results, **deduplicate** across personas (for review, apply `sf-review`'s confidence rubric), and spot-check before trusting. Isolated workers can each surface the same finding or reach a wrong conclusion in isolation — reconcile, don't concatenate.

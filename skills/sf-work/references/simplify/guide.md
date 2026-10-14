@@ -16,9 +16,9 @@ Resolve the simplification scope in this order:
 
 If none produces a non-empty scope, stop and ask what to simplify rather than guessing.
 
-## Step 2: Dispatch three SF reviewers in parallel
+## Step 2: Run focused SF reviews
 
-Spawn these existing agents in a single message via the platform's subagent primitive (`Task`/`Agent` in Claude Code, `spawn_agent` in Codex). Pass each the full diff / resolved file set. **Permission mode:** omit the `mode` parameter so the user's settings apply.
+Prefer subagent dispatch (`Task`/`Agent` in Claude Code, `spawn_agent` in Codex) with one launch per lens and the resolved scope. Run concurrently up to the platform's limit; without a subagent primitive, run the lenses inline as separate passes. Concurrency / active-agent-limit failures are backpressure — retry after a slot frees. Any other launch failure runs only the affected review inline with a one-line disclosure. Describe a review as independent only when a subagent actually returned it.
 
 - **`architecture lens`** — YAGNI, over-engineering, and **platform-native alternatives**: custom Apex where a Flow/formula/standard component would do, premature frameworks (fflib, hand-rolled Selector/UoW layers, custom permission engines) with one caller, abstract types with one implementation, dead code, unnecessary null checks the platform guarantees.
 - **`apex lens`** — efficiency that is *also* a simplification: redundant SOQL/DML that collapses into one query, verbose field-by-field loops that a relationship query or `SObject.clone()` replaces, repeated work that hoists out of a loop. (Flag only where the simpler form is also clearer; leave deeper performance work to `/sf-review`.)
@@ -33,6 +33,8 @@ Aggregate findings and fix each directly. Skip false positives without arguing t
 - **Trigger order of execution unchanged** — folding handlers must not reorder before/after logic or recursion control.
 
 Do not remove an abstraction that exists for testability or that you cannot confirm is obsolete — check `git blame` for original intent. If a change would be longer or harder to follow, don't make it.
+
+An interface or data shape that existed only in an earlier iteration of the current unshipped scope is not protected behavior once you verify it has no deployed org dependency, persisted data, public API, package consumer, or in-repo caller outside the resolved scope. Remove that compatibility path only when every required caller update fits the mutation boundary; otherwise preserve it. Context-dependent Salesforce vocabulary (`with sharing`, `USER_MODE`, bulkification) is clarity, not noise — do not "simplify" it away.
 
 ## Step 4: Verify behavior is preserved
 

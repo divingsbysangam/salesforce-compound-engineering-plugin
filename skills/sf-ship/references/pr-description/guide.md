@@ -13,21 +13,27 @@ Generate a Salesforce-aware pull request description that scales with change com
 - **Test plan**: Apex test classes affected, coverage delta, sharing scenarios exercised, mock callouts, manual UI verification needs.
 - **Risk callouts**: governor-limit headroom changes, sharing/visibility changes, integration contract changes, permission set delta.
 
+## Framing rules
+
+- Lead with value delivered, not the file list or the steps taken.
+- Match conventional-commit type defaults from `sf-ship mode:commit`: prefer `fix:` over `feat:` when ambiguous.
+- Preserve existing `Related:` / `Fixes` references on rewrite; never invent closing keywords.
+- **Program altitude (multi-PR / series).** When program context is already in hand (user prompt, known plan path, existing PR body, commit messages, or sibling/series language), lead **program → lead-in (if any) → this contribution → lead-out (if any)**. Do **not** invent a series, and do **not** scan all open PRs solely for this step. When program context is absent, keep the single-PR umbrella only.
+- Size the body to decision cost: small + simple stays under ~300 characters; Salesforce multi-metadata changes get deploy/test/risk sections; never pad.
+
 ## Interaction Method
 
-When asking the user a question, use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Fall back to numbered options in chat when no blocking tool is available. Ask one question at a time. Prefer concise single-select choices when natural options exist.
+When asking the user a question, use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Fall back to numbered options in chat when no blocking tool is available. Ask one question at a time.
 
 ## Procedure
 
-This skill follows the standard sf-compound-engineering execution discipline:
-
-1. **Understand the input** — read the `<feature_description>` block above and any referenced files, plans, or issues.
-2. **Plan a small set of phases** — break the work into 2-5 ordered steps that an implementer (or another skill) can verify.
-3. **Apply the Salesforce Angle notes above** — these encode the platform-specific considerations (governor limits, sharing context, deploy ordering, FLS, metadata semantics) that distinguish this skill from generic counterparts.
-4. **Use Salesforce-aware contexts and commands** — file paths under `force-app/main/default/...`, test commands like `sf apex run test`, deploy commands like `sf project deploy validate` and `sf project deploy start`, query the org with `sf data query` when state inspection is needed.
-5. **Surface decisions back to the user** — when a step requires a choice that materially affects scope or risk, ask using the platform's blocking question tool rather than guessing.
+1. **Understand the input** — read the `<feature_description>` block and any referenced files, plans, or issues. If rewriting an existing PR, fetch its current body first.
+2. **Map scope** — Salesforce file types, gov/sharing/integration risk, and (when already known) program placement.
+3. **Compose title and body** — value-first summary; then deploy plan, test plan, and risk callouts when the change warrants them. Include validation notes for observable behavior; never label test output as "Demo" or "Screenshots."
+4. **Pre-apply audit** — every material claim in the body must be checkable from the diff or cited evidence; drop inventable series language and unverifiable metrics.
+5. **Apply or print** — `gh pr create` / `gh pr edit` in full workflow; print only in description-only mode.
 
 ## Related
 
-- Salesforce knowledge: `docs/solutions/` (search via the `sf-learnings-researcher` agent).
-- Plugin conventions: see `CLAUDE.md` for frontmatter, naming, and protected-artifact rules.
+- Commit conventions: `../commit/guide.md`
+- Ship + babysit handoff: `../pr/guide.md`

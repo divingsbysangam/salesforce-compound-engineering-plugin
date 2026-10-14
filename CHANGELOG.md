@@ -13,6 +13,17 @@
 
 ### Changed
 
+- **Ship babysit reliability.** Draft auto-handoffs stop without superseding an existing watch; ready reports open with a fixed status line plus a remote-record run recap; interactive watches drain review while fork CI awaits approval; dispatched bot comments no longer re-open on self-edits; managed-stack runs take an explicit `posture:target|stack-ready|stack-land`.
+- **PR completion gate.** `sf-ship mode:pr` is not done until babysit owns follow-on (or an explicit skip); drafts skip auto-babysit unless forced with a watch-mode token.
+- **Commit / PR description lean protocol.** Named-file staging, logical commits, program-altitude framing for multi-PR series already in context, Salesforce deploy/test/risk sections.
+- **Handoff create/resume.** Status-first bodies with named pointers; resume recommends from continuity reason without inventing fake choice menus.
+- **Work dispatch.** One implementation unit per worker handle; retire after integrate.
+- **Explain scout degradation.** Non-capacity launch failures run the scout inline with disclosure.
+- **Doc-review decisions.** Same-turn finding context in interactive choice prompts.
+- **Compound refresh.** Falsifiable Keep/Update/Consolidate/Replace/Deprecate gates; never deletes protected `docs/solutions/` files.
+- **Simplify.** Leaner review dispatch with inline fallback; pre-release compatibility scaffolding and Salesforce vocabulary preserved.
+- **Scratch temps.** Per-run throwaways honor `TMPDIR`; durable babysit/handoff state stays under `/tmp/sfce-$(id -u)`.
+
 - `@salesforce/mcp` now starts with `--toolsets orgs,metadata,data,testing,code-analysis,lwc-experts` instead of `all` (60+ tool schemas in every session). `core` is always on.
 
 ## [4.0.0] - 2026-09-27
