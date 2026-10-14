@@ -1,7 +1,7 @@
 ---
 name: sf-ship
 description: "Commit, push, open or describe a PR, resolve review feedback, watch a PR until mergeable, write release notes, clean merged branches. Use for 'commit', 'open a PR', 'babysit this PR', 'fix review comments'."
-argument-hint: "mode:<commit|pr|pr-description|resolve-feedback|babysit|release-notes|clean-branches> [PR number or scope]"
+argument-hint: "mode:<commit|pr|pr-description|resolve-feedback|babysit|release-notes|clean-branches> [PR number or scope] [posture:target|stack-ready|stack-land]"
 ---
 
 # /sf-ship
