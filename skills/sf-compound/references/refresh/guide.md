@@ -39,6 +39,8 @@ If the arguments contain `mode:non-interactive` (or a deprecated `mode:headless`
 
 **Auto-deprecate gate** (all three must hold; otherwise recommend only): (1) implementation referenced by the doc is gone from the codebase, (2) the problem domain is also gone or clearly superseded by newer in-repo content, (3) inbound markdown citations are absent or purely decorative. Missing files alone prove the *implementation* is gone, not the problem — if the org still deals with the domain, that is Replace, not Deprecate.
 
+**Named guidance.** When a learning links a skill, a runbook, or a root instruction file, read that file. If it states a different order or a contradictory rule for the same situation, classify that contradiction. Do not treat the link as decoration. Frontmatter uses this repo's `schema.yaml` categories; do not rename them to match an older generic list.
+
 **Relocation four-condition gate** (non-interactive auto-move): frontmatter and directory disagree; content clearly says the directory is wrong; target category directory exists; inbound citations are in-repo and mechanically rewritable. Otherwise recommend.
 
 4. **Decide / Execute** — interactive asks only on genuine forks; non-interactive applies gates or stale-marks. Never restructure category trees as a side effect.

@@ -6,6 +6,10 @@ Review a Salesforce planning document (plan, brainstorm, requirements, `STRATEGY
 \#$ARGUMENTS
 \</feature\_description>
 
+## What to ask
+
+Ask only where a real choice remains: scope, sharing, a governor tradeoff, or a product call the document does not already settle. Batch the rest. Mechanical wording, a missing test name the verification section can absorb, and findings the text already decides are applied or noted, not a question per finding. When you do ask, put the finding in the same turn as the question: what is wrong, the proposed change, and what happens if it stays.
+
 ## Procedure
 
 1. Read the document and any files it references.

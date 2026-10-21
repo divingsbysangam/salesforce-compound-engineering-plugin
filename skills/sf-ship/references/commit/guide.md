@@ -41,7 +41,9 @@ Treat this as a snapshot. Re-read branch and staged set immediately before commi
 5. **Message** — subject is imperative and names the outcome (what is now possible or fixed), not the file list. Body only when motivation or trade-offs are not obvious from the subject.
 
    - Bad: `Update AccountTriggerHandler.cls` / `Add tests and fix stuff`
-   - Good: `fix(apex): bulk-safe Account owner reassignment`
+   - Good: `fix(apex): bulk-safe Account owner reassignment (U3)` when the plan names unit U3. Omit the unit id when none is known.
+
+   Honor `exclude:<paths>` when the caller passes it: those files stay uncommitted no matter what else changed, and the report names them. Pass the staged paths on `git commit --` as well, so a bare commit cannot take the whole index.
 
 6. **Stage and commit** — stage **named files only**. Prefer one shell call per commit group:
 

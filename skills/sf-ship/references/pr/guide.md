@@ -35,3 +35,7 @@ When asking the user a question, use the platform's blocking question tool (`Ask
 
 - Description framing: `../pr-description/guide.md`
 - Watch loop: `../babysit/guide.md`
+
+## Named parent
+
+When the user names a parent pull request or branch to stack on, root the new work there. Classify by pull request number when one exists. Record the work branch and its tip before any checkout, and return to them before building the layer. An unproven parent is a stop, not a guess: do not open a second stack beside the one the user named. A request that names a stack is the request; do not reread it as a single pull request with a custom base.

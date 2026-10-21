@@ -3,6 +3,8 @@
 Read with `sf-lfg/SKILL.md`. Procedure lives here.
 
 ## Stage 4: REVIEW
+This stage is the review receipt later ship steps require. Do not skip it and do not invent a second pass only to satisfy that gate.
+
 Review with parallel persona dispatch:
 
 1. Classify changed files.

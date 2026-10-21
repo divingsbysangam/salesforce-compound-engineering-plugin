@@ -67,4 +67,8 @@ You are planning a Salesforce implementation using parallel research personas. Y
 
 Create a specification and technical design for: `$ARGUMENTS.feature`
 
+Repo-local plan writes need a git checkout you can edit. If this session has no writable checkout, but the user named a repository and the harness exposes a remote repo-work surface, write the plan there. Otherwise report that no writable checkout is available and return the plan in chat.
+
+Leave the bootstrap when the problem frame is stated, the boundaries that matter are known, and success criteria or a verification strategy can be named — or when the user says to proceed. Confirm that frame before research when it is still open.
+
 ***

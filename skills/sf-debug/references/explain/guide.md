@@ -40,7 +40,8 @@ This skill writes an explainer under `<root>/explainers/` only when it archives 
 <!-- sf-docs-root:start -->
 **Resolve the SFCE artifact root `<root>` before composing any artifact path.**
 
-- **Read** `docs_root` from `<repo-root>/.compound-engineering/config.local.yaml`, then `config.yaml`; first non-empty value wins (`<repo-root>` = `git rev-parse --show-toplevel`). Unset -> `<root>` is `docs`, exactly as before.
+- **Read** `docs_root` from `<repo-root>/.compound-engineering/config.yaml` only (`<repo-root>` = `git rev-parse --show-toplevel`). Do not read `docs_root` from `config.local.yaml`. Unset -> `<root>` is `docs`, exactly as before.
+- **Ordinary keys** other than `docs_root`: read `<repo-root>/.compound-engineering/config.local.yaml`, then `config.yaml`. Missing files are skipped. The first active (non-comment) value wins. An empty scalar is unset and the next layer applies. A present list or map, including an empty one, wins as a whole.
 - **Validate** a set value: a repo-relative directory whose real, symlink-resolved path stays inside the repo and is neither the repo root nor under `.git/`. Otherwise stop with an error naming `docs_root` and the value -- never fall back to `docs`.
 - **Use** `<root>` as the sole artifact location: create it if absent, compose each path as `<root>/<subdir>` with this skill's own subdirectory, and never also read `docs`.
 <!-- sf-docs-root:end -->

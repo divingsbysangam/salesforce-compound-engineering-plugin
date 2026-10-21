@@ -29,3 +29,7 @@ When implementation is split across subagents or workers, bind each handle to **
 ## After dispatch
 
 Collect the results, **deduplicate** across personas (for review, apply `sf-review`'s confidence rubric), and spot-check before trusting. Isolated workers can each surface the same finding or reach a wrong conclusion in isolation — reconcile, don't concatenate.
+
+## Rejected dispatch
+
+A dispatch the harness rejects before the agent launches, because the call itself was malformed (unsupported option, schema validation error, incompatible argument), is a correctable invocation error. Change only the arguments the harness named, keep the prompt and scope, and retry once. A capacity or active-agent-limit rejection is not malformed: leave that dispatch queued and retry when a slot frees. A failure after the agent launched is not retried this way. Spend an inline fallback only when correction does not fix the failure, or the host has no subagent tool at all, and say so in one line.

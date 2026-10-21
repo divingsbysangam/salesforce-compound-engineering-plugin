@@ -37,3 +37,7 @@ When asking the user a question, use the platform's blocking question tool (`Ask
 
 - Commit conventions: `../commit/guide.md`
 - Ship + babysit handoff: `../pr/guide.md`
+
+## Scannable medium and large bodies
+
+The opening is one or two sentences: what is different now, and the gap it closes. A reviewer who stops there should know what the pull request does. Later sections exist only when each answers a remaining question (deploy plan, test plan, risk, a design choice). Cut a section that restates the diff. A before/after table is for observable behavior, not for a file list.
