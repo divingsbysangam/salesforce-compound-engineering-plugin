@@ -37,3 +37,7 @@ This skill follows the standard sf-compound-engineering execution discipline:
 * Salesforce knowledge: `docs/solutions/` (search via the `sf-learnings-researcher` agent).
 
 * Plugin conventions: see `CLAUDE.md` for frontmatter, naming, and protected-artifact rules.
+
+## Instruction prose
+
+When the file under review is a skill, a persona, or a project rule, a case the stated condition already decides is not a code change. Quote the condition and reply. Change the text only when the condition itself is wrong or missing, or the rule sits in the wrong file. On a second round against the same block, restate the goal, the done condition, and the safe direction once, instead of appending another special case. Apex, LWC, Flow, and metadata in the same pull request keep ordinary fixes.

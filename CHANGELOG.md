@@ -14,6 +14,14 @@
 ### Changed
 
 - **Ship babysit reliability.** Draft auto-handoffs stop without superseding an existing watch; ready reports open with a fixed status line plus a remote-record run recap; interactive watches drain review while fork CI awaits approval; dispatched bot comments no longer re-open on self-edits; managed-stack runs take an explicit `posture:target|stack-ready|stack-land`.
+- **Current-base readiness.** A pull request is ready only when the live base ref, the merge computation's base, and the test-merge parents agree. A historical base oid may differ after the base branch moves and does not by itself block. A private repository that returns HTTP 404 on the REST ref read falls back to non-interactive `git ls-remote` with the existing `gh` credential helper.
+- **Review before ship.** Standalone implementation is not done until `/sf-review` returns a completed pass or the summary carries an explicit skip phrase. A repo that already names its own ship process still uses that process, and still holds the receipt.
+- **Commit scope.** Subjects can carry a known plan unit id. `git commit` receives the same path list that was staged. Files that were already dirty stay out unless the user is asked.
+- **Plan outcomes.** Plans separate the outcome from the chosen approach, refuse to overwrite an existing plan path, and read product docs at the repo root when they exist.
+- **Judgment on prose.** Document review asks only where a real choice remains. Feedback on skill prose is answered by the condition the text already states.
+- **Ideation and strategy.** Ideation stays short for a tactical ask and widens only on an explicit go-deep request. Strategy questions open from what the repo already shows.
+- **Refresh, dispatch, and debug handoff.** Refresh compares a learning with the skill or instruction file it names. A malformed subagent call is corrected once before an inline fallback. A debug fix does not ask permission to ship its own files, and it does not publish files the user did not offer.
+- **Artifact root.** `docs_root` is read from the shared repo config only. Other ordinary keys still prefer the local override file.
 - **PR completion gate.** `sf-ship mode:pr` is not done until babysit owns follow-on (or an explicit skip); drafts skip auto-babysit unless forced with a watch-mode token.
 - **Commit / PR description lean protocol.** Named-file staging, logical commits, program-altitude framing for multi-PR series already in context, Salesforce deploy/test/risk sections.
 - **Handoff create/resume.** Status-first bodies with named pointers; resume recommends from continuity reason without inventing fake choice menus.

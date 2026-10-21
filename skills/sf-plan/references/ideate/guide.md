@@ -19,6 +19,16 @@ Generate 3-5 grounded ideas about a Salesforce topic with explicit warrants, the
 
 When asking the user a question, use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Fall back to numbered options in chat when no blocking tool is available. Ask one question at a time. Prefer concise single-select choices when natural options exist.
 
+## Scale the run
+
+Match depth to the ask. Do not run a broad research pass for a narrow request.
+
+- **Tactical** — the hint says polish, typo, quick wins, small fixes, or cleanup. Return a short list grounded in the current metadata and recent diffs. Skip a second critic.
+- **Default** — 3 to 5 grounded ideas with warrants, then one critique pass.
+- **Go deep** — the user asks to go deep or equivalent. Add a second critic and a wider read of `docs/solutions/` plus the metadata the ideas touch.
+
+A tactical signal does not apply when the user also asked to go deep. Deep wins.
+
 ## Procedure
 
 This skill follows the standard sf-compound-engineering execution discipline:

@@ -106,8 +106,11 @@ State lives at `<scratch-root>/sf-ship mode:babysit/<host>-<owner>-<repo>-<pr>/s
     "repository": "owner/repo",
     "ref": "main",
     "oid": "live-base-sha",
-    "pr_oid": "cached-pr-base-sha",
-    "freshness": "current"
+    "graphql_oid": "graphql-live-base-sha",
+    "historical_oid": "historical-pr-base-sha",
+    "merge_commit_oid": "generated-test-merge-sha",
+    "merge_parent_oids": ["live-base-sha", "head-sha"],
+    "identity": "current"
   },
   "base_ref_blocker": null,
   "branch_currency_state": {
@@ -161,7 +164,7 @@ The rule that makes ticks idempotent *and* crash-safe: **the snapshot never mark
 
 ## Merge-readiness and the settle window
 
-Do not re-derive "required checks" — GitHub already computes it. Use `mergeability_certain`, `mergeable == "MERGEABLE"`, and `merge_state_status == "CLEAN"` for GitHub gates, then require base-ref freshness, chain, and branch currency to be clear. A managed target is ready only when `target_needs_rebase == false`; true or unknown emits `stack_blocker`. Any current `base_ref_blocker` or `branch_currency_blocker` blocks ready until fresh remote evidence clears it. A manual dependency can be ready relative to its parent but is not independently landable while that parent remains open. `UNSTABLE` means mergeable but a non-required check is red; `BLOCKED` means a required gate is unmet. The snapshot also emits `has_failing_checks` so you can act on a red check even while `merge_state_status` is `UNSTABLE`.
+Do not re-derive required checks or required reviews — GitHub already computes them. Use `mergeability_certain`, `mergeable == "MERGEABLE"`, and `merge_state_status == "CLEAN"` for GitHub gates after the merge computation is bound to the current base, then require base identity, chain, and branch currency to be clear. A managed target is ready only when `target_needs_rebase == false`; true or unknown emits `stack_blocker`. Any current `base_ref_blocker` or `branch_currency_blocker` blocks ready until fresh remote evidence clears it. A manual dependency can be ready relative to its parent but is not independently landable while that parent remains open. `UNSTABLE` means mergeable but a non-required check is red; `BLOCKED` means a required gate is unmet. The snapshot also emits `has_failing_checks` so you can act on a red check even while `merge_state_status` is `UNSTABLE`.
 
 The settle window guards the most damaging false positive: "CI went green, told the user to merge, then feedback landed."
 
@@ -197,3 +200,9 @@ The one-time semantic-scope offer and draft/human boundaries live in `setup.md` 
 - **No push access / fork PR:** a delegated push will fail. Detect that from the delegated skill's result, report it, and stop — the loop cannot make progress it has no permission to make.
 - **CI that never completes:** a check stuck `IN_PROGRESS` for a long time will keep the loop from settling. When the invocation budget is reached — either the 8h **active** cap (`invocation_elapsed_seconds`, which excludes suspended time) or the 3-calendar-day **wall-clock backstop** (`invocation_wall_elapsed_seconds`) — hand back with the measured `invocation_elapsed_seconds` and the `max_runtime_ceiling` that fired; never substitute the age of persisted PR state or automatically start another budget.
 - **Rate limits / transient API errors:** honor the reset time, back off, resume. The claim→confirm protocol protects against replay.
+
+## Current-base identity
+
+The base-ref freshness bullet in the claim section names older fields. The sample JSON above is the contract: readiness uses `base.identity`.
+
+`historical_oid` may differ after the base branch moves and does not block by itself. `identity: current` requires the live ref, the GraphQL base, and, when GitHub reports a clean merge, the test-merge parents. A mismatch is `race`. A merge result that is not ready to trust is `mergeability-pending`. A failed read is `probe-error`. HTTP 404 on the REST ref read falls back to non-interactive `git ls-remote`. Older journals that still say `freshness: stale` keep blocking.

@@ -74,4 +74,6 @@ If a plan file path is provided, read it first. If a description is provided, im
 
 **Do not ask which branch to start on** when already on a meaningful feature branch. After implementation, invoke `/sf-review`. Critical/High security findings abort `/sf-lfg` (Principle 1) — they are not warnings.
 
+**Branch and pre-work scope.** If you are on the default branch, detached, or on a generated name, create a feature branch from the work and continue. Do not ask. Before the first edit, record `git status --short --untracked-files=all`. Later commits stay path-limited and leave those pre-existing dirty paths out unless a unit must edit one of them; then ask once, covering those files together.
+
 ***

@@ -12,6 +12,7 @@ For each section: ask the opening question, evaluate against the quality bar, pu
 4. **Keep answers to 1–3 sentences.** Longer usually hides vagueness. Ask them to pick the sentence that matters most.
 5. **Don't leak anti-pattern names.** Don't say "that's a vanity metric" — just ask the sharper question.
 6. **Honor the org context** set in Phase 0 (internal org / consulting engagement / ISV product). The examples below are tagged where the right answer differs by context.
+7. **Ground the question, not the answer.** When the repo already shows something that bears on a section (README, `STRATEGY.md` if this is an update, recent metadata, a named package), open with what it suggests and let the user confirm or correct it. Do not interview as if the checkout were empty. Recent commits help the tracks section only: offer them as a question, not as the track list.
 
 ---
 

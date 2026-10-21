@@ -58,3 +58,11 @@ Default is interactive. **`mode:pipeline`** (set by `sf-ship mode:babysit` or `s
 ## Interaction Method
 
 When asking the user a question, use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Fall back to numbered options in chat when no blocking tool is available. Ask one question at a time. Prefer concise single-select choices when natural options exist.
+
+## After the fix
+
+Record which files this fix owns, and which files were already dirty. Commit and publish only the fix-owned files.
+
+Do not ask whether to open a pull request when the branch contains only this fix. State the branch, the files, and that a pull request will be opened, then continue. If the branch also holds work this run did not create, commit the fix-owned files when they are separable and stop before push, naming the other files. If a fix-owned file was already dirty, ask once before including the user's edits.
+
+An instruction already in context that names how this repo ships (drafts only, commit only, review first) outranks that default. Do not widen the diff to the rest of the branch. `mode:pipeline` still follows `references/pipeline-mode.md` and does not open a pull request on its own.
