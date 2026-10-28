@@ -1,31 +1,25 @@
 # sf-work mode:optimize
 
-Systematic experimentation loop: measure → propose → run experiments in parallel → keep improvements → converge.
+Measure a named Salesforce cost, try variants, and keep a winner only when the measurement says so.
 
 <feature_description>
 #$ARGUMENTS
 </feature_description>
 
-## Salesforce Angle
+## What counts as a win
 
-- Salesforce metrics: Apex CPU time, heap size, SOQL count, DML count, query selectivity (filterable indexes hit), LWC bundle size, p95 page load.
-- Measurement scaffolding uses `Limits.getCpuTime()`, `Limits.getQueries()`, debug logs, the SOQL Query Plan tool, and the LWC Lighthouse profile.
+Name the metrics before the first run. Typical metrics: Apex CPU time, SOQL count, query rows, heap, DML count, LWC transfer size. A variant is a win when every named metric is no worse and at least one improves, against the same fixture and the same API version. A variant that improves CPU and regresses SOQL is not a single-objective discard: record both numbers and keep it only when the spec named a priority (for example "CPU first, SOQL must stay under 20"). Do not drop a multi-metric improvement because one unstated metric moved the wrong way, and do not keep a change that wins one metric by blowing another the spec named.
 
-## Interaction Method
+## Screen expensive runs
 
-When asking the user a question, use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Fall back to numbered options in chat when no blocking tool is available. Ask one question at a time. Prefer concise single-select choices when natural options exist.
+A locating measurement comes before a full test run or a deploy validate. Locating means the cheapest observation that says where the cost sits: `Limits.getCpuTime()`, `Limits.getQueries()`, `Limits.getHeapSize()`, and `Limits.getDmlStatements()` around the entry point, on a small fixture (one record and a 200-record list), or a Query Plan for the SOQL. If that measurement cannot be taken, stop and say what blocked it. Do not start a full `sf apex run test` or `sf project deploy validate` until a hypothesis is worth that cost. Skip a hypothesis whose expected benefit is unknown and a cheaper locating run could still decide it.
 
-## Procedure
+## Loop
 
-This skill follows the standard sf-compound-engineering execution discipline:
+1. Record the baseline on the fixture. The baseline is the scoring reference.
+2. List a few hypotheses from the locating numbers and the code. Each one names the edit, the metric it should move, and whether it needs a new dependency. A new dependency waits for an explicit yes.
+3. Run the cheap measurement on one hypothesis at a time. Keep the edit only when the win rule above holds. Revert the rest.
+4. Run the expensive confirmation (the affected Apex tests, including a 200-record case when the change is bulk) only on a kept edit.
+5. Stop when the next hypothesis cannot beat the kept baseline by a margin the fixture can show, or the user stops. Report baseline, kept change, and the metrics side by side.
 
-1. **Understand the input** — read the `<feature_description>` block above and any referenced files, plans, or issues.
-2. **Plan a small set of phases** — break the work into 2-5 ordered steps that an implementer (or another skill) can verify.
-3. **Apply the Salesforce Angle notes above** — these encode the platform-specific considerations (governor limits, sharing context, deploy ordering, FLS, metadata semantics) that distinguish this skill from generic counterparts.
-4. **Use Salesforce-aware contexts and commands** — file paths under `force-app/main/default/...`, test commands like `sf apex run test`, deploy commands like `sf project deploy validate` and `sf project deploy start`, query the org with `sf data query` when state inspection is needed.
-5. **Surface decisions back to the user** — when a step requires a choice that materially affects scope or risk, ask using the platform's blocking question tool rather than guessing.
-
-## Related
-
-- Salesforce knowledge: `docs/solutions/` (search via the `sf-learnings-researcher` agent).
-- Plugin conventions: see `CLAUDE.md` for frontmatter, naming, and protected-artifact rules.
+Governor-limit headroom is the point of the loop. A faster path that drops `with sharing`, `USER_MODE`, or bulkification is not a win.

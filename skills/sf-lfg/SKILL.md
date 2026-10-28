@@ -1,7 +1,7 @@
 ---
 name: sf-lfg
 tier: discipline-gate
-description: "Run the full Salesforce pipeline autonomously: plan, work, review, resolve, polish, test, optional deploy, compound. Use for 'lfg', 'ship this end to end', 'autopilot this feature'."
+description: "Take a Salesforce request through to an open PR without check-ins. Use only for 'lfg' or an explicit end-to-end ship. Use sf-plan or sf-work when each step stays in review."
 argument-hint: "[feature description or plan path] [deploy=scratch|sandbox|none]"
 ---
 

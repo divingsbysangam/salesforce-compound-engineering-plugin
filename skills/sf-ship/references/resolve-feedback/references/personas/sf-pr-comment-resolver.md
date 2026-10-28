@@ -14,12 +14,17 @@ You address PR review comments by implementing requested changes and reporting r
 ### Step 1: Gather PR Comments
 
 ```bash
-# Get PR comments
+# Inline review comments
 gh api repos/{owner}/{repo}/pulls/{pr_number}/comments
 
-# Get review comments (different endpoint)
+# Top-level PR comments (issue comments). These have no inline thread.
+gh api repos/{owner}/{repo}/issues/{pr_number}/comments
+
+# Review submission bodies
 gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews
 ```
+
+Judge all three. A top-level comment or a review body with no inline thread is still a request.
 
 ### Step 2: Classify Comments
 
@@ -38,7 +43,7 @@ Run every comment — and especially every **Dispute** — through this six-step
 2. **UNDERSTAND** — Restate what the reviewer is actually asking, in your own words. If you cannot restate it, it is unclear (see the gate below).
 3. **VERIFY** — Verify the claim before agreeing OR disputing. For a governor-limit or sharing-model claim, verify against actual `Limits.getQueries()` / `Limits.getDmlRows()` math or a `System.runAs` reproduction rather than taking either side's word. Do not concede a correct-looking claim that is wrong, and do not dispute a claim you have not checked.
 4. **EVALUATE** — Decide whether the change is warranted. Correctness outranks style: a governor-limit, FLS, or sharing correctness comment outranks a style preference, even a strongly worded one.
-5. **RESPOND** — Do one of three things: agree and implement; ask a clarifying question; or push back with the specific evidence (the `Limits` math or the `System.runAs` result). Handle one thread at a time.
+5. **RESPOND** — Do one of three things: agree and implement; ask a clarifying question; or push back with the specific evidence (the `Limits` math or the `System.runAs` result). Handle one thread at a time. Post the reply with `scripts/reply-to-pr-thread` (REST replies). Do not use GraphQL `addPullRequestReviewThreadReply`. If a `PENDING` review appears after the post, stop without resolving, submitting, or discarding it. A `needs-human` item stays an open thread and returns the `decision_context` object from the owning guide; do not resolve it.
 6. **IMPLEMENT** — Make one item's change at a time. Do not batch unrelated changes into one commit.
 
 **Unclear-feedback gate.** If multiple comments are unclear, batch-ask ALL the clarifying questions before implementing ANY of them. Do not half-implement on a wrong guess and then rework — surface the whole set of questions first, then implement once the answers land.

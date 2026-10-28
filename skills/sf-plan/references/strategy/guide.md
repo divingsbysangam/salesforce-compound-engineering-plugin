@@ -4,7 +4,7 @@
 
 > **Note: the current year is 2026.** Use this when dating the strategy document.
 
-`sf-plan mode:strategy` produces and maintains `STRATEGY.md` — a short, durable anchor that captures what the Salesforce program or product is, who it serves, how it succeeds, and where the team is investing. It lives at the repo root as a canonical file (peer of `README.md`). The loop skills (`sf-plan mode:ideate`, `sf-plan mode:brainstorm`, `sf-plan`) read it as grounding when it exists, so the autonomous middle of the pipeline is anchored to real direction rather than re-derived each run.
+`sf-plan mode:strategy` produces and maintains `STRATEGY.md` — the agreed shared project document for what the Salesforce program or product is, who it serves, how it succeeds, and where the team is investing. It lives at the repo root as a canonical file (peer of `README.md`). The loop skills (`sf-plan mode:ideate`, `sf-plan mode:brainstorm`, `sf-plan`) treat written sections as settled direction, not a private draft, so the autonomous middle of the pipeline is anchored to an agreement rather than re-derived each run. An update preserves every section the user did not reopen.
 
 The document is short and structured on purpose. Good answers to a handful of sharp questions beat any amount of prose. This skill asks those questions, pushes back on weak answers, and writes the doc.
 

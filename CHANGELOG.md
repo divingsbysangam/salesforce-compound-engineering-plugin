@@ -8,11 +8,20 @@
 
 ### Added
 
+- **Small-work planning.** `/sf-plan` answers a one-file Salesforce change in chat and writes `docs/plans/` only when the work needs a durable spec. Brainstorms ask only what the repo and `STRATEGY.md` cannot already settle.
+- **PR reply script.** `sf-ship mode:resolve-feedback` posts thread replies through the REST replies endpoint and stops if a pending review appears. Top-level PR comments and review bodies are judged with inline threads.
+- **Local preview port.** `/sf-review mode:browser` resolves the dev-server port with `scripts/resolve-port.sh` instead of a hand-copied shell line.
 - **Project context at session start.** Inside a Salesforce DX project, `scripts/session-start` appends up to ~500 bytes of facts: project name, API version, package directories, default org and whether it is scratch/sandbox/production, source counts, and the trigger framework detected. Local files only; no network, no tokens read into output.
 - **`/sf-know topic:org-context`.** One table of where to get org facts: Salesforce's `salesforce-development` plugin tools when loaded (`validate_soql`, `apex.diagnostics`, `get_metadata_type_fields`, `execute_metadata_action`), then `@salesforce/mcp` (`run_soql_query`, `run_apex_test`), then the `sf` CLI. `sf-generate`, the review lens contract, `sf-plan`, and `sf-deploy mode:setup` now use it.
 
 ### Changed
 
+- **Babysit stacks.** `stack-ready` walks to the next layer once the current one has no actionable backlog, even while CI is still running. Landing still waits until the layer is settled. An unasked merge of the base into the PR head is reported and left in place; the watch does not treat the restarted checks as a new code failure, and it does not merge the base locally.
+- **Review dispatch.** A lens subagent receives file paths or inline content, not both. Document review raises a product finding only when the doc stakes an unsettled product position.
+- **PR descriptions.** The scope map is written from the full commit range before the opening, and the opening is checked against that map.
+- **Handoffs.** A handoff says which decisions were the user's and which were the writing agent's.
+- **Optimization.** A kept variant must not regress a named Salesforce limit, and a full Apex test run waits until a cheap `Limits` measurement says the hypothesis is worth it.
+- **Skill descriptions** name the sibling skill that owns the adjacent job.
 - **Ship babysit reliability.** Draft auto-handoffs stop without superseding an existing watch; ready reports open with a fixed status line plus a remote-record run recap; interactive watches drain review while fork CI awaits approval; dispatched bot comments no longer re-open on self-edits; managed-stack runs take an explicit `posture:target|stack-ready|stack-land`.
 - **Current-base readiness.** A pull request is ready only when the live base ref, the merge computation's base, and the test-merge parents agree. A historical base oid may differ after the base branch moves and does not by itself block. A private repository that returns HTTP 404 on the REST ref read falls back to non-interactive `git ls-remote` with the existing `gh` credential helper.
 - **Review before ship.** Standalone implementation is not done until `/sf-review` returns a completed pass or the summary carries an explicit skip phrase. A repo that already names its own ship process still uses that process, and still holds the receipt.

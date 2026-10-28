@@ -1,7 +1,7 @@
 ---
 name: sf-review
 tier: discipline-gate
-description: "Review Salesforce code or docs: governor limits, bulkification, CRUD/FLS, sharing, LWC, Flow, integrations; UI polish, SLDS 2, browser tests. Use for 'review this', 'security review', 'review the plan'."
+description: "Review a Salesforce diff or planning doc for governor limits, CRUD/FLS, sharing, LWC, and Flow. Use for 'review this'. Use sf-ship to judge comments already left on a PR."
 argument-hint: "[mode:doc|polish|slds2|browser] [path, PR number, or depth fast|thorough|comprehensive]"
 ---
 

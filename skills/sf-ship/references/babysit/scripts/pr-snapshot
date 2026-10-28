@@ -347,6 +347,7 @@ query($owner:String!,$repo:String!,$pr:Int!){
   repository(owner:$owner,name:$repo){ pullRequest(number:$pr){
     mergeable mergeStateStatus headRefOid baseRefOid baseRefName viewerCanUpdateBranch
     baseRef { target { oid } }
+    headRef { target { ... on Commit { parents(first:2) { nodes { oid } } } } }
     potentialMergeCommit { oid parents(first:2) { nodes { oid } } }
   } }
 }"""
@@ -453,6 +454,78 @@ def fetch_base_ref(owner, name, ref, merge_identity, host=None):
 
     base["identity"] = BASE_REF_CURRENT
     return base
+
+
+def _head_parents(merge_identity):
+    """Parent OIDs of the PR head, or None when the merge-identity read omitted them.
+
+    A two-parent head whose one parent is the base tip, produced without a claimed
+    currency item, is a base merge nobody asked for.
+    """
+    target = ((merge_identity or {}).get("headRef") or {}).get("target") or {}
+    nodes = (target.get("parents") or {}).get("nodes") if isinstance(target, dict) else None
+    if not isinstance(nodes, list):
+        return None
+    oids = []
+    for node in nodes:
+        oid = node.get("oid") if isinstance(node, dict) else None
+        if _valid_oid(oid):
+            oids.append(str(oid).lower())
+    return oids
+
+
+def _classify_unrequested_base_merge(state, cur, head, head_changed, now):
+    """Head-scoped fact: this head is a two-parent merge of the base tip that no claimed
+    currency item produced. The head already present on the first snapshot is the watch
+    baseline, not a candidate. A head whose parents could not be read stays pending.
+    """
+    prior_base = state.get("base") if isinstance(state.get("base"), dict) else {}
+    persisted = state.get("unrequested_base_merge")
+    pending = state.get("unrequested_base_merge_pending")
+    should_evaluate = bool(head_changed) or pending == head
+    if not should_evaluate:
+        if isinstance(persisted, dict) and persisted.get("head") == head:
+            return persisted
+        return None
+
+    state["unrequested_base_merge"] = None
+    if "head_parents" not in cur:
+        state["unrequested_base_merge_pending"] = None
+        return None
+    parents = cur.get("head_parents")
+    if parents is None:
+        state["unrequested_base_merge_pending"] = head
+        return None
+    state["unrequested_base_merge_pending"] = None
+    if not isinstance(parents, list) or len(parents) != 2:
+        return None
+    base = cur.get("base") if isinstance(cur.get("base"), dict) else {}
+    base_oids = set()
+    for source in (base, prior_base):
+        if not isinstance(source, dict):
+            continue
+        for key in ("oid", "graphql_oid", "historical_oid"):
+            oid = source.get(key)
+            if _valid_oid(oid):
+                base_oids.add(str(oid).lower())
+    normalized = [str(parent).lower() for parent in parents if _valid_oid(parent)]
+    if len(normalized) != 2:
+        return None
+    base_parent = next((parent for parent in normalized if parent in base_oids), None)
+    if base_parent is None:
+        return None
+    other_parents = {parent for parent in normalized if parent != base_parent}
+    currency = _load_branch_currency_state(state)
+    for item in (currency.get("items") or {}).values():
+        if not isinstance(item, dict) or not item.get("mutation_consumed"):
+            continue
+        item_head = str(item.get("head_sha") or "").lower()
+        item_base = str(item.get("base_oid") or "").lower()
+        if item_head in other_parents and item_base == base_parent:
+            return None
+    fact = {"head": head, "base_parent": base_parent, "observed_at": _iso(now)}
+    state["unrequested_base_merge"] = fact
+    return fact
 
 
 def _base_ref_blocker(base):
@@ -855,6 +928,7 @@ def fetch(pr, repo):
         # resolver's judgment; this deterministic layer keeps every non-empty non-author body.
         "feedback": _extract_feedback(v),
         "awaiting_approval": fetch_awaiting_approval(owner, name, head, host),
+        "head_parents": _head_parents(merge_identity),
         "pr_chain": pr_chain,
     }
 
@@ -1585,6 +1659,8 @@ def diff(state, cur, now=None, advance_trajectory=True):
         state["blocked_external_first_seen_at"] = None
         state["blocked_external_review_last_activity_at"] = None
     state["pr_chain"] = cur.get("pr_chain") or _default_pr_chain()
+    unrequested_base_merge = _classify_unrequested_base_merge(
+        state, cur, head, head_changed, now)
     state["base"] = cur.get("base")
     branch_currency = _apply_branch_currency(state, cur, head, head_changed, now)
 
@@ -1647,6 +1723,7 @@ def diff(state, cur, now=None, advance_trajectory=True):
             "disposition": branch_currency.get("disposition"),
             "recovery_state": branch_currency.get("recovery_state"),
         } if branch_currency else None),
+        "unrequested_base_merge": unrequested_base_merge,
         "url": cur["url"],
         "has_failing_checks": has_failing,
         "checks_terminal": checks_terminal,
@@ -1953,7 +2030,11 @@ def _wake_reason(a, settle_seconds):
     if a.get("pr_state") in ("MERGED", "CLOSED"):
         return "terminal"
     c = a.get("counts") or {}
-    if c.get("threads", 0) or c.get("ci", 0):
+    if c.get("threads", 0):
+        return "actionable"
+    if a.get("unrequested_base_merge"):
+        return "unrequested-base-merge"
+    if c.get("ci", 0):
         return "actionable"
     if c.get("comments", 0):
         # Non-thread bodies are feedback candidates, not a deterministic conclusion that work is
@@ -2000,6 +2081,7 @@ def _wake_reason(a, settle_seconds):
             and a.get("checks_terminal") and not a.get("has_failing_checks")
             and a.get("checks_awaiting_approval", 0) == 0
             and a.get("branch_currency_blocker") is None
+            and not a.get("unrequested_base_merge")
             and not review_blocking
             and a.get("quiet_seconds", 0) >= settle_seconds):
         return "merge-ready"
@@ -2036,6 +2118,9 @@ def _blocker_sig(a):
         sig.add(f"__stack__:{a['stack_blocker']}")
     if a.get("base_ref_blocker"):
         sig.add(f"__base_ref__:{a['base_ref_blocker']}")
+    unrequested = a.get("unrequested_base_merge")
+    if isinstance(unrequested, dict) and unrequested.get("head"):
+        sig.add(("unrequested-base-merge", unrequested.get("head")))
     branch_currency = a.get("branch_currency") or {}
     currency_disposition = branch_currency.get("disposition")
     if (currency_disposition in (CURRENCY_CONFIRMED, DISPOSITION_NEEDS_HUMAN)
@@ -2301,7 +2386,7 @@ def cmd_watch(args):
                 reason == "blocked-external"
                 and actionable.get("blocked_external_review_moved_this_tick"))
             if (reason in ("needs-human", "blocked-failing", "blocked-external",
-                           "stack-blocked", "base-ref-blocked")
+                           "stack-blocked", "base-ref-blocked", "unrequested-base-merge")
                     and not approval_review_moved and _blocker_sig(actionable) <= armed):
                 reason = None   # already-surfaced residual — keep watching, do not re-wake or terminate
             if reason:

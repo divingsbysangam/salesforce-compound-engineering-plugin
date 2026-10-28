@@ -22,15 +22,44 @@ Dispatch sub-agents to evaluate each review thread, classify validity, implement
 
 When asking the user a question, use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Fall back to numbered options in chat when no blocking tool is available. Ask one question at a time. Prefer concise single-select choices when natural options exist.
 
+## What to judge
+
+Judge every open request on the PR, not only inline review threads:
+
+- inline comments from `gh api repos/{owner}/{repo}/pulls/{pr}/comments`
+- top-level comments from `gh api repos/{owner}/{repo}/issues/{pr}/comments`
+- review submission bodies from `gh api repos/{owner}/{repo}/pulls/{pr}/reviews`
+
+A top-level "please rename this field" or a Changes-Requested body with no inline thread is still feedback. Empty bodies and this run's own replies are not new requests.
+
+## Replies stay out of pending reviews
+
+Post a thread reply with `scripts/reply-to-pr-thread` (REST `POST .../pulls/{pr}/comments/{id}/replies`, body on stdin). Do not call GraphQL `addPullRequestReviewThreadReply`: that mutation can attach the reply to a pending review and report success before anyone can see it. If a review with state `PENDING` exists after the post, stop. Do not resolve the thread, do not submit the review, and do not discard it.
+
+## needs-human
+
+Fix a correctness comment (governor limits, CRUD/FLS, sharing, bulk) when the evidence agrees. A product call, a sharing-model change, a data migration, or a reversal of behavior the PR set out to ship is `needs-human`. Compose this object once and do not summarize it away:
+
+```yaml
+type: needs-human
+sources: [{ kind: thread|comment|review, id: "...", url: "..." }]
+decision_context:
+  quoted_feedback: "..."
+  investigation: "..."
+  decision_reason: "..."
+  options: [{ option: "...", tradeoff: "..." }]
+  recommendation: "..."
+thread_urls: []
+```
+
+Leave every covered thread open. Under `mode:pipeline`, return that object to the caller. The posted reply carries the decision context; it is not a completed handoff by itself, and it must not live only inside a pending review.
+
 ## Procedure
 
-This skill follows the standard sf-compound-engineering execution discipline:
-
-1. **Understand the input** — read the `<feature_description>` block above and any referenced files, plans, or issues.
-2. **Plan a small set of phases** — break the work into 2-5 ordered steps that an implementer (or another skill) can verify.
-3. **Apply the Salesforce Angle notes above** — these encode the platform-specific considerations (governor limits, sharing context, deploy ordering, FLS, metadata semantics) that distinguish this skill from generic counterparts.
-4. **Use Salesforce-aware contexts and commands** — file paths under `force-app/main/default/...`, test commands like `sf apex run test`, deploy commands like `sf project deploy validate` and `sf project deploy start`, query the org with `sf data query` when state inspection is needed.
-5. **Surface decisions back to the user** — when a step requires a choice that materially affects scope or risk, ask using the platform's blocking question tool rather than guessing.
+1. Fetch inline threads, top-level comments, and review bodies.
+2. Classify each item: fix, reply, or `needs-human`.
+3. Apply Salesforce fixes one item at a time and re-run the affected Apex tests (`sf apex run test`) when the fix touches a class, trigger, or flow.
+4. Reply through `scripts/reply-to-pr-thread`. Resolve a thread only after a submitted reply is visible and the item is not `needs-human`.
 
 ## Related
 

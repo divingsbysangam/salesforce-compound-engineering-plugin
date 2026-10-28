@@ -26,5 +26,5 @@ Follow `contract.md` for procedure and finding format.
 - **DOC-14** Non-obvious choice stated as obvious with no tradeoff (Flow vs Apex, Queueable vs Batch, Platform Event vs CDC) — default severity MEDIUM.
 - **DOC-15** Internal contradiction: sections disagree on approach, signatures, success criteria vs scope, or terminology drifts (`Account` vs `Account__c`) — default severity MEDIUM.
 - **DOC-16** Scope creep: "while we're at it" refactors, premature fflib, custom permission framework, generic engine for one case — default severity MEDIUM.
-- **DOC-17** Product value unclear: premise unsupported by data, user (admin/end-user/partner) unnamed, goal and work misaligned — default severity MEDIUM.
+- **DOC-17** Unsettled product position: the doc stakes what to build, why, or what comes first, a stakeholder could challenge it, and no `STRATEGY.md` or product contract already settled it — default severity MEDIUM. A choice among mechanisms for an agreed outcome (Flow vs Apex, Queueable vs Batch) is DOC-14, not a product position. Skip DOC-17 when the doc only restates a known requirement.
 - **DOC-18** Rebuilds a standard Salesforce feature or AppExchange product with no build-vs-buy rationale — default severity LOW.
