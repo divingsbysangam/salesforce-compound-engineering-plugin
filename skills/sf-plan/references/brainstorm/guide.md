@@ -9,11 +9,11 @@
 ## Copy-paste-to-agent
 
 ```
-Run a Salesforce-aware brainstorm to refine a feature idea before planning. Ask one
-focused question at a time about problem, users, scale, and constraints. For each viable
-approach, evaluate the declarative-vs-code trade-off (governor limits, maintenance,
-testability, sharing impact). Save the result to docs/brainstorms/YYYY-MM-DD-{slug}.md as
-input to /sf-plan — this is pre-spec exploration, not a spec.
+Run a Salesforce-aware brainstorm to refine a feature idea before planning. Read the
+repo and STRATEGY.md before asking anything. Ask only a decision those sources cannot
+settle: org shape, sharing, volume, or a product call. Small, well-bounded work ends as
+a chat paragraph. Write docs/brainstorms/ only when a later plan needs the decision by
+id, or the user asks for a file. This is pre-spec exploration, not a spec.
 ```
 
 \<feature\_description>
@@ -36,8 +36,11 @@ Explore and refine: `$ARGUMENTS.idea`
 
 ## Phase 0: Assess Clarity
 
+Read `sfdx-project.json`, the named metadata, and repo-root `STRATEGY.md` when it exists before asking. Ask only a decision that material cannot settle: who the user is when the repo does not say, expected volume, sharing or CRUD/FLS the org shape does not already fix, or a product call about what to build. Do not ask which files exist, what the package directories are, or which approach `STRATEGY.md` already chose.
+
 Rate the idea's clarity:
 
+* **Lightweight**: small, well-bounded, low ambiguity → a chat paragraph (what is being built, the one or two decisions, the next `/sf-plan` prompt). No file, no research dispatch, no approach matrix. A file is earned only when a downstream plan needs the decision by id, or the user asks for one. When the tier is uncertain, take the heavier one.
 * **Clear**: User knows what they want, specific requirements → Move fast through Phase 1
 
 * **Exploratory**: User has a general direction but needs options → Spend time in Phase 2
@@ -96,7 +99,9 @@ If approaches are unclear, dispatch research personas:
 
 ## Phase 3: Capture
 
-Save the brainstorm to `docs/brainstorms/YYYY-MM-DD-{topic-slug}.md`:
+Lightweight work stops after the chat paragraph in Phase 0. Do not write a file for it.
+
+Otherwise save the brainstorm to `docs/brainstorms/YYYY-MM-DD-{topic-slug}.md`:
 
 ```markdown
 ---
@@ -144,7 +149,9 @@ participants: [user, claude]
 
 ## Phase 4: Handoff
 
-When brainstorm is complete:
+When the result is only the chat paragraph, the handoff is that paragraph plus the `/sf-plan` prompt. Do not invent a file path.
+
+When a file was written:
 
 ```
 Brainstorm captured: docs/brainstorms/YYYY-MM-DD-{topic}.md

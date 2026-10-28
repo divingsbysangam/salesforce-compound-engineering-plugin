@@ -1,6 +1,6 @@
 ---
 name: sf-compound
-description: "Capture a solved Salesforce problem in docs/solutions/ and refresh stale learnings. Use for 'compound this', 'document this fix', 'remember this', 'refresh learnings'."
+description: "Capture a solved Salesforce problem in docs/solutions/, or refresh stale learnings. Use for 'compound this'. Skip a routine fix whose code and tests already explain the lesson."
 argument-hint: "[mode:refresh|doc-format] [scope; defaults to recent work]"
 ---
 

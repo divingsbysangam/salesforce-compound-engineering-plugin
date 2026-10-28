@@ -18,6 +18,7 @@ Procedure lives in sibling files, not only in this orchestrator:
 - **Output Format** — read `references/output-format.md` before acting on this section.
 - **When to Use** — read `references/when-to-use.md` before acting on this section.
 - **Skill Structure** — read `references/skill-structure.md` before acting on this section.
+- **Size and structure** — read `references/size-and-structure.md` before shortening or splitting a skill.
 - **Skill tiers (Protocol A/B)** — read `references/skill-tiers-protocol-a-b.md` before acting on this section.
 - **Content quality — pressure-testing discipline-gate skills** — read `references/content-quality-pressure-testing-discipline-gate-skills.md` before acting on this section.
 - **After Creating** — read `references/after-creating.md` before acting on this section.

@@ -50,15 +50,10 @@ Determine the preferred port using this priority:
 5. **Default** — fall back to `3000`.
 
 ```bash
-# If your in-context project instructions state the dev-server port, set EXPLICIT_PORT first.
-PORT="${EXPLICIT_PORT:-}"
-if [ -z "$PORT" ]; then
-  PORT=$(grep -Eo '\-\-port[= ]+[0-9]{4,5}' package.json 2>/dev/null | grep -Eo '[0-9]{4,5}' | head -1)
-fi
-if [ -z "$PORT" ]; then
-  PORT=$(grep -h '^PORT=' .env .env.local .env.development 2>/dev/null | tail -1 | cut -d= -f2)
-fi
-PORT="${PORT:-3000}"
+# If your in-context project instructions state the dev-server port, pass it.
+# Do not transcribe a port out of prose. The script prints the port alone.
+SCRIPT="<this skill's scripts/resolve-port.sh>"
+PORT="$("$SCRIPT" ${EXPLICIT_PORT:-})"
 echo "Preferred dev server port: $PORT"
 ```
 

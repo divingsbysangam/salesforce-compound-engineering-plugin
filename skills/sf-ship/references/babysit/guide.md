@@ -13,8 +13,8 @@ Hold exactly one posture for the run. Carrier: `posture:target|stack-ready|stack
 | Posture | Behavior |
 | --- | --- |
 | `target` | Only the named PR. Stop at looks-ready. May offer stack-wide once when a confirmed multi-layer managed stack needs work; decline keeps the target-local stop. Never merges. |
-| `stack-ready` | After the active layer settles, automatically continue to the next open non-draft upstack layer that needs work. Never merges. Persist for the run; do not re-ask each layer. |
-| `stack-land` | Like `stack-ready` for traversal. Selecting or handing off `posture:stack-land` **is** run-level land authorization. After settle, merge the **bottom-most open settled** PR via `gh stack merge` + `gh stack sync`, then continue. |
+| `stack-ready` | Once the active layer is quiescent — zero actionable backlog, no standing residual, no delegate in flight — continue to the next open non-draft upstack layer that needs work, even while that layer's CI is still running. Never merges. Landing still waits for settled. Persist for the run; do not re-ask each layer. |
+| `stack-land` | Like `stack-ready` for traversal. Selecting or handing off `posture:stack-land` **is** run-level land authorization. Landing still requires settled, not merely quiescent: merge the **bottom-most open settled** PR via `gh stack merge` + `gh stack sync`, then continue. |
 
 **Selection:** named one PR / no stack language → default `target`, but if confirmed multi-layer managed stack ask once (only this PR vs whole stack to ready). Intent to own/finish the stack → `stack-ready`. Intent to land/merge when green → `stack-land`. Prefer intent over keyword regex. An explicit "babysit the managed stack" request selects `stack-ready` (or `stack-land` when land intent is also clear). In `mode:pipeline`, use only the posture/scope already supplied on the invocation — never ask.
 

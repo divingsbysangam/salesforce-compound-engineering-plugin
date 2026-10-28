@@ -1,7 +1,7 @@
 ---
 name: sf-debug
 tier: discipline-gate
-description: "Find root causes of Salesforce bugs and explain code: failing tests, governor-limit errors, deploy failures, LWC errors, sharing issues, Agentforce traces. Use for 'debug', 'why is this failing', 'explain this'."
+description: "Diagnose a Salesforce failure or explain code: tests, governor limits, deploys, LWC, sharing. Use for 'debug' or 'why is this failing'. Use sf-work when the change is already known."
 argument-hint: "[mode:explain|agent-observe] [error, test path, log, or subject]"
 ---
 
@@ -41,7 +41,7 @@ Procedure lives in sibling files, not only in this orchestrator:
 
 ## Mode
 
-Default is interactive. **`mode:pipeline`** (set by `sf-ship mode:babysit` or `sf-lfg`) is non-interactive: never ask the user; fix only convergent bugs; return the structured JSON in `references/pipeline-mode.md`. Status spellings are fixed: `fixed-and-pushed | fixed-not-pushed | diagnosed-no-fix | flaky-infra | needs-human`.
+Default is interactive. **`mode:pipeline`** (set by `sf-ship mode:babysit` or `sf-lfg`) is non-interactive: never ask the user; fix only convergent bugs; return the structured JSON in `references/pipeline-mode.md`. Status spellings are fixed: `fixed-and-pushed | fixed-not-pushed | diagnosed-no-fix | flaky-infra | needs-human`. Those spellings stay in this file. A caller branches on them; a reference that restates them does not replace this line. `fixed-not-pushed` means the fix is committed locally and the push did not happen — never report that as `fixed-and-pushed` or as `diagnosed-no-fix`.
 
 ## Salesforce Angle
 

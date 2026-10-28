@@ -6,6 +6,8 @@ Review lenses are checklists at `references/lenses/<name>.md`, not registered ag
 
 Each subagent gets: the lens file path, `references/lenses/contract.md`, and the **list of changed file paths** (not their contents). It returns finding lines per the contract.
 
+Pass paths only. Do not also paste the diff or file bodies into the same prompt. Inline content is authoritative when a path cannot be given; a path is not content until the lens reads the file. Sending both makes the reviewer score the same change twice and disagree with itself.
+
 ## Which lenses run
 
 Pick lenses from the file classes found in Step 1. A lens runs once, over all of its files.

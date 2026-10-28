@@ -1,7 +1,7 @@
 ---
 name: sf-work
 tier: discipline-gate
-description: "Implement Salesforce work from a plan or prompt (Apex, LWC, Flow, metadata). Use for 'build this', 'implement the plan', 'simplify', 'optimize CPU/SOQL', worktrees, todos, handoff."
+description: "Implement Salesforce work from a plan or a concrete prompt (Apex, LWC, Flow, metadata). Use for 'build this'. Use sf-plan when the approach is still open; use sf-debug for an open bug."
 argument-hint: "[mode:simplify|optimize|worktree|todos|handoff] [plan path or feature description]"
 ---
 
@@ -24,6 +24,14 @@ First argument `mode:<name>` selects a mode; everything after it passes to that 
 > **Persona dispatch.** This skill dispatches personas as isolated subagents — see `references/dispatch/guide.md` for the mechanics (isolated subagents, same-response parallelism, same-file-conflict check). Review personas are referenced from `../sf-review/references/personas/`, research personas from `../sf-plan/references/personas/`.
 
 > **Principles enforced:** 1 (preserve the quality ceiling), 2 (verifiability), 3 (jagged intelligence). See `PRINCIPLES.md`.
+
+## How much procedure the prompt earns
+
+Classify a bare prompt before the research reads. When the tier is uncertain, take the fuller route. A prompt this session's `sf-plan` already sized is implemented, not re-planned. A decision the user would weigh stops before the write and asks; it does not by itself route back to `sf-plan`.
+
+- **Trivial** — one or two files and no behavior change (a label, a comment, a rename). Skip the research dispatch and the task list. Still run the analyzer or test that covers the file. Do not open a PR watch unless the user asked to ship.
+- **Small or medium** — clear scope. Build a task list from discovery, then the reads below.
+- **Large** — cross-object, a sharing-model change, many metadata types, auth, or a data migration. Unless this session already has a plan for it, say it would benefit from `sf-plan` and honor the choice. When proceeding, build the task list and continue.
 
 ## Required reads
 

@@ -1,6 +1,6 @@
 ---
 name: sf-ship
-description: "Commit, push, open or describe a PR, resolve review feedback, watch a PR until mergeable, write release notes, clean merged branches. Use for 'commit', 'open a PR', 'babysit this PR', 'fix review comments'."
+description: "Commit, open or describe a PR, judge review feedback, or watch a PR until it looks mergeable. Use for 'open a PR' or 'babysit this PR'. Use sf-review before feedback exists."
 argument-hint: "mode:<commit|pr|pr-description|resolve-feedback|babysit|release-notes|clean-branches> [PR number or scope] [posture:target|stack-ready|stack-land]"
 ---
 

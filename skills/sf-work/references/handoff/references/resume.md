@@ -26,6 +26,8 @@ Read the selected source directly. For a long or structured source, inspect the 
 
 Assess whether the source contains enough concrete continuity context to orient the session. Judge sufficiency from its contents, not its author, format, location, ownership, or metadata contract. If it is too sparse, ambiguous, or unrelated to recover a meaningful objective or current state, say what context is missing and ask the user to supplement it or choose another source. Do not invent a forced resume; stop without acting.
 
+Intent and decisions in the source carry the user's weight only where the source attributes them to the user. The rest is the writer's own reading, whoever wrote it. Check those with the current user where acting on them would commit the user to something hard to walk back.
+
 The current user, the current project's active instructions, and verified current state are authoritative. Check only material claims that can be verified read-only within the user's present scope. If the handoff is stale, the worktree is gone, or current files disagree, name the mismatch and distinguish durable state from missing machine-local state.
 
 When the source is sufficient, return a concise orientation covering the recovered objective, meaningful progress, decisions, constraints, current state, unfinished work, and material drift. Then recommend how to continue from this handoff's actual continuity reason — research parked mid-thread, a pending decision, unfinished planning, ready implementation, a debug pause, review feedback, a no-repo conversation, or another shape evidenced by the source. Do not default to an implementation-resume menu. Name relevant installed skills only when they fit that reason.
