@@ -20,7 +20,7 @@ Dispatch sub-agents to evaluate each review thread, classify validity, implement
 
 ## Interaction Method
 
-When asking the user a question, use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Fall back to numbered options in chat when no blocking tool is available. Ask one question at a time. Prefer concise single-select choices when natural options exist.
+When asking the user a question, use the host's blocking question tool already in the current tool list (match by capability, not by a host-specific name). Presence in that list is proof the tool exists; never call a question tool to discover it. Fall back to numbered options in chat when no blocking tool is available. Ask one question at a time. Prefer concise single-select choices when natural options exist.
 
 ## What to judge
 
@@ -60,6 +60,7 @@ Leave every covered thread open. Under `mode:pipeline`, return that object to th
 2. Classify each item: fix, reply, or `needs-human`.
 3. Apply Salesforce fixes one item at a time and re-run the affected Apex tests (`sf apex run test`) when the fix touches a class, trigger, or flow.
 4. Reply through `scripts/reply-to-pr-thread`. Resolve a thread only after a submitted reply is visible and the item is not `needs-human`.
+5. When babysit marks the thread `dispatched` and the fix is the same invariant on a new head (the same CRUD/FLS hole, the same unbulkified query), pass `--invariant-key` on that mark. The key is one you choose, 1–120 characters of letters, digits, `.`, `_`, `:`, or `-` (for example `apex-crud-fls`). The snapshot counts unique heads. It does not invent the key. A second head on the same key is a non-convergence fact the leaf must see.
 
 ## Related
 

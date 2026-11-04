@@ -36,3 +36,5 @@ Follow `contract.md` for procedure and finding format.
 - **TST-18** Test data built inline instead of `@TestSetup`/the project test data factory — default severity LOW.
 - **TST-19** Weak assertion: only `!= null`/`true`, legacy `System.assert*` instead of `Assert` class, or no message — default severity LOW.
 - **TST-20** Test asserts on `@TestVisible private` state instead of observable behavior — default severity LOW.
+
+Mutation (comment out a CRUD/FLS or sharing guard, run the suite, revert) runs only in a worktree or scratch copy whose HEAD matches the reviewed tree. Verify that HEAD before the edit. Never mutate the shared checkout.

@@ -27,6 +27,8 @@ For the detailed reproduction sweep, you may dispatch the `sf-bug-reproduction-v
    ```
 
 4. **Attempt reproduction** — read the executing code path, trace all automation that fires, check order-of-execution issues, verify sharing/CRUD/FLS implications, and check governor-limit proximity. Reproduce sharing bugs with `System.runAs(User)` for the suspect role; reproduce deploy failures against a sandbox with `sf project deploy validate`.
+
+   **Reproduction is complete when you hold a named, repeatable check that fails on this bug now and will pass once it is fixed** — an Apex test invocation, `sf apex run test`, a failing Flow interview, an anonymous Apex script, or a `curl` against an Apex REST resource — and you have run it at least once and seen the failure. Do not form a fix hypothesis, and do not edit, until that check exists. A performance symptom (slow, timeout, CPU) uses a numeric baseline (`Limits.getCpuTime()`, `Limits.getQueries()`, a query plan) as that check. When the check cannot run here (CI-only or production-only) and this is `mode:pipeline`, do not ask for access; continue from the failing log and the code, and say the check could not run.
 5. **Classify into one of five buckets** and take the prescribed next action:
 
    | Bucket | Meaning | Next action |
@@ -43,7 +45,7 @@ Only **Confirmed Bug** advances to Phase 2. The other four buckets resolve the i
 
 Once — and only once — the root cause is classified as a Confirmed Bug:
 
-1. Write or update a failing test that reproduces the defect (test-first discipline).
+1. Write or update a failing test that reproduces the defect (test-first discipline). The Phase 1 check is the red bar: it must fail for the root cause, not for unrelated setup. When no test seam exists, that check remains the red/green instrument.
 2. Implement the smallest fix that addresses the confirmed cause, applying the Salesforce Angle notes above (governor limits, sharing context, deploy ordering, FLS, metadata semantics).
 3. Verify against the org — `sf apex run test`, then `sf project deploy validate` / `sf project deploy start`; inspect state with `sf data query` when needed.
 4. Surface any decision that materially affects scope or risk using the platform's blocking question tool rather than guessing.

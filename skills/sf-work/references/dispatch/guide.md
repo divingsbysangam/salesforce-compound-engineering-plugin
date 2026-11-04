@@ -24,7 +24,23 @@ Give each persona a **bounded packet**: the persona file's contents + the specif
 
 ## Worker scope (one unit per handle)
 
-When implementation is split across subagents or workers, bind each handle to **one** implementation unit only: spawn fresh for that unit, integrate its result, then retire the handle. Never retask or reuse an idle worker for a later unit. In a parallel batch, commit (or otherwise integrate) and retire each unit before starting the next wave. Cleanup of orphaned workers is the caller's job only when the harness assigns that responsibility to the caller.
+When implementation is split across subagents or workers, bind each handle to **one** implementation unit only: spawn fresh for that unit, integrate its result, then retire the handle. Never retask or reuse an idle worker for a later unit. Cleanup of orphaned workers is the caller's job only when the harness assigns that responsibility to the caller.
+
+Parallel dispatch of each independent dependency layer is the default. Serialize only a real dependency: a unit that reads a file another unit writes, a shared runtime resource, or a merge you cannot attribute. Resolve uncertainty by reading the files, not by defaulting to serial. A unit too small to pay its own context ramp (a one-line label, a single constant) is batched with its neighbors instead of getting its own worker.
+
+Before an isolated worktree dispatch, verify snapshot fidelity: the worktree HEAD is the commit you intended, and `git status --porcelain` shows only the files you expect (often none). A drifted checkout — wrong HEAD, a surprise `package.xml` — is not isolated. Fix the snapshot or do not dispatch.
+
+## Shared-workspace wave
+
+A parallel wave in one working directory is allowed only while all of these hold. A unit that cannot meet one runs serially or in its own worktree.
+
+- Start from a committed tree, so each worker's output is attributable and an aborted wave can restore to that baseline.
+- Exclusive ownership includes hidden write surfaces: `package.xml`, `sfdx-project.json`, Jest config, lockfiles, generated metadata, and `.sfdx` cache. Two units that both regenerate `package.xml` are not independent.
+- Workers do not run `git add`, commit, or otherwise write the index. The orchestrator stages and commits after the batch.
+- Workers do not run mutating verification: a full `sf apex run test`, `sf project deploy`, or an install that rewrites a lockfile. One focused test class is allowed only when it writes no shared state. The orchestrator runs the authoritative tests after the wave.
+- A write outside every worker's exclusive set aborts the wave and disables further shared-workspace waves for the run. Restore only changes attributable to a worker.
+
+Dispatch a cleared wave in one response: list the ready units privately, then issue every worker dispatch that does not depend on another's result. After the wave, the orchestrator reviews each unit's diff against its declared files, runs tests, commits, and retires that handle before the next layer.
 
 ## After dispatch
 

@@ -24,12 +24,13 @@ Follow `contract.md` for procedure and finding format.
 - **ARC-6** Wrong async shape: Queueable where sync suffices, chained Queueables where Batchable fits — default severity MEDIUM.
 - **ARC-7** Service method exposed as `@AuraEnabled` rather than via a thin controller — default severity MEDIUM.
 - **ARC-8** Diverges from an established project pattern (handler framework, selector, factory) instead of reusing it — default severity MEDIUM. Cite the existing file.
-- **ARC-9** Logic duplicated from an existing class or method — default severity MEDIUM. Cite the original.
-- **ARC-10** Cross-module coupling: one service reaching into another object's internals, or handlers calling each other directly — default severity MEDIUM.
+- **ARC-9** Feature envy or duplication (Fowler): logic that mostly reads another module's data, or a copy of an existing method — default severity MEDIUM. Cite the original.
+- **ARC-10** Information leakage (Ousterhout): a service reaching into another object's internals, or a selector re-querying data the domain already holds — default severity MEDIUM.
 - **ARC-11** File is a git hot-spot (repeated fixes/reverts) and the change adds to it without addressing the cause — default severity MEDIUM.
-- **ARC-12** Over-engineering: interface or abstract class with one implementation, generic framework for one use, unused extension points — default severity MEDIUM.
+- **ARC-12** Premature abstraction (Fowler: Speculative Generality): an interface or abstract class with one implementation, or a generic framework for one use — default severity MEDIUM.
 - **ARC-13** Custom Apex/LWC replacing a native feature (formula, Flow, standard component, sharing rule) — default severity MEDIUM.
 - **ARC-14** Hardcoded IDs, magic numbers, or strings that belong in Custom Metadata or Labels — default severity MEDIUM.
 - **ARC-15** Dead code: unreferenced methods, fields, or labels; commented-out blocks; unused parameters — default severity LOW.
-- **ARC-16** Vague naming (`Helper`/`Util`/`Manager` suffixes, `process()`/`doIt()`, flag fields that do not say what they mark) — default severity LOW.
+- **ARC-16** Vague name (Ousterhout): `Helper`/`Util`/`Manager`, `process()`/`doIt()`, or a flag that does not say what it marks — default severity LOW.
+- **ARC-18** With `<standards-paths>`, judge each file only against its paired criteria. `CODING_STANDARDS.md` outranks `CLAUDE.md`/`AGENTS.md`. Do not grade one file against both, or review the criteria file — default severity MEDIUM.
 - **ARC-17** Stale comment: old TODO, or doc describing behavior the code no longer has — default severity LOW.

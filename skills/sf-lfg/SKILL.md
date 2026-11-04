@@ -45,7 +45,7 @@ failures. Honors $ARGUMENTS.deploy = scratch | sandbox | none.
 
 ## Interaction Method
 
-When asking the user a question, use the platform's blocking question tool: `AskUserQuestion` in Claude Code (call `ToolSearch` with `select:AskUserQuestion` first if its schema isn't loaded), `request_user_input` in Codex, `ask_user` in Gemini. Fall back to numbered options in chat only when no blocking tool exists in the harness or the call errors. Never silently skip the question.
+When asking the user a question, use the host's blocking question tool already in the current tool list (match by capability, not by a host-specific name). Presence in that list is proof the tool exists; never call a user-facing question tool to discover whether it exists. If a matching tool is listed but unloaded, load its schema with the host's tool-discovery primitive, then call it. Fall back to numbered options in chat only when no blocking tool is listed or the call errors. Never silently skip the question.
 
 Ask one question at a time. Prefer a concise single-select choice when natural options exist.
 
@@ -56,6 +56,10 @@ Full autonomous pipeline. Takes a feature from idea to deployment with minimal h
 ## Goal
 
 Execute the full compound engineering loop for: `$ARGUMENTS.feature`
+
+## Progress
+
+Narrate the run in chat as it moves. One line entering a stage names the stage and what it should produce. One line when it returns names what it actually produced. Report a stage done only after it ran and returned. Describing the next stage is not running it. Do not end the turn before the output block in `references/output.md` or an explicit abort.
 
 ***
 

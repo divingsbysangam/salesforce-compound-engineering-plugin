@@ -86,7 +86,7 @@ Visibility is independent from unattended execution:
 
 - **Host-native integrated browser:** keep its normal integrated surface visible and non-blocking so the user can watch progress when useful. Do not repeatedly steal focus as routes change. This applies in both manual and pipeline modes.
 - **`agent-browser` fallback, pipeline mode:** run headless without asking.
-- **`agent-browser` fallback, manual mode:** ask the user whether to run headed or headless using the platform's blocking question tool: `AskUserQuestion` in Claude Code (call `ToolSearch` with `select:AskUserQuestion` first if its schema isn't loaded), `request_user_input` in Codex, `ask_question` in Antigravity CLI (`agy`), `ask_user` in Pi (requires the `pi-ask-user` extension). Fall back to presenting options in chat only when no blocking tool exists in the harness or the call errors. Never silently skip the question:
+- **`agent-browser` fallback, manual mode:** ask the user whether to run headed or headless using the host's blocking question tool already in the current tool list (match by capability, not by a host-specific name). Presence in that list is proof the tool exists; never call a user-facing question tool to discover whether it exists. Fall back to presenting options in chat only when no blocking tool is listed or the call errors. Never silently skip the question:
 
   ```
   Do you want to watch the browser tests run?

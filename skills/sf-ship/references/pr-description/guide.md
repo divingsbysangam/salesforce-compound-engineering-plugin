@@ -15,7 +15,11 @@ Generate a Salesforce-aware pull request description that scales with change com
 
 ## Framing rules
 
-- Lead with value delivered, not the file list or the steps taken.
+- Lead with what is now different for an admin, user, or caller, and why it takes this shape. The opening carries that one idea in one or two sentences. A reviewer who reads only it should be able to say what changed. A lead that names the files edited, or names the mechanism that produced the change, is rewritten.
+  - Bad: "Updates `AccountService.cls` and `AccountServiceTest.cls`."
+  - Bad: "The review lenses now anchor their checks to named frameworks."
+  - Good: "Account owner reassignment stays under the SOQL limit on a 200-row import."
+  - Good, when the program is the point: "Leads now carry the Territory queue they fall back to. Nothing assigns from it yet."
 - Match conventional-commit type defaults from `sf-ship mode:commit`: prefer `fix:` over `feat:` when ambiguous.
 - Preserve existing `Related:` / `Fixes` references on rewrite; never invent closing keywords.
 - **Program altitude (multi-PR / series).** When program context is already in hand (user prompt, known plan path, existing PR body, commit messages, or sibling/series language), lead **program → lead-in (if any) → this contribution → lead-out (if any)**. Do **not** invent a series, and do **not** scan all open PRs solely for this step. When program context is absent, keep the single-PR umbrella only.
@@ -23,7 +27,7 @@ Generate a Salesforce-aware pull request description that scales with change com
 
 ## Interaction Method
 
-When asking the user a question, use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Fall back to numbered options in chat when no blocking tool is available. Ask one question at a time.
+When asking the user a question, use the host's blocking question tool already in the current tool list (match by capability, not by a host-specific name). Presence in that list is proof the tool exists; never call a question tool to discover it. Fall back to numbered options in chat when no blocking tool is available. Ask one question at a time.
 
 ## Procedure
 

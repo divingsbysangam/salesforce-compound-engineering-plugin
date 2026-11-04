@@ -41,6 +41,10 @@ If the arguments contain `mode:non-interactive` (or a deprecated `mode:headless`
 
 **Named guidance.** When a learning links a skill, a runbook, or a root instruction file, read that file. If it states a different order or a contradictory rule for the same situation, classify that contradiction. Do not treat the link as decoration. Frontmatter uses this repo's `schema.yaml` categories; do not rename them to match an older generic list.
 
+**Two boundaries.** This mode never changes product code. A claim about current mechanics follows current Apex, LWC, or Flow, so the doc changes. Guidance that still has independent support — a governor-limit rule, a CRUD/FLS requirement, a skill the repo still ships — does not become false merely because one implementation drifted. Separate that descriptive drift (Update) from a recommendation that no longer governs (Replace, and only when a trustworthy successor can be written).
+
+In non-interactive mode the report is the sole deliverable and is not abbreviated. **Applied** lists writes that succeeded. **Recommended** lists writes the gates withheld.
+
 **Relocation four-condition gate** (non-interactive auto-move): frontmatter and directory disagree; content clearly says the directory is wrong; target category directory exists; inbound citations are in-repo and mechanically rewritable. Otherwise recommend.
 
 4. **Decide / Execute** — interactive asks only on genuine forks; non-interactive applies gates or stale-marks. Never restructure category trees as a side effect.

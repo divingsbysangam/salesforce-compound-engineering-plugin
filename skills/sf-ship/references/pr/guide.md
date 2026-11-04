@@ -15,13 +15,13 @@ Atomic flow: commit (using `sf-ship mode:commit` conventions) → push → open 
 
 ## Interaction Method
 
-When asking the user a question, use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Fall back to numbered options in chat when no blocking tool is available. Ask one question at a time.
+When asking the user a question, use the host's blocking question tool already in the current tool list (match by capability, not by a host-specific name). Presence in that list is proof the tool exists; never call a question tool to discover it. Fall back to numbered options in chat when no blocking tool is available. Ask one question at a time.
 
 ## Procedure
 
 1. **Commit** — follow `../commit/guide.md` (named-file staging, logical commits, outcome-focused messages).
 2. **Push** the feature branch with ordinary `git push -u` (never force-push protected branches).
-3. **Open or update the PR** — compose title/body via `../pr-description/guide.md`. When listing existing PRs, request `isDraft` in the JSON fields. Re-check for an existing PR immediately before `gh pr create` to avoid duplicates.
+3. **Open or update the PR** — compose title/body via `../pr-description/guide.md`. When listing existing PRs, request `isDraft` in the JSON fields. Re-check for an existing PR immediately before `gh pr create` to avoid duplicates. When review left findings this run did not apply, render them verbatim as `## Unapplied review findings`: one `- [ ] <severity> — <file:line> — <title>` bullet each, with the suggested fix on the following line when present. Do not open a tracker ticket for those residuals. The opening still states what is now different for someone using this, not the files the diff touched.
 4. **Babysit handoff — default on; completion gate.** In interactive full workflow, after reporting a newly-created PR URL (or after new commits land on an existing open PR), this run is **not done** until `sf-ship mode:babysit` owns follow-on for that PR — or an explicit skip below applies. Reporting the PR URL alone is not success.
    - **Auto-hand off by default:** announce in one non-blocking line (e.g. "Babysitting toward merge-ready — pass `babysit:off` to skip"), then invoke `sf-ship mode:babysit` through the host's normal skill-invocation mechanism with the PR URL — never ask yes/no.
    - **Success** = babysit has started on that PR (its own bootstrap/watch path).

@@ -45,16 +45,15 @@ Treat this as a snapshot. Re-read branch and staged set immediately before commi
 
    Honor `exclude:<paths>` when the caller passes it: those files stay uncommitted no matter what else changed, and the report names them. Pass the staged paths on `git commit --` as well, so a bare commit cannot take the whole index.
 
-6. **Stage and commit** — stage **named files only**. Prefer one shell call per commit group:
+6. **Stage and commit** — stage **named files only** (never `git add -A` or `git add .`). Honor `exclude:<paths>` when the invocation carries it: those files stay uncommitted no matter what else changed. Use a separate shell call for `git add` and another for `git commit`. Do not join them with `&&`.
+
+Write the message to a file, then:
 
 ```bash
-git add force-app/main/default/classes/Foo.cls force-app/main/default/classes/FooTest.cls && git commit -m "$(cat <<'EOF'
-fix(apex): subject line here
-
-Optional body when the why is not obvious from the subject.
-EOF
-)"
+git commit -F <message-file> -- force-app/main/default/classes/Foo.cls force-app/main/default/classes/FooTest.cls
 ```
+
+No shell parses the message with `-F`. A `$`, quotes, backticks, or a multi-line body pass through under PowerShell and bash alike. Git's usual whitespace cleanup still applies.
 
 7. **Confirm** — `git status`; report hash(es) and subject(s).
 

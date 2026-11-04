@@ -38,7 +38,7 @@ learning generalizes beyond a single solution.
 
 ## Interaction Method
 
-When asking the user a question, use the platform's blocking question tool: `AskUserQuestion` in Claude Code (call `ToolSearch` with `select:AskUserQuestion` first if its schema isn't loaded), `request_user_input` in Codex, `ask_user` in Gemini. Fall back to numbered options in chat only when no blocking tool exists in the harness or the call errors. Never silently skip the question.
+When asking the user a question, use the host's blocking question tool already in the current tool list (match by capability, not by a host-specific name). Presence in that list is proof the tool exists; never call a user-facing question tool to discover whether it exists. If a matching tool is listed but unloaded, load its schema with the host's tool-discovery primitive, then call it. Fall back to numbered options in chat only when no blocking tool is listed or the call errors. Never silently skip the question.
 
 Ask one question at a time. Prefer a concise single-select choice when natural options exist.
 
@@ -140,6 +140,8 @@ tags: ["{tag1}", "{tag2}", "{tag3}"]
 Save to: `docs/solutions/{category}/{YYYY-MM-DD}-{slug}.md`
 
 Validate frontmatter against `schema.yaml`.
+
+Then run `python3 skills/sf-compound/scripts/validate-doc-claims.py <doc>` from the repo root. Adjudicate each flag: fix the citation, or annotate it as historical. An absolute path that falls inside the repo is a citation — the script rewrites it to repo-relative before checking. A flag is not a hard failure; a path the fix itself deleted can stay if the doc says so. Do not treat a clean script run as optional when the doc cites paths.
 
 ***
 

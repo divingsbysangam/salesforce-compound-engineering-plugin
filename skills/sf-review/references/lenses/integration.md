@@ -28,8 +28,8 @@ Follow `contract.md` for procedure and finding format.
 - **INT-10** Hosted MCP: Apex exposed as a tool is not `global`; prompt template not `einstein_gpt__global` (e.g. `FlexTemplate`); Flow tool uses `templateDataProviders` — default severity HIGH.
 - **INT-11** MCP auth via Connected App instead of External Client App; scopes lack `mcp_api`+`refresh_token` or keep beta scopes; PKCE off; one ECA shared across clients; `mcp-remote` bridge — default severity HIGH.
 - **INT-12** Test path with no `HttpCalloutMock` or only happy-path mocks (no 4xx/5xx/timeout) — default severity MEDIUM.
-- **INT-13** No `setTimeout`, relying on the 10s default; total wait may pass the 120s per-transaction max — default severity MEDIUM.
-- **INT-14** Retry with no cap/backoff, retried non-idempotent POSTs, or final failures dropped unrecorded — default severity MEDIUM.
+- **INT-13** No `setTimeout` (Nygard: no timeout); the 10s default can blow the 120s cap — default severity MEDIUM.
+- **INT-14** Retry storm (Nygard): no cap or backoff, retried non-idempotent POSTs, or dropped final failures — default severity MEDIUM.
 - **INT-15** Apex REST returns 200 on error (no `RestContext.response.statusCode`), returns `e.getMessage()`/stack traces, or has unpaginated lists — default severity MEDIUM.
 - **INT-16** `EventBus.publish` SaveResults ignored, or publish called per record in a loop — default severity MEDIUM.
 - **INT-17** External PE/CDC subscriber drops replay ID or assumes replay past 72h retention — default severity MEDIUM.

@@ -79,6 +79,7 @@ BASE_REF_RACE = "race"
 BASE_REF_MERGEABILITY_PENDING = "mergeability-pending"
 BASE_REF_PROBE_ERROR = "probe-error"
 BASE_REF_LEGACY_STALE = "stale"
+BASE_REF_STALE_COMPUTATION = "stale-computation"
 
 # First judgment point for an incomplete review lifecycle. The agent may extend once to 1800s when
 # concrete prior-round timing supports it; the skill contract owns that semantic decision.
@@ -1284,6 +1285,7 @@ def _empty_trajectory():
         "heads_since_progress": 0,     # head changes since progress (a new low OR something cleared)
         "last_head": None,             # head as of the last AGENT tick — hsp counts moves between ticks,
                                        # NOT poll-observed head moves (state["head_sha"] advances on polls)
+        "invariant_heads": {},         # resolver-supplied invariant_key -> unique heads it was marked on
     }
 
 
@@ -1298,6 +1300,36 @@ def _load_trajectory(state):
         tj.setdefault(key, value)
     state["trajectory"] = tj
     return tj
+
+
+_INVARIANT_KEY_RE = re.compile(r"^[A-Za-z0-9._:-]{1,120}$")
+
+
+def _record_invariant_round(state, key, head):
+    """Count a resolver-supplied invariant against unique heads. Never infer keys."""
+    if not key:
+        return
+    if not _INVARIANT_KEY_RE.match(key):
+        raise SystemExit("--invariant-key must be 1-120 chars of A-Za-z0-9._:-")
+    if not head:
+        return
+    tj = _load_trajectory(state)
+    heads = tj.setdefault("invariant_heads", {})
+    seen = heads.setdefault(key, [])
+    if not isinstance(seen, list):
+        seen = []
+        heads[key] = seen
+    if head not in seen:
+        seen.append(head)
+
+
+def _invariant_rounds_view(tj):
+    """Public trajectory view: resolver keys counted per unique head."""
+    items = []
+    for key, heads in sorted((tj.get("invariant_heads") or {}).items()):
+        if isinstance(heads, list):
+            items.append({"key": key, "rounds": len(heads)})
+    return items
 
 
 def _push_bounded(lst, item, cap):
@@ -1427,6 +1459,7 @@ def _update_trajectory(state, head, new_checks, new_threads, new_feedback, actio
         "new_threads_this_tick": len(new_arrivals),
         "stream_alternations": _stream_alternations(tj["stream_series"]),
         "heads_since_progress": tj["heads_since_progress"],
+        "invariant_rounds": _invariant_rounds_view(tj),
     }
 
 
@@ -1744,7 +1777,7 @@ def diff(state, cur, now=None, advance_trajectory=True):
         "blocked_external_review_moved_this_tick": (
             awaiting_approval > 0 and external_review_moved),
         "pr_chain": state["pr_chain"],
-        "stack_blocker": _stack_blocker(state["pr_chain"]),
+        "stack_blocker": _stack_blocker(state["pr_chain"], cur),
         "open_needs_human": open_needs_human,
         "needs_human_ids": needs_human_ids,
         "actionable": {"threads": actionable_threads, "ci": actionable_ci, "comments": actionable_feedback},
@@ -1774,6 +1807,22 @@ def diff(state, cur, now=None, advance_trajectory=True):
     }, state
 
 
+def _settle_base(base):
+    """Base fields whose movement should reset the settle clock.
+
+    `stale-computation` is a presentation of a still-stable `race` candidate
+    (same head + live base) plus a report flag. Hashing those presentation
+    fields would reset last_change_at and add a synthetic settle delay.
+    Genuine identity values stay in the signature.
+    """
+    if not isinstance(base, dict):
+        return base
+    payload = {k: v for k, v in base.items() if k != "merge_computation_stale"}
+    if payload.get("identity") == BASE_REF_STALE_COMPUTATION:
+        payload["identity"] = BASE_REF_RACE
+    return payload
+
+
 def _change_sig(state):
     """Everything whose movement should reset the settle clock."""
     checks = {k: (v.get("status"), v.get("conclusion")) for k, v in state.get("checks", {}).items()}
@@ -1789,7 +1838,7 @@ def _change_sig(state):
             state.get("review_signal_count"),
             tuple(state.get("review_signal_identities") or []),
             json.dumps(state.get("pr_chain") or _default_pr_chain(), sort_keys=True),
-            json.dumps(state.get("base"), sort_keys=True),
+            json.dumps(_settle_base(state.get("base")), sort_keys=True),
             (current_currency.get("host_branch_update_capability")
              if current_currency.get("status") == "BEHIND" else None),
             currency.get("current_key"), current_currency.get("disposition"),
@@ -1800,8 +1849,14 @@ def _change_sig(state):
             bool(state.get("awaiting_approval")))
 
 
-def _stack_blocker(chain):
-    """Return the manager-currency residual that blocks target readiness, if any."""
+def _stack_blocker(chain, cur=None):
+    """Return the manager-currency residual that blocks target readiness, if any.
+
+    Manager freshness (`needsRebase`) fires on plain trunk drift, which GitHub already
+    prices into the target's own mergeability against its parent base. A certain
+    MERGEABLE/CLEAN read defers to GitHub. Only a stale or unknown target that GitHub
+    does not clear still blocks.
+    """
     status = (chain or {}).get("manager_status")
     if status == MANAGER_PROBE_ERROR:
         return "manager-probe-error"
@@ -1809,10 +1864,16 @@ def _stack_blocker(chain):
         return "relationship-probe-error"
     if status == MANAGER_CONFIRMED:
         freshness = chain.get("target_needs_rebase")
+        if freshness is False:
+            return None
+        cur = cur or {}
+        if (cur.get("mergeable") == "MERGEABLE" and cur.get("merge_state_status") == "CLEAN"
+                and _mergeability_certain(cur.get("mergeable"), cur.get("merge_state_status"),
+                                          cur.get("base"))):
+            return None
         if freshness is True:
             return "target-needs-rebase"
-        if freshness is not False:
-            return "managed-freshness-unknown"
+        return "managed-freshness-unknown"
     return None
 
 
@@ -2618,6 +2679,8 @@ def cmd_mark(args):
                     # snapshot-time edit_id the agent passes is already the correct baseline (no fetch).
                     entry["acted_identity"] = [args.acted_edit_id]
             state["last_action"] = f"{args.disposition} {label} {item_id}"
+        if getattr(args, "invariant_key", None) and args.disposition == DISPOSITION_DISPATCHED:
+            _record_invariant_round(state, args.invariant_key, state.get("head_sha"))
     print(json.dumps({"marked": args.currency_key or args.check or args.thread or args.comment}))
 
 
@@ -2691,6 +2754,8 @@ def main():
     m.add_argument("--comment", default=None)
     m.add_argument("--fetch-file", default=None)  # reuse the tick's fetch for the at-mark baseline
     m.add_argument("--acted-edit-id", default=None)  # snapshot-time edit_id baseline; read only by needs-human comment reactivation
+    m.add_argument("--invariant-key", default=None,
+                   help="resolver-supplied review invariant; counted per unique head, never inferred")
     m.add_argument("--currency-key", default=None,
                    help="exact branch-currency observation key emitted by snapshot")
     m.add_argument("--currency-disposition",
