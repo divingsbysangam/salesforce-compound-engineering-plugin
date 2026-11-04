@@ -24,7 +24,7 @@ Implement the plan:
    * Sharing scenario check
 
    * Integration mock check
-6. Make incremental commits.
+6. Make incremental commits. Independent units follow the parallel wave rules in `../../sf-work/references/dispatch/guide.md`.
 
 **Gate:** All 5 test check questions must pass before proceeding.
 

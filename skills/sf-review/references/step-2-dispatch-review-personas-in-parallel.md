@@ -25,6 +25,16 @@ Pick lenses from the file classes found in Step 1. A lens runs once, over all of
 
 Typical dispatch: Apex-only diff → `apex`, `security`, `tests` (3 subagents). LWC + Apex → add `lwc`.
 
+## How to dispatch
+
+Dispatch the applicable lenses as one foreground concurrent batch, sized to the host's active-agent cap. Ask for background execution off. Collect each return when that launch reaches a terminal outcome. Do not synthesize a partial roster, and do not poll a detached job, when a launch has no reliable blocking collection path: stop that work and apply the unfinished lens inline, and say so in one line.
+
+A missing or unauthenticated Salesforce DX MCP server, or no default target org, does not skip this pass. A lens that wanted a live org records the tool as unavailable and continues on the diff.
+
+## Repo-owned standards
+
+Before dispatch, build the criteria mapping in `standards-criteria.md`. When any changed file has a governing criteria file, include `architecture` even below comprehensive depth, and append the mapping as a `<standards-paths>` block. Pass paths, not the criteria text. `architecture` at comprehensive depth still receives the same block.
+
 ## Depth
 
 - `fast`: only the lenses for the file classes present; skip `tests` when no logic changed.

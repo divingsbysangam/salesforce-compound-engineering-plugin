@@ -34,6 +34,7 @@ argument-hint: "[optional argument hint]"
 4. **<span data-proof="authored" data-by="ai:claude">Concise</span>**<span data-proof="authored" data-by="ai:claude">: include only what's needed for decision-making.</span>
 5. **<span data-proof="authored" data-by="ai:claude">Substance over sycophancy</span>**<span data-proof="authored" data-by="ai:claude">: agent-facing skill and persona prose should avoid gratitude-performance language ("You're absolutely right!", "Thanks for catching that!") in favor of verified substance — this keeps the pattern from creeping into future skills.</span>
 6. **Goal first.** State the outcome, the done condition, and the safe failure direction before the procedure. A case the condition already decides does not get its own bullet. Gates name the state that must hold, not a specific git invocation.
+7. **Do not strip a concrete shape the rule depends on.** A known-bad example — SOQL inside a `for` loop, `without sharing` with no justification — may be what a literal host matches on. Removing it while "generalizing" the rule is a behavior change, not a cleanup. Keep the shape next to the rule. Keep a quantifier or an exclusion ("for each candidate separately", "do not change files outside the unit") beside the step it governs, where nothing else can compete with it.
 
 ### <span data-proof="authored" data-by="ai:claude">Generate and deploy-shaped skills</span>
 

@@ -8,6 +8,8 @@
 
 ### Added
 
+- **Repo-owned review criteria.** `/sf-review` pairs each changed file with the nearest `CODING_STANDARDS.md`, falling back to `CLAUDE.md` or `AGENTS.md` only where no standards file governs. The architecture lens applies that pairing and does not grade one file against both.
+- **Solution citation check.** `/sf-compound` runs `skills/sf-compound/scripts/validate-doc-claims.py` on a new learning. An absolute path inside the repo is rewritten to a repo-relative citation before it is checked.
 - **Small-work planning.** `/sf-plan` answers a one-file Salesforce change in chat and writes `docs/plans/` only when the work needs a durable spec. Brainstorms ask only what the repo and `STRATEGY.md` cannot already settle.
 - **PR reply script.** `sf-ship mode:resolve-feedback` posts thread replies through the REST replies endpoint and stops if a pending review appears. Top-level PR comments and review bodies are judged with inline threads.
 - **Local preview port.** `/sf-review mode:browser` resolves the dev-server port with `scripts/resolve-port.sh` instead of a hand-copied shell line.
@@ -16,6 +18,14 @@
 
 ### Changed
 
+- **Questions use the tool that is loaded.** Skills ask with the blocking question tool already in the current tool list, matched by capability. They do not call a question tool to discover whether one exists.
+- **Plans state a holdable objective.** The objective is an outcome a reader can restate without the rest of the plan. Bulk, sharing, and CRUD/FLS constraints stay on their requirement ids. An approach such as "move the lookup into a before-save Flow" is the means, not the objective.
+- **Review collection.** Applicable lenses dispatch as one foreground batch and are collected when each launch finishes. A missing Salesforce DX login does not skip the local pass. The tests lens mutates Apex only in a worktree whose HEAD matches the reviewed tree.
+- **Parallel work.** Independent plan units dispatch together. A shared-workspace wave needs a committed baseline, exclusive files (including `package.xml` and lockfiles), and no worker git commands. Org-only completion (permission-set assignment, a Named Credential secret) is confirmed in the org, not by `git status`.
+- **Debug reproduction.** A fix waits on a named check that fails now and will pass once the cause is fixed: an Apex test, a Flow interview, or a `Limits` baseline for a slow transaction.
+- **Ship wording.** Commit messages go through `git commit -F` so PowerShell does not parse them. A pull request opening states what is now different for a user of the org. Review findings left unapplied are a checklist in the PR body.
+- **Babysit on managed stacks.** Plain trunk drift that GitHub already reports as mergeable and clean does not block. A stale merge-computation flag does not reset the settle clock. Repeated review invariants are counted per head.
+- **Compound refresh.** A learning whose guidance is still supported is updated when the code drifted. It is replaced only when that guidance no longer governs. Capture runs at the end of the pipeline, not when the pull request merges.
 - **Babysit stacks.** `stack-ready` walks to the next layer once the current one has no actionable backlog, even while CI is still running. Landing still waits until the layer is settled. An unasked merge of the base into the PR head is reported and left in place; the watch does not treat the restarted checks as a new code failure, and it does not merge the base locally.
 - **Review dispatch.** A lens subagent receives file paths or inline content, not both. Document review raises a product finding only when the doc stakes an unsettled product position.
 - **PR descriptions.** The scope map is written from the full commit range before the opening, and the opening is checked against that map.

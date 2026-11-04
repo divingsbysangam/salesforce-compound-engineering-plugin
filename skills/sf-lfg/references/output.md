@@ -21,6 +21,8 @@ Pipeline Results:
 ├── Deploy:  ✅ {deployed_to|skipped}
 └── Compound:✅ {n} solutions documented
 
+Unapplied review findings: {none | ## Unapplied review findings checklist in the PR body}
+
 Knowledge captured:
 - docs/solutions/: {n} new entries
 - Skills updated: {list}
