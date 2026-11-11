@@ -16,10 +16,16 @@ A locating measurement comes before a full test run or a deploy validate. Locati
 
 ## Loop
 
-1. Record the baseline on the fixture. The baseline is the scoring reference.
+Give the run a unique directory name (spec name plus a timestamp). Two runs of the same spec must not share a log.
+
+1. Record the baseline on the fixture. The baseline is the scoring reference. A paired comparison needs one baseline sample for every candidate sample. If the candidate has more samples than the baseline, stop and say the baseline is incomplete. Do not reuse an earlier baseline sample to fill the gap, and do not call that comparison a win.
 2. List a few hypotheses from the locating numbers and the code. Each one names the edit, the metric it should move, and whether it needs a new dependency. A new dependency waits for an explicit yes.
 3. Run the cheap measurement on one hypothesis at a time. Keep the edit only when the win rule above holds. Revert the rest.
 4. Run the expensive confirmation (the affected Apex tests, including a 200-record case when the change is bulk) only on a kept edit.
 5. Stop when the next hypothesis cannot beat the kept baseline by a margin the fixture can show, or the user stops. Report baseline, kept change, and the metrics side by side.
+
+When the user names a transaction or an entry point, measure that before searching the repo for other hotspots. Progress lines name the finding that changed keep-or-skip (the metric, the before and after, and the limit it still has to respect). Batch counts stay in the log unless they change the decision.
+
+A step is done only after it ran. Describing the next measurement is not running it.
 
 Governor-limit headroom is the point of the loop. A faster path that drops `with sharing`, `USER_MODE`, or bulkification is not a win.
