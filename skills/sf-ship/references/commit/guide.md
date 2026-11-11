@@ -32,7 +32,7 @@ Treat this as a snapshot. Re-read branch and staged set immediately before commi
 
 1. **Nothing to commit** — if `git status` shows no staged, modified, or untracked files, report that and stop. Do not use `git diff HEAD` alone as cleanliness (it misses untracked files).
 
-2. **Branch first** — if detached HEAD, or on the default branch (`main` / `master` / the bare default name above), create a feature branch from the change content (`git checkout -b <name>`), then re-read `git branch --show-current`. Do not ask — commit-only still must not leave work only on a detached HEAD or the default branch. If the derived name exists, pick a non-conflicting suffix.
+2. **Branch first** — if detached HEAD, or on the default branch (`main` / `master` / the bare default name above), create a feature branch with `git checkout --no-overwrite-ignore -b <name>`, then re-read `git branch --show-current`. Do not ask — commit-only still must not leave work only on a detached HEAD or the default branch. If the derived name exists, pick a non-conflicting suffix. If checkout fails because uncommitted or ignored files would be overwritten, stop and ask the user to handle those paths. In `mode:pipeline`, report the blocker and do not ask. Do not stash, and do not delete the colliding paths. Ignored Salesforce files (local scratch config, `.sf` state, generated caches) stay where they are.
 
 3. **Convention** — match project commit conventions already in context; else match the recent log pattern; else conventional commits (`type(scope): description`). When using conventional commits and `fix`/`feat` both fit, default to `fix:` (remedying broken or missing behavior); reserve `feat:` for new capabilities. User override wins.
 
