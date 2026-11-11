@@ -18,7 +18,8 @@ class WorkflowContractTest(unittest.TestCase):
 
     def test_review_collects_and_uses_repo_standards(self):
         step = text("skills/sf-review/references/step-2-dispatch-review-personas-in-parallel.md")
-        self.assertIn("foreground concurrent batch", step)
+        self.assertIn("one batch collected in this turn", step)
+        self.assertIn("artifact file is on disk", step)
         self.assertIn("does not skip this pass", step)
         self.assertIn("CODING_STANDARDS.md", text("skills/sf-review/references/standards-criteria.md"))
 

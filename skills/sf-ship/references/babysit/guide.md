@@ -31,7 +31,13 @@ The watch runs until terminal, settled, its bounded external-approval review dra
 
 > **Never wait for a full CI run before addressing review comments.** A comment fix pushes a new commit that re-triggers CI anyway, so handling comments *while CI is still running* collapses the two timelines instead of serializing them. Handle comments first; if that pass pushed, the old CI failure is against a dead SHA — skip it and let the new run start.
 >
-> **The same rule applies to an in-progress review.** Act on the feedback a reviewer has *already posted* rather than waiting for its 👀/"reviewing" signal to clear — the in-progress signal gates only the "looks ready" call (`references/settle.md`), never the work. Waiting for a review to finish before resolving the comments it already left serializes exactly the way waiting for CI would.
+> **The same rule applies to an in-progress review.** Act on the feedback a reviewer has already posted. An eyes reaction is a start announcement, not proof the review is still running, and it does not hold the wake. Whether a review of this head is still coming is your judgment in `references/settle.md`, with a bound. Waiting for a review to finish before resolving the comments it already left serializes exactly the way waiting for CI would.
+
+## Why the watch is shaped this way
+
+The goal is one sentence: keep this pull request moving until GitHub says it is mergeable and quiet, the review of the current head has landed or the bounded wait has run out, and anything that still needs a person is on the record. The snapshot reports facts that are cheap to re-check: thread counts, check state, quiet time, stack membership, an eyes reaction. It does not decide what those facts mean. That split is here because a short poll loop keeps missing the same Salesforce cases: a clean merge state after trunk moved, a thread fixed twice after a resume, a laptop sleep eating an 8-hour budget, and a reviewer bot that leaves an eyes reaction and never takes it down. When a piece of the snapshot starts encoding a judgment, delete that piece and state the goal instead.
+
+Keep the in-session watch running until a stop condition in `references/settle.md`. Use checkpoint only when the user asks for it, or the harness cannot stay active while waiting on the watcher. Do not read `references/watch-loop.md` again on later steps; cite the section you need.
 
 ## Step 1: Confirm GitHub, resolve the PR, pick an execution mode
 

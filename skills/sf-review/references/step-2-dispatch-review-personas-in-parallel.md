@@ -27,7 +27,11 @@ Typical dispatch: Apex-only diff → `apex`, `security`, `tests` (3 subagents). 
 
 ## How to dispatch
 
-Dispatch the applicable lenses as one foreground concurrent batch, sized to the host's active-agent cap. Ask for background execution off. Collect each return when that launch reaches a terminal outcome. Do not synthesize a partial roster, and do not poll a detached job, when a launch has no reliable blocking collection path: stop that work and apply the unfinished lens inline, and say so in one line.
+Dispatch the applicable lenses as one batch collected in this turn, sized to the host's active-agent cap. A lens is collected when this turn holds a terminal result for that launch, or its artifact file is on disk. A receipt, a progress note, or a wait that returns early is not a result. Bound the wait per lens at 10 minutes from that lens's start. When the bound passes with neither a result nor a file, stop that lens, record it failed, and continue with the artifacts you have. That recorded failure is a collected outcome. Do not end the turn to poll.
+
+When the host can close a finished subagent, close this review's lenses before research, a second pass, or the report. Do not message a finished lens. Do not assume a slot is free until the host says the agent is released.
+
+If a second-model pass was requested and its artifact file is missing, name the outcome: still running, skipped, or unreadable. A missing file is not a failed read of a finished pass until you have checked that state.
 
 A missing or unauthenticated Salesforce DX MCP server, or no default target org, does not skip this pass. A lens that wanted a live org records the tool as unavailable and continues on the diff.
 

@@ -66,3 +66,5 @@ Record which files this fix owns, and which files were already dirty. Commit and
 Do not ask whether to open a pull request when the branch contains only this fix. State the branch, the files, and that a pull request will be opened, then continue. If the branch also holds work this run did not create, commit the fix-owned files when they are separable and stop before push, naming the other files. If a fix-owned file was already dirty, ask once before including the user's edits.
 
 An instruction already in context that names how this repo ships (drafts only, commit only, review first) outranks that default. Do not widen the diff to the rest of the branch. `mode:pipeline` still follows `references/pipeline-mode.md` and does not open a pull request on its own.
+
+Offer `/sf-compound` once, only when the verified fix produced reasoning that the final code, tests, and comments do not carry, and losing it would plausibly cause the same failure again. If the document would not change what a later reader does, skip it and do not ask.

@@ -1,6 +1,6 @@
 ---
 name: sf-compound
-description: "Capture a solved Salesforce problem in docs/solutions/, or refresh stale learnings. Use for 'compound this'. Skip a routine fix whose code and tests already explain the lesson."
+description: "Capture durable Salesforce knowledge in docs/solutions/, or refresh stale learnings. Use when the lesson is not in the final code or tests. Use sf-debug for an open failure."
 argument-hint: "[mode:refresh|doc-format] [scope; defaults to recent work]"
 ---
 
@@ -61,6 +61,10 @@ Brainstorm (10%) → Plan (30%) → Work (20%) → Review (20%) → Compound (20
 ```
 
 ***
+
+## What qualifies
+
+Write a learning only when the work is solved and verified, and the reasoning is not recoverable from the final Apex, tests, comments, or an existing solution doc. If the document disappeared, would a later reader of the implementation repeat the mistake or redo the investigation? If not, write nothing and say why. Completion, effort, and diff size do not qualify. An explicit `/sf-compound` still applies this test. Update an existing learning that would now mislead instead of adding a second one.
 
 ## Step 1: Analyze Recent Work
 
@@ -141,7 +145,7 @@ Save to: `docs/solutions/{category}/{YYYY-MM-DD}-{slug}.md`
 
 Validate frontmatter against `schema.yaml`.
 
-Then run `python3 skills/sf-compound/scripts/validate-doc-claims.py <doc>` from the repo root. Adjudicate each flag: fix the citation, or annotate it as historical. An absolute path that falls inside the repo is a citation — the script rewrites it to repo-relative before checking. A flag is not a hard failure; a path the fix itself deleted can stay if the doc says so. Do not treat a clean script run as optional when the doc cites paths.
+Then run `python3 skills/sf-compound/scripts/validate-doc-claims.py <doc>` from the repo root. Adjudicate each FLAG: fix the citation, or annotate it as historical. A NOTE is an unresolved hex token with no commit cue around it (a session id or a content hash). It does not fail the run. An absolute path that falls inside the repo is a citation — the script rewrites it to repo-relative before checking. A flag is not a hard failure; a path the fix itself deleted can stay if the doc says so. Do not treat a clean script run as optional when the doc cites paths.
 
 ***
 

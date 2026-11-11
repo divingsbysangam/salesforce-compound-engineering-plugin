@@ -81,10 +81,6 @@ BASE_REF_PROBE_ERROR = "probe-error"
 BASE_REF_LEGACY_STALE = "stale"
 BASE_REF_STALE_COMPUTATION = "stale-computation"
 
-# First judgment point for an incomplete review lifecycle. The agent may extend once to 1800s when
-# concrete prior-round timing supports it; the skill contract owns that semantic decision.
-REVIEW_INPROGRESS_MAX_WAIT = 900
-
 # Trajectory check-history states (persisted, compared by ==).
 CHECK_UNKNOWN = "unknown"
 CHECK_CLEAR = "clear"
@@ -900,10 +896,9 @@ def fetch(pr, repo):
             host_branch_update_capability = fetch_host_branch_update_capability(
                 v.get("number") or pr, owner, name, host)
 
-    # In-progress review signal: an 👀 (EYES) reaction on the PR body is how several review bots
-    # (Codex among them) announce a review is *underway* — a present in-progress signal means the PR
-    # is NOT settled, regardless of quiet time. A present signal is meaningful; absence tells us
-    # nothing (many reviewers give no signal), so this only ever *delays* a merge-ready read.
+    # An eyes reaction is an observation that someone started a review. It is not
+    # proof the review is still running, and it does not delay a merge-ready wake.
+    # Whether a review of this head is still coming is judged by the watch.
     review_signal_identities = fetch_eyes_reactors(v.get("number") or pr, owner, name, host)
     review_signal_count = len(review_signal_identities)
     review_in_progress = review_signal_count > 0
@@ -2125,11 +2120,10 @@ def _wake_reason(a, settle_seconds):
     if (a.get("open_needs_human", 0)
             or branch_currency.get("disposition") == DISPOSITION_NEEDS_HUMAN):
         return "needs-human"         # parked items block ready; surface them
-    # merge-ready candidate: green + settled with no fresh review movement. A live 👀 blocks the
-    # ordinary 300s settle, but wakes the agent after 900 quiet seconds for the semantic stale-review
-    # judgment. The agent may extend once to 1800s by re-arming with that settle value; the detector
-    # never decides whether the reviewer is genuinely slow or stuck.
-    review_blocking = a.get("review_in_progress") and a.get("quiet_seconds", 0) < REVIEW_INPROGRESS_MAX_WAIT
+    # Eyes reactions stay on the snapshot as observations. They do not hold this
+    # wake. The watch judges whether a review of the current head is still coming
+    # and may re-arm with a longer settle window. A standing reaction is not liveness.
+    review_blocking = False
     # Interactive merge-ready does NOT require `all_checks_ok`'s "at least one observed check": a repo
     # with no configured checks has a CLEAN/MERGEABLE PR that should be callable ready. (That guard
     # stays in pipeline success, where a not-yet-created rollup must not read as a pass.)

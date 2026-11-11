@@ -78,6 +78,25 @@ class UnrequestedBaseMergeTest(unittest.TestCase):
         self.assertIsNone(self.classify(state, cur))
         self.assertEqual(state["unrequested_base_merge_pending"], HEAD)
 
+    def test_eyes_reaction_does_not_hold_merge_ready(self):
+        ready = {
+            "pr_state": "OPEN",
+            "counts": {"threads": 0, "ci": 0, "comments": 0},
+            "mergeable": "MERGEABLE",
+            "merge_state_status": "CLEAN",
+            "mergeability_certain": True,
+            "checks_terminal": True,
+            "has_failing_checks": False,
+            "checks_awaiting_approval": 0,
+            "branch_currency_blocker": None,
+            "base_ref_blocker": None,
+            "review_in_progress": True,
+            "quiet_seconds": 400,
+        }
+        self.assertEqual(self.mod._wake_reason(ready, 300), "merge-ready")
+        still_quiet = dict(ready, quiet_seconds=100)
+        self.assertIsNone(self.mod._wake_reason(still_quiet, 300))
+
     def test_wake_prefers_the_defect_over_restarted_ci(self):
         reason = self.mod._wake_reason(
             {

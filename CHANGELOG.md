@@ -6,8 +6,11 @@
 
 ## [Unreleased]
 
+## [4.0.1] - 2026-11-11
+
 ### Added
 
+- **Review depth from executable lines.** `/sf-review` counts added and removed lines in Apex, LWC script, `.mjs`, `.cjs`, Visualforce, and Aura script files. Companion metadata beside those sources is ignored. Flow, object, permission, profile, and sharing metadata keep the review on the thorough pass.
 - **Repo-owned review criteria.** `/sf-review` pairs each changed file with the nearest `CODING_STANDARDS.md`, falling back to `CLAUDE.md` or `AGENTS.md` only where no standards file governs. The architecture lens applies that pairing and does not grade one file against both.
 - **Solution citation check.** `/sf-compound` runs `skills/sf-compound/scripts/validate-doc-claims.py` on a new learning. An absolute path inside the repo is rewritten to a repo-relative citation before it is checked.
 - **Small-work planning.** `/sf-plan` answers a one-file Salesforce change in chat and writes `docs/plans/` only when the work needs a durable spec. Brainstorms ask only what the repo and `STRATEGY.md` cannot already settle.
@@ -18,9 +21,15 @@
 
 ### Changed
 
+- **Citation check.** An unresolved hex token with no commit cue around it is a note (a session id or a content hash). It does not fail the run. A token the sentence presents as a commit still flags when it does not resolve.
+- **Pull request watch.** An eyes reaction is recorded and does not hold the merge-ready wake. The watch judges whether a review of the current head is still coming, waits 15 quiet minutes, extends once to 30 when that reviewer's earlier round actually took longer, then says what it could not confirm. A standing `auto_babysit: false` is read at the handoff. A per-run babysit token overrides it. The pipeline's bounded watch still runs. After handoff, this session stays with the watch until the watch's own stop.
+- **Ship gates.** Push waits on the project's own publish or validate requirement for that commit. Creating a branch uses a checkout that does not overwrite ignored files, and it does not stash or delete a collision.
+- **Compound bar.** A learning is written only when losing the document would make a later reader repeat the mistake or redo the investigation. Explain puts a static check-yourself section in the artifact and does not stop the run for a quiz.
+- **Plan and review.** Implementation follows the plan's contents, not a readiness label. Review collection is bounded per lens, releases finished lenses before follow-on work, keeps a gate finding unless cited evidence refutes it, and raises confidence only for a verified different-model pass.
+- **Optimization.** A paired comparison needs a baseline sample for every candidate sample. Progress lines name the finding that changed the decision.
 - **Questions use the tool that is loaded.** Skills ask with the blocking question tool already in the current tool list, matched by capability. They do not call a question tool to discover whether one exists.
 - **Plans state a holdable objective.** The objective is an outcome a reader can restate without the rest of the plan. Bulk, sharing, and CRUD/FLS constraints stay on their requirement ids. An approach such as "move the lookup into a before-save Flow" is the means, not the objective.
-- **Review collection.** Applicable lenses dispatch as one foreground batch and are collected when each launch finishes. A missing Salesforce DX login does not skip the local pass. The tests lens mutates Apex only in a worktree whose HEAD matches the reviewed tree.
+- **Review collection.** Applicable lenses dispatch as one batch and are collected from a terminal result or an on-disk artifact. A missing Salesforce DX login does not skip the local pass. The tests lens mutates Apex only in a worktree whose HEAD matches the reviewed tree.
 - **Parallel work.** Independent plan units dispatch together. A shared-workspace wave needs a committed baseline, exclusive files (including `package.xml` and lockfiles), and no worker git commands. Org-only completion (permission-set assignment, a Named Credential secret) is confirmed in the org, not by `git status`.
 - **Debug reproduction.** A fix waits on a named check that fails now and will pass once the cause is fixed: an Apex test, a Flow interview, or a `Limits` baseline for a slow transaction.
 - **Ship wording.** Commit messages go through `git commit -F` so PowerShell does not parse them. A pull request opening states what is now different for a user of the org. Review findings left unapplied are a checklist in the PR body.

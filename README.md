@@ -1,4 +1,4 @@
-# SF Compound Engineering Plugin v4.0.0
+# SF Compound Engineering Plugin v4.0.1
 
 **Skills-first compound engineering for Salesforce** — a multi-platform plugin (Claude Code, Cursor, Codex, and 9 other AI coding tools) where each iteration becomes smarter than the last through institutional knowledge capture and parallel persona dispatch. This is a skill-native product, not an instruction pack: workflows auto-route from natural language and from `/sf-*` invocation.
 
@@ -441,7 +441,7 @@ The `sf-learnings-researcher` persona searches these documents by frontmatter me
 ```
 salesforce-compound-engineering-plugin/
 ├── .claude-plugin/
-│   ├── plugin.json           # Plugin manifest (v4.0.0)
+│   ├── plugin.json           # Plugin manifest (v4.0.1)
 │   └── marketplace.json      # Marketplace loader schema
 ├── .cursor-plugin/           # Cursor plugin manifest
 ├── .codex-plugin/            # Codex plugin manifest
