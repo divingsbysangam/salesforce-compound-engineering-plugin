@@ -74,7 +74,7 @@ You are implementing a Salesforce feature with parallel persona support and buil
 
 Implement the feature described in: `$ARGUMENTS.plan`
 
-If a plan file path is provided, read it first. If a description is provided, implement directly.
+If a plan file path is provided, read it first. Implement when the contents name the change, the scope, and how to verify it, and no launch-blocking question remains. An old readiness label is not permission. A requirements-only or approach-only document goes back to `sf-plan`. If a description is provided, implement directly. Confirm a prerequisite the plan says already exists in the repo before relying on it. A file the plan says you will add does not have to exist yet.
 
 **Bundled reference loading is fail-closed.** Resolve every path under this skill's `references/` from this `SKILL.md` directory. If a required file cannot be read, stop and report the missing reference instead of approximating.
 
