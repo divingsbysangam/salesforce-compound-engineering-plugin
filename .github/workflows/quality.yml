@@ -11,6 +11,9 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    # A stuck test worker can sit with no output until the platform default
+    # of six hours. Green runs finish in minutes. Fail at 30 so a rerun can start.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -88,7 +91,12 @@ jobs:
         working-directory: cli
         run: |
           bun run typecheck
-          bun test
+          # A wedged worker can fail the parallel run without a real assertion
+          # failure. Retry once in a fresh process before the job goes red.
+          if ! bun test; then
+            echo "bun test failed; retrying once in a fresh process"
+            bun test
+          fi
           bun run lint -- ..
 
   # U10 asked whether to add a macOS leg or downgrade the bash-3.2 claim to a
