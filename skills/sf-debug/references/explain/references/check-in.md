@@ -1,46 +1,24 @@
 # Check-in
 
-The check-in is the active-recall step that makes the explainer stick: the user produces first, the explanation confirms or corrects. It runs in the session — never inside the artifact, never automated.
+The check-in is a `Check yourself` section at the end of the explainer. The reader answers first and reads the answers after. It is static text in the document. The run does not offer a quiz, does not ask for a prediction, and does not wait on an exercise in chat. A reader who leaves does not come back to a blocked question.
 
-## Warrant test — offer or skip
+## Include or omit
 
-Offer a check-in when retention is the point: a hard or unfamiliar concept, a gnarly or consequential diff, a dense recap window with decisions worth recalling later. Skip it (produce the explainer and move on) when comprehension is the point and retention is incidental: a routine recap before a meeting, a small mechanical diff, a topic the user signals they only need to skim. When skipping, do not announce a justification — just proceed.
+The request wins in both directions. An explicit ask for a check-in, quiz, or exercises includes the section. An explicit "no quiz" omits it. When the request is silent, include the section when retention is the point: a hard or unfamiliar Salesforce mechanism (order of execution, mixed DML, sharing recalculation), a consequential diff, or a dense recap with decisions worth recalling. Omit it when the point is comprehension and retention is incidental: a routine recap before a meeting, a small mechanical diff, a topic the user only needs to skim. Do not announce the choice.
 
-**When the material and the request disagree, the request wins.** A dense window asked for explicitly as meeting prep is a skip, not an offer — density is your judgment, the stated purpose is the user's. And when the explainer is rendered for another reader, skip the offer: the check-in exercises the user, so quizzing them on a document written for someone else is beside the point. Offer it there only if they ask.
+An explainer written for another reader uses the same test. The section exercises whoever reads the document.
 
-The user can always decline the offer, and a decline is final for the run — do not re-offer.
+## Shape
 
-Offer exactly two choices in this order:
+- One section headed `Check yourself`, placed last, after the explanation.
+- Two to four numbered questions, then the answers under an `Answers` label, numbered to match, so a reader can attempt every question before any answer is in view.
+- Each answer states what a correct response contains and names the gap a plausible wrong answer exposes. One correction per question.
+- Static only: no forms, scripts, click handlers, or widgets that hide the answers.
 
-1. **Just the explainer (Recommended)** — build the report and skip prediction and exercises.
-2. **Quiz me** — run the applicable prediction or exercise loop.
+## Question kinds
 
-Do not mark the quiz as recommended. Most runs want the explainer; active recall is the deliberate opt-in.
+Design questions to expose understanding, not recall of the artifact's wording.
 
-In diff mode, word the offer without describing the change's content or purpose — an offer that summarizes the change pre-leaks the reveal.
-
-## Predict-then-reveal (diff mode)
-
-Run this section only when the user's exact choice was **Quiz me**. **Just the explainer** skips the prediction and proceeds directly to composition.
-
-The prediction must come before any interpretation reaches the user, or the mechanic is dead on arrival.
-
-1. Show only the raw change reference: the diff or its stat summary, with zero commentary.
-2. Ask for the prediction with the blocking question tool: what does this change do, and why was it made? Free-text is the primary answer path; options, if offered, must be genuinely competing readings, not one right answer plus padding.
-3. **End the turn.** In the no-blocking-tool fallback, ask in chat and stop. Never place any explanation in the same message as the prediction prompt.
-4. After the prediction lands, compose and present the reveal. Name the gaps explicitly: what the prediction got right, what it missed, what it got wrong and why the reality differs. The gap-naming is the teaching — a reveal that doesn't reference the prediction wastes the prediction.
-
-## Exercises (concepts, ideas, dense recaps)
-
-Run this section only when the user's exact choice was **Quiz me**.
-
-Two to four exercises, posed in chat one at a time after the artifact is presented. Design them to expose understanding, not recall of the artifact's phrasing:
-
-- **Apply:** a small scenario the concept decides ("given X, what happens / what would you choose?").
-- **Explain-back:** the user restates the core mechanism in their own words.
-- **Boundary:** a case where the concept does not apply, or where the naive reading fails.
-- **Recap recall (recap mode):** why a notable change in the window was made, or what its consequence was.
-
-Check each answer as it arrives: confirm what is right, correct what is wrong, and name the specific gap the answer exposed. One correction per exercise — do not lecture past the gap. If an answer exposes a misunderstanding the artifact should have prevented, say so plainly and fix the mental model before moving on.
-
-Stop after the planned exercises. Do not spiral into quiz mode; the run ends at the destination ask.
+- **Explain-back:** restate the mechanism. The answer names the pieces a complete restatement carries (for example, which trigger context runs, and what the bulk path does at 200 records).
+- **Predict:** what happens under a named input. The answer names the outcome and the limit or sharing rule that produces it.
+- **Change (diff mode):** what the change does and why. The answer names the intent, not a line-by-line reading of the hunks.
