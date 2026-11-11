@@ -18,3 +18,4 @@ SEVERITY | CONFIDENCE | path:line | RULE-ID | problem — fix
 - `CONFIDENCE`: `HIGH`, `MEDIUM`, or `LOW`, per `../subagent-confidence-rubric.md`.
 - `RULE-ID`: the checklist ID from the lens (for example `APX-3`).
 - Keep each line under about 200 characters. Add at most one indented line of evidence (a count, a query, a failing assertion) when confidence is `HIGH`.
+- The return is that line. Do not add a `notes` field or another name for the same prose. Extra detail belongs in the evidence line or in the lens's on-disk artifact, not in a second key.

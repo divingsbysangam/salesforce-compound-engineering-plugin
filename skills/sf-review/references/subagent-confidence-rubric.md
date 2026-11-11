@@ -9,7 +9,7 @@ This is the shared rubric that review and research personas reference when assig
 
 ## Confidence tiers
 
-* **High** — confirmed by 2+ independent personas, OR a single persona backed by reproducible evidence: a failing assertion, a governor-limit calculation that overflows, a `System.runAs` repro, a concrete SOQL/DML count against the limit, or an equivalent runnable proof. *Report it as a firm finding; lead with the evidence.*
+* **High** — a single lens backed by reproducible evidence (a failing assertion, a governor-limit calculation that overflows, a `System.runAs` repro, a concrete SOQL/DML count against the limit, or an equivalent runnable proof), OR the same finding from a second pass on a different model whose return says the pass was independent. Lenses in one review share a model. Their agreement is recorded and does not by itself raise this tier. *Report it as a firm finding; lead with the evidence.*
 
 * **Medium** — single-persona judgment with clear reasoning but no independent confirmation and no runnable proof. The logic holds up, but nothing has reproduced it yet. *Report it as a finding with the reasoning stated; flag that it is unconfirmed.*
 
@@ -25,4 +25,4 @@ When consolidating findings from multiple subagents:
 
 * **Conflicting severity on a merged finding → take the higher severity.**
 
-* **A finding confirmed by a second persona → upgrade its confidence to High** (per the tiers above).
+* **Agreement raises confidence only with a verified different-model pass.** Same-model lenses record agreement and keep the higher severity. They do not promote the tier. A different-model pass promotes only when its return says the pass was independent of this review. Peer findings do not gain permission to edit the tree.
