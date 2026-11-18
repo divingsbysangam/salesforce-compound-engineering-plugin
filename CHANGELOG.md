@@ -6,6 +6,14 @@
 
 ## [Unreleased]
 
+## [4.1.1] - 2026-11-18
+
+### Changed
+
+- **`/sf-debug` fixes every site of the mistake.** Before the first test, the fix looks for other code that repeats the root-cause mistake and fixes each site in the same run. A site where fixing would reverse deliberate behavior is returned as `needs-human`.
+- **Multi-guard proof.** When a fixed behavior rests on more than one guard, the test must fail with each guard removed alone (`/sf-debug`, `/sf-work` test-first).
+- **Codex peer fallback.** The different-model pass falls back once when the account lacks the requested model, and retries once without the refused effort.
+
 ## [4.1.0] - 2026-11-18
 
 ### Added
