@@ -5,7 +5,7 @@ Read with `sf-work/SKILL.md`. Procedure lives here.
 ## Step 2.5: Test-First (Red → Green → Refactor)
 **Iron Law: NO APEX / LWC / FLOW PRODUCTION LOGIC WITHOUT A FAILING TEST FIRST.**
 
-* **RED** — write the `@isTest` method (or Jest spec) that asserts the not-yet-built behavior, then run it and confirm it fails for the expected reason: `sf apex run test --result-format human` (Apex) or `npm run test:unit` (LWC Jest). Paste the red failure.
+* **RED** — write the `@isTest` method (or Jest spec) that asserts the not-yet-built behavior, then run it and confirm it fails for the expected reason: `sf apex run test --result-format human` (Apex) or `npm run test:unit` (LWC Jest). Paste the red failure. When the behavior rests on more than one guard, also confirm after implementing that the test fails with each guard alone removed, restoring each one afterward.
 
 * **GREEN** — write the minimal production code that makes the test pass. Nothing more.
 

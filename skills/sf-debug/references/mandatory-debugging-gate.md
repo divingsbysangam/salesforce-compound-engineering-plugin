@@ -46,7 +46,9 @@ Only **Confirmed Bug** advances to Phase 2. The other four buckets resolve the i
 Once — and only once — the root cause is classified as a Confirmed Bug:
 
 1. Write or update a failing test that reproduces the defect (test-first discipline). The Phase 1 check is the red bar: it must fail for the root cause, not for unrelated setup. When no test seam exists, that check remains the red/green instrument.
-2. Implement the smallest fix that addresses the confirmed cause, applying the Salesforce Angle notes above (governor limits, sharing context, deploy ordering, FLS, metadata semantics).
-3. Verify against the org — `sf apex run test`, then `sf project deploy validate` / `sf project deploy start`; inspect state with `sf data query` when needed.
-4. Surface any decision that materially affects scope or risk using the platform's blocking question tool rather than guessing.
+2. Before the first test, look for other code that makes the same root-cause mistake, whether or not the report names it: the same faulty construct, such as a SOQL or DML call in a loop or a missing `WITH USER_MODE`, or code that rests on the same wrong assumption. Every site that makes that mistake is part of the minimal fix; fix each one in this run and give it test coverage. A site where the same construct is correct because its inputs differ is not an instance. A site whose fix would reverse a deliberate behavior stays as it is and is reported as `needs-human` in `mode:pipeline`. Do not leave a known instance as a follow-up.
+3. Implement the smallest fix at every such site, applying the Salesforce Angle notes above (governor limits, sharing context, deploy ordering, FLS, metadata semantics).
+4. When the fixed behavior rests on more than one guard, remove each guard alone after the fix, confirm the test fails, and restore it before the next. A guard whose removal leaves the test green is not proven by the test.
+5. Verify against the org — `sf apex run test`, then `sf project deploy validate` / `sf project deploy start`; inspect state with `sf data query` when needed.
+6. Surface any decision that materially affects scope or risk using the platform's blocking question tool rather than guessing.
 

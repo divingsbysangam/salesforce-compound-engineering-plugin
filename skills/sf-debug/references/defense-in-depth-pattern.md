@@ -3,7 +3,7 @@
 Read with `sf-debug/SKILL.md`. Procedure lives here.
 
 ## Defense-in-depth pattern
-A confirmed fix should be reinforced at four layers so the same class of bug cannot silently recur:
+Fixing each site of the mistake does not stop the next caller from writing it again. A confirmed fix should be reinforced at four layers so the same class of bug cannot silently recur:
 
 1. **Entry Point** — a guard clause in the trigger handler that rejects or short-circuits invalid invocations (recursion flags, context checks, null/empty collections).
 2. **Business Logic** — validation in the service layer, independent of the entry point, so the invariant holds no matter who calls it.
