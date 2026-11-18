@@ -4,7 +4,7 @@ Read with `sf-review/SKILL.md`. Procedure lives here.
 
 Review lenses are checklists at `references/lenses/<name>.md`, not registered agents. Dispatch **one subagent per applicable lens**, all in the same response, per `../../sf-work/references/dispatch/guide.md`. On a harness without subagents, apply the lenses inline one after another.
 
-Each subagent gets: the lens file path, `references/lenses/contract.md`, and the **list of changed file paths** (not their contents). It returns finding lines per the contract.
+Each subagent gets: the lens file path, `references/lenses/contract.md`, `references/defect-classes.md`, and the **list of changed file paths** (not their contents). It returns finding lines per the contract. Security, tests, and architecture apply `defect-classes.md`. When a different-model pass is in scope, read `references/peer-models.md` before starting it.
 
 Pass paths only. Do not also paste the diff or file bodies into the same prompt. Inline content is authoritative when a path cannot be given; a path is not content until the lens reads the file. Sending both makes the reviewer score the same change twice and disagree with itself.
 
@@ -41,6 +41,9 @@ Before dispatch, build the criteria mapping in `standards-criteria.md`. When any
 
 ## Depth
 
-- `fast`: only the lenses for the file classes present; skip `tests` when no logic changed.
-- `thorough` (default): the table above.
-- `comprehensive`: add `architecture`, Step 3 research, and the deployment verification writer at `references/personas/sf-deployment-verification-agent.md`.
+Choose the depth in `references/review-depth-levels.md` before this table. The script there does not award `fast`.
+
+- `fast`: only the lenses for the file classes present; skip `tests` when no logic changed. Only for a loud, local change below the floor.
+- `thorough` (default when the failure would be silent): the table above.
+- `comprehensive`: add `architecture`, Step 3 research, and the deployment verification writer at `references/personas/sf-deployment-verification-agent.md`. Required when `full_floor` is set, or the diff touches auth, money, or a public contract.
+- `ci_only`: review the workflow files. Do not dispatch the org lenses.

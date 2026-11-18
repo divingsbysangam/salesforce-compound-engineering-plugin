@@ -11,7 +11,7 @@ Mutate under the inherited envelope: **actions** = fix / commit / push on the cu
 - Do not ask the user to paste content if an issue fetch fails — proceed with what you have.
 - There is no "diagnosis only" question. Fix **convergent** defects (real bugs vs planned/tested intent). Defer product/API/UX decisions as `needs-human`.
 - Operate on the current branch. Commit `fix(ci): …` or `fix: …` and push when the envelope allows. Never weaken a failing assertion to make CI green.
-- Skip simplify/review nesting; keep tests. Emit the structured return below.
+- Skip simplify/review nesting; keep tests. Emit the structured return below as the last thing this skill writes. The return ends this skill, not the turn. The caller continues in the same session. Do not announce a handoff and stop.
 - When the reproduction check cannot run in this environment, do not ask for logs, access, or a go-ahead. Continue from the failing job output already in reach. A hypothesis still needs a check you could re-run once the environment can run it.
 
 ## Structured return

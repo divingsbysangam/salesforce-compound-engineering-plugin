@@ -54,10 +54,19 @@ thread_urls: []
 
 Leave every covered thread open. Under `mode:pipeline`, return that object to the caller. The posted reply carries the decision context; it is not a completed handoff by itself, and it must not live only inside a pending review.
 
+## Adjudicate before escalating
+
+An item that would be `needs-human` still splits by what the decision needs. Only one kind reaches a person.
+
+- **Authority-bound.** The decision needs authority or knowledge this run does not hold: security, sharing, CRUD/FLS, a production deploy, billing, a data migration, a product call, or intent only the user knows. This stays `needs-human`. Do not adjudicate it.
+- **Judgment-bound.** Competent engineers could disagree, and every fact is in the repo, the PR, and the thread: a deliberate choice a reviewer wants reversed, two reviewers asking for opposite things, or a non-convergence root. Write the adjudication from that evidence before it becomes `needs-human`. Adjudicate once per root, not once per thread. Do not adjudicate an item that was an ordinary fix. Uncertainty about a correctness comment still resolves to fixing.
+
+A clear lean whose action is inside the inherited envelope (fix, fix differently, decline, or reply) becomes that verdict. The reply names the reasoning and says the call was made so the author can reverse it. No lean, or an action outside the envelope (merge, rebase, force-push, approving CI), stays `needs-human`, with the adjudication folded into `decision_context`.
+
 ## Procedure
 
 1. Fetch inline threads, top-level comments, and review bodies.
-2. Classify each item: fix, reply, or `needs-human`.
+2. Classify each item: fix, reply, or `needs-human`. Run "Adjudicate before escalating" on each judgment-bound item before it stays `needs-human`.
 3. Apply Salesforce fixes one item at a time and re-run the affected Apex tests (`sf apex run test`) when the fix touches a class, trigger, or flow.
 4. Reply through `scripts/reply-to-pr-thread`. Resolve a thread only after a submitted reply is visible and the item is not `needs-human`.
 5. When babysit marks the thread `dispatched` and the fix is the same invariant on a new head (the same CRUD/FLS hole, the same unbulkified query), pass `--invariant-key` on that mark. The key is one you choose, 1–120 characters of letters, digits, `.`, `_`, `:`, or `-` (for example `apex-crud-fls`). The snapshot counts unique heads. It does not invent the key. A second head on the same key is a non-convergence fact the leaf must see.

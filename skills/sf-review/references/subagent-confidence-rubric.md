@@ -13,7 +13,7 @@ This is the shared rubric that review and research personas reference when assig
 
 * **Medium** — single-persona judgment with clear reasoning but no independent confirmation and no runnable proof. The logic holds up, but nothing has reproduced it yet. *Report it as a finding with the reasoning stated; flag that it is unconfirmed.*
 
-* **Low / Speculative** — plausible but unverified: pattern-matched, inferred from convention, or dependent on assumptions you could not confirm. *Report it as a flag to investigate, not a defect; state the assumption it rests on.*
+* **Low / Speculative** — plausible but unverified: pattern-matched, inferred from convention, or dependent on assumptions you could not confirm. *Report it as a flag to investigate, not a defect; state the assumption it rests on.* A finding whose only basis is a name, where a boundary should sit, or whether an extraction helped stays here and does not fire a non-negotiable gate. A structural regression you can point at in the diff (a recursion guard removed, a handler bypassed, a sharing keyword removed) stays a gate finding even when you could not fully reproduce it.
 
 ## Merge / dedup rule
 

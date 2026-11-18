@@ -15,6 +15,7 @@ argument-hint: "[feature description or plan path] [deploy=scratch|sandbox|none]
 
 Procedure lives in sibling files, not only in this orchestrator:
 
+- **Intake** — read `references/intake.md` before Stage 0. It chooses the route. A request that is not a code change ends at the skill that owns it.
 - **Stage 0: IDEATE & BRAINSTORM (the front "bread" — human-led, conditional)** — read `references/stage-0-ideate-brainstorm-the-front-bread-human-led-conditional.md` before acting on this section.
 - **Stage 1: PLAN** — read `references/stage-1-plan.md` before acting on this section.
 - **Stage 2: DEEPEN** — read `references/stage-2-deepen.md` before acting on this section.
@@ -59,7 +60,7 @@ Execute the full compound engineering loop for: `$ARGUMENTS.feature`
 
 ## Progress
 
-Narrate the run in chat as it moves. One line entering a stage names the stage and what it should produce. One line when it returns names what it actually produced. Report a stage done only after it ran and returned. Describing the next stage is not running it. Do not end the turn before the output block in `references/output.md` or an explicit abort.
+Narrate the run in chat as it moves. One line entering a stage names the stage and what it should produce. One line when it returns names what it actually produced. Report a stage done only after it ran and returned. Describing the next stage is not running it. A child skill's return ends that skill, not this turn. The next stage follows in the same turn. Do not end the turn before the output block in `references/output.md` or an explicit abort.
 
 ***
 

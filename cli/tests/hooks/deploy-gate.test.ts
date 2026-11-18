@@ -105,9 +105,9 @@ describe("deploy gate", () => {
     auth("admin@acme.com", {
       instanceUrl: "https://acme.my.salesforce.com",
       isSandbox: false,
-      accessToken: "SECRET_TOKEN_VALUE",
+      accessToken: "example-token",
     });
     const r = await run("sf project deploy start -d force-app -o prod");
-    expect(r.stdout).not.toContain("SECRET_TOKEN_VALUE");
+    expect(r.stdout).not.toContain("example-token");
   });
 });

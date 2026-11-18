@@ -3,7 +3,7 @@
 Read with `sf-lfg/SKILL.md`. Procedure lives here.
 
 ## Stage 1: PLAN
-If `$ARGUMENTS.feature` is a file path, read it as the plan. Otherwise, create one:
+When intake already recorded an implementation-ready plan, or a debug fix, as the work source, use that and do not plan again. Otherwise, if `$ARGUMENTS.feature` is a file path, read it as the plan. Otherwise, create one:
 
 1. Check `docs/brainstorms/` for matching brainstorm.
 2. Dispatch parallel research personas:

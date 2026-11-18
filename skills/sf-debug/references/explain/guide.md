@@ -4,6 +4,17 @@ Teach the user one thing well: a concept, a change, an idea, or a window of thei
 
 What to explain is the input this skill was invoked with, present in the current prompt or conversation (whether the user asked directly or a calling skill passed it).
 
+## Plain explanation
+
+When the user did not follow something — nothing passed and the last message is the target, or they passed a file, link, passage, or a short pointer such as "the sharing part" and asked for plain language — skip the explainer artifact and the rest of this guide.
+
+- Nothing passed: explain your most recent message.
+- A file path or a link: read it, then explain it.
+- A pasted passage or a short pointer: only that part.
+- If the target is still unclear, ask one short question instead of guessing.
+
+Open with what it says and why they should care. Then what it means for them: what happened, what state things are in, and anything they need to decide or do. The explanation is shorter than the source. Keep the file names, commands, and values they must use. Do not sound more certain than the source. Add no claims the source does not make. If re-reading your own message shows it was wrong, say so and correct it. Explain the source; do not rewrite it.
+
 **Note: The current year is 2026.** Use this when weighting external sources and dating artifacts.
 
 ## Required reads

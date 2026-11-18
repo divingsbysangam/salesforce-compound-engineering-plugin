@@ -6,7 +6,7 @@ Read with `sf-review/SKILL.md`.
 
 ```
 ## Review: {target}
-**Depth:** {fast|thorough|comprehensive}
+**Depth:** {fast|thorough|comprehensive|ci} — {the one fact that chose it}
 **Agents dispatched:** {count}
 
 ### Critical ({count})

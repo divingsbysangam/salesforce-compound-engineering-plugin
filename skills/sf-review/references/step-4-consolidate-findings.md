@@ -13,6 +13,8 @@ Collect results from all dispatched agents and:
 6. Keep a finding whose on-disk lens artifact quotes the line, even when the compact return omitted the quote. Copy the quote from the artifact. Do not drop the finding for a missing quote the file already has.
 7. Do not reject a gate finding (security, sharing, governor limit, trigger context, test coverage) without evidence you checked against the reviewed revision: a quoted line with file and line, a doc that names the API version in force, or a test result that names this revision and the assertion. "No evidence found" is not a rejection. An uncited rejection stays in the report as unresolved, and the verdict stays not ready while a Critical or High gate is unresolved.
 8. Finish this consolidation from the returned lines and any on-disk lens files. If the dispatch turn is long, re-read those artifacts. Do not reconstruct findings from memory of the launch.
+9. When a plan was in scope, list each unrequested behavior rule from `defect-classes.md` with the requirements check. It stays Low and does not change the verdict.
+10. When a different-model pass was requested and did not run, and the local lenses still ran, the summary says `different-model pass not run: <reason>; local lenses covered the diff`. Do not write `Code review skipped` for that case.
 
 ***
 

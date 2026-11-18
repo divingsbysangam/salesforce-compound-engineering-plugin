@@ -6,6 +6,26 @@
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-11-18
+
+### Added
+
+- **Review depth follows the failure, not the line count.** `/sf-review` reads `executable-lines.py` for facts only. A large diff or behavior metadata (Flow, object, permission, profile, sharing) takes the comprehensive pass. A workflow-only diff stays on the workflow. A short diff is `fast` only when a wrong version would fail at that line. Sharing, CRUD/FLS, governor, callout, and public-entry changes stay on the thorough pass.
+- **Shared defect classes.** Security, tests, and architecture flag a dropped feature or permission gate, a test that would still pass if the behavior broke, a production seam that exists only for tests, and a behavior rule the plan did not ask for. The last of those stays advisory.
+- **Pull-request head check.** A fetched head ref is the reviewed tree only when it resolves to `headRefOid`.
+- **Pipeline routing.** `/sf-lfg` sends a request to the skill that owns it before the delivery stages. A diagnosis, a review, or a how-to ends there. A child skill's return continues the next stage in the same turn.
+- **Plan trace.** `/sf-plan` traces how the org behaves today before a choice that depends on it, and compares a still-open costly choice (trigger versus before-save Flow, callout versus platform event, sharing) without waiting to be asked.
+- **Learning retirement.** A solution doc may set `retire_when` when the guidance holds only while something outside the repo holds. Refresh checks that condition and does not delete the doc.
+- **Plain explanation.** `/sf-debug mode:explain` explains the last message, or a file or passage the user did not follow, in chat, without an explainer artifact.
+
+### Changed
+
+- **Review comments.** A judgment call whose facts are all in the repo is decided in the reply before it becomes `needs-human`. Security, sharing, CRUD/FLS, production deploy, billing, migration, and product calls still wait for a person.
+- **Check runs.** A check that is both in progress and already concluded stays pending until the check run, the job, the suite, and the workflow run agree on the same head.
+- **Different-model pass.** When one is requested, the peer is Claude Opus 5.5 at high, Codex GPT-6 Sol at extra-high, or Grok 4.7 at extra-high, named by that request. An OpenCode peer receives the review brief. A peer that did not run does not count as a skipped review when the local lenses ran.
+- **OpenCode install.** The `opus` alias maps to Claude Opus 5.5, and that model is written without a temperature.
+- **Tests.** A new Apex or Jest test has to be able to fail for the reason it names, and it goes through the real entry point when that entry point can drive the behavior.
+
 ## [4.0.1] - 2026-11-11
 
 ### Added
