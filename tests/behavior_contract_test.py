@@ -44,8 +44,13 @@ class BehaviorContractTest(unittest.TestCase):
         skill = text("skills/sf-lfg/SKILL.md")
         self.assertIn("ends that skill, not this turn", skill)
         intake = text("skills/sf-lfg/references/intake.md")
-        self.assertIn("sf-debug", intake)
+        self.assertIn("sf-debug mode:pipeline", intake)
+        self.assertIn("without `mode:pipeline`", intake)
+        self.assertIn("Stage 3.5", intake)
         self.assertIn("Not a code change", intake)
+        stage3 = text("skills/sf-lfg/references/stage-3-work.md")
+        self.assertIn("Stage 3.5", stage3)
+        self.assertNotIn("continue at Stage 4", stage3)
 
     def test_plan_traces_before_a_costly_choice(self):
         guide = text("skills/sf-plan/references/trace-before-choice.md")

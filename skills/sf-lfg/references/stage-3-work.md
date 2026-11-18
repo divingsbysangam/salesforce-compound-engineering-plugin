@@ -3,7 +3,7 @@
 Read with `sf-lfg/SKILL.md`. Procedure lives here.
 
 ## Stage 3: WORK
-When intake's work source is a debug fix that already landed, skip implementation and continue at Stage 4 with that diff. Otherwise implement the plan:
+When intake's work source is a debug fix that already landed, skip implementation only. Still run the five test-check questions and the p0 boundary in this stage, then Stage 3.5, before Review. Do not jump to Stage 4. Otherwise implement the plan:
 
 1. Pre-implementation research (parallel):
 
