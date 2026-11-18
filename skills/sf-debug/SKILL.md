@@ -1,7 +1,7 @@
 ---
 name: sf-debug
 tier: discipline-gate
-description: "Diagnose a Salesforce failure or explain code: tests, governor limits, deploys, LWC, sharing. Use for 'debug' or 'why is this failing'. Use sf-work when the change is already known."
+description: "Diagnose a Salesforce failure or explain code: tests, governor limits, deploys, LWC, sharing. Use for 'debug', 'why is this failing', or 'I didn't follow'. Use sf-work when the change is already known."
 argument-hint: "[mode:explain|agent-observe] [error, test path, log, or subject]"
 ---
 
@@ -14,7 +14,7 @@ First argument `mode:<name>` selects a mode; everything after it passes to that 
 | Mode | Use for | Guide |
 |---|---|---|
 | `(none)` | Reproduce, find the root cause, fix | this file |
-| `explain` | Explain how or why code works, or recap work | `references/explain/guide.md` |
+| `explain` | Explain how or why code works, recap work, or say the last message in plain language | `references/explain/guide.md` |
 | `agent-observe` | Analyze production Agentforce sessions (STDM traces) | `references/agent-observe/guide.md` |
 
 > **Principles enforced:** 2 (verifiability), 3 (jagged intelligence). See `PRINCIPLES.md`.

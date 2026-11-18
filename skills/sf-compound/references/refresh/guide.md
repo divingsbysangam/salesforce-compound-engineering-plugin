@@ -41,6 +41,8 @@ If the arguments contain `mode:non-interactive` (or a deprecated `mode:headless`
 
 **Named guidance.** When a learning links a skill, a runbook, or a root instruction file, read that file. If it states a different order or a contradictory rule for the same situation, classify that contradiction. Do not treat the link as decoration. Frontmatter uses this repo's `schema.yaml` categories; do not rename them to match an older generic list.
 
+**Retirement condition.** When frontmatter has `retire_when`, check that condition the way the field says (release notes, the API version in `sfdx-project.json`, a dependency the repo pins). Record the result in the report. Do not invent a condition for a learning that declares none. A met condition is evidence the premise is gone, not proof the workaround code is safe to delete. When the repo still contains the workaround, Keep or Update the doc and put the removal under **Recommended**. An unmet condition decides nothing. A condition that could not be checked is unverifiable, not false.
+
 **Two boundaries.** This mode never changes product code. A claim about current mechanics follows current Apex, LWC, or Flow, so the doc changes. Guidance that still has independent support — a governor-limit rule, a CRUD/FLS requirement, a skill the repo still ships — does not become false merely because one implementation drifted. Separate that descriptive drift (Update) from a recommendation that no longer governs (Replace, and only when a trustworthy successor can be written).
 
 In non-interactive mode the report is the sole deliverable and is not abbreviated. **Applied** lists writes that succeeded. **Recommended** lists writes the gates withheld.

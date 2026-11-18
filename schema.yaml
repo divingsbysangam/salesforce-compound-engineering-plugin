@@ -68,6 +68,18 @@ optional_fields:
     type: string
     description: Salesforce API version where this was observed
 
+  retire_when:
+    type: string
+    description: >
+      Optional. The change outside this repo that would retire the learning,
+      and how a refresh can check it without editing the repo. Set it only
+      when the guidance holds while something outside the repo holds: an open
+      platform bug, a Salesforce release, an API version, a dependency's
+      behavior. Example: "Release notes for the API version in
+      sfdx-project.json no longer document the Flow interview bug; check the
+      release notes." Omit it otherwise. A check that needs a repo change,
+      such as removing a workaround and rerunning tests, belongs in the body.
+
 # Example solution document:
 # ---
 # title: "SOQL 101 error in Account trigger"

@@ -7,8 +7,28 @@ import { formatFrontmatter, normalizeName } from "../transforms/frontmatter.js";
 const MODEL_MAP: Record<string, string> = {
   haiku: "anthropic/claude-haiku-4-5",
   sonnet: "anthropic/claude-sonnet-4-5",
-  opus: "anthropic/claude-opus-4",
+  opus: "anthropic/claude-opus-5-5",
 };
+
+/** These ids reject temperature, top_p, and top_k. */
+const SAMPLING_REJECTING_MODELS = new Set([
+  "anthropic/claude-opus-5-5",
+  "anthropic/claude-opus-5",
+  "anthropic/claude-opus-4-8",
+  "anthropic/claude-opus-4-7",
+  "anthropic/claude-sonnet-5",
+]);
+
+export function resolveOpenCodeModel(model: string | undefined): string | undefined {
+  if (!model) return undefined;
+  return MODEL_MAP[model] || model;
+}
+
+function rejectsSamplingParams(model: string | undefined): boolean {
+  if (!model) return false;
+  const resolved = resolveOpenCodeModel(model) ?? model;
+  return SAMPLING_REJECTING_MODELS.has(resolved) || SAMPLING_REJECTING_MODELS.has(model);
+}
 
 export class OpenCodeConverter extends BaseConverter {
   readonly target: TargetPlatform = "opencode";
@@ -31,8 +51,10 @@ export class OpenCodeConverter extends BaseConverter {
   private convertAgents(plugin: ClaudePlugin, ocDir: string): void {
     for (const agent of plugin.agents) {
       const name = normalizeName(agent.name);
-      const model = agent.model ? MODEL_MAP[agent.model] || agent.model : undefined;
-      const temperature = inferTemperature(agent.name, agent.description);
+      const model = resolveOpenCodeModel(agent.model);
+      const temperature = rejectsSamplingParams(model)
+        ? undefined
+        : inferTemperature(agent.name, agent.description);
 
       const fm = formatFrontmatter({
         description: agent.description,
@@ -50,7 +72,7 @@ export class OpenCodeConverter extends BaseConverter {
   private convertCommands(plugin: ClaudePlugin, ocDir: string): void {
     for (const cmd of plugin.commands) {
       const name = normalizeName(cmd.name);
-      const model = cmd.model ? MODEL_MAP[cmd.model] || cmd.model : undefined;
+      const model = resolveOpenCodeModel(cmd.model);
 
       const fm = formatFrontmatter({
         description: cmd.description,

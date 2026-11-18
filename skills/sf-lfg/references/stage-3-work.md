@@ -3,7 +3,7 @@
 Read with `sf-lfg/SKILL.md`. Procedure lives here.
 
 ## Stage 3: WORK
-Implement the plan:
+When intake's work source is a debug fix that already landed, skip implementation and continue at Stage 4 with that diff. Otherwise implement the plan:
 
 1. Pre-implementation research (parallel):
 

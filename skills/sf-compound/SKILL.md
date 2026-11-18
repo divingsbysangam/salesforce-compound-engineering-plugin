@@ -123,6 +123,7 @@ date: {YYYY-MM-DD}
 category: {category from schema.yaml}
 severity: {critical|high|medium|low}
 tags: ["{tag1}", "{tag2}", "{tag3}"]
+retire_when: "{optional; outside change that retires this doc, and the check; omit otherwise}"
 ---
 
 ## Symptoms
@@ -178,6 +179,8 @@ Save a report to `docs/solutions/` summarizing all changes.
 ***
 
 ## Output
+
+When a caller invoked this skill, this report ends the skill, not the turn. The caller continues in the same session.
 
 ```
 Compound complete.

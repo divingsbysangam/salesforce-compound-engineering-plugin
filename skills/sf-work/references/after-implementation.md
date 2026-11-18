@@ -3,6 +3,8 @@
 Read with `sf-work/SKILL.md`. Procedure lives here.
 
 ## After Implementation
+When a caller invoked this skill, the summary is the last thing this skill writes. It ends this skill, not the turn. The caller's next step follows in the same session.
+
 When implementation is complete:
 
 ```

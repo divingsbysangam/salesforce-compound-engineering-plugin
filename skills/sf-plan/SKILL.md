@@ -41,6 +41,7 @@ Procedure for a Durable plan lives in sibling files. Load each when its step sta
 
 - **Step 0: Check for Brainstorm** — read `references/step-0-check-for-brainstorm.md` before acting on this section.
 - **Step 1: Parallel Research (dispatch simultaneously)** — read `references/step-1-parallel-research-dispatch-simultaneously.md` before acting on this section.
+- **Trace before a dependent choice** — read `references/trace-before-choice.md` before a choice that depends on current org behavior, and when a costly choice is still open after research.
 - **Step 2: Consolidate Research** — read `references/step-2-consolidate-research.md` before acting on this section.
 - **Step 3: Internal-First Discovery** — read `references/step-3-internal-first-discovery.md` before acting on this section.
 - **Step 4: Spec Flow Analysis** — read `references/step-4-spec-flow-analysis.md` before acting on this section.

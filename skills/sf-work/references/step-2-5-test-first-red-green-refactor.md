@@ -15,6 +15,8 @@ Read with `sf-work/SKILL.md`. Procedure lives here.
 
 **Scope:** production logic — Apex classes/triggers, LWC JS, Flow decision logic. Pure config/metadata with no behavioral change is exempt (record the reason), but Flow, validation-rule, and formula *behavior* changes still need before/after assertions, not just a deploy-succeeded check.
 
+A new or changed test must fail when the behavior it names breaks, and keep passing when only the implementation changes. It misses that bar when the expected value comes from the code under test, when a mock or fixture supplies the result the code should produce, or when it only asserts that nothing threw. Do not add `@TestVisible`, a `Test.isRunningTest()` branch that changes behavior, or an entry point only tests call when the real entry point can drive the behavior. A seam for time or randomness is fine. Do not add a second test for a contract an existing test already owns unless the new test reaches a risk that one cannot (a callout failure, a `System.runAs` user, a 200-record path).
+
 This precedes — it does not replace — the Step 4 System-Wide Test Check, which is a completeness gate, not a red/green loop.
 
 ***
