@@ -60,11 +60,11 @@ describe("session-start project context", () => {
     writeFileSync(join(home, ".sfdx", "alias.json"), JSON.stringify({ orgs: { prod: "a@acme.com" } }));
     writeFileSync(
       join(home, ".sfdx", "a@acme.com.json"),
-      JSON.stringify({ instanceUrl: "https://acme.my.salesforce.com", isSandbox: false, accessToken: "SECRET_TOKEN" }),
+      JSON.stringify({ instanceUrl: "https://acme.my.salesforce.com", isSandbox: false, accessToken: "example-token" }),
     );
     const out = await run(project);
     expect(out).toContain("Default org: prod (PRODUCTION)");
-    expect(out).not.toContain("SECRET_TOKEN");
+    expect(out).not.toContain("example-token");
   });
 
   test("the context block stays small", async () => {
