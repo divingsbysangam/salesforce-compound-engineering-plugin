@@ -11,7 +11,7 @@ Apply the first row that matches.
 | Fact | Depth |
 |---|---|
 | `hard_block`, or `full_floor` without `ci_only` | `comprehensive`. A floor cannot be talked down. `hard_block` means Flow, object, permission, profile, or sharing metadata changed, or a file the script could not classify. `full_floor` is also set when `size_band` is `large`: 200 or more non-test executable lines, or 400 or more changed lines of any kind. |
-| `ci_only` | Review those workflow files only, including when the file is long: what the job gates (deploy validate, test level, org alias, secrets in the file). Do not dispatch Apex, LWC, or Flow lenses. |
+| `ci_only` | Every changed path is a workflow file. Review those files only, including when one is long: what the job gates (deploy validate, test level, org alias, secrets in the file). Do not dispatch Apex, LWC, or Flow lenses. A named credential, class meta, or any other non-workflow path is not this row. |
 | neither | Line count decides nothing. Read the diff and judge where a wrong version would fail. |
 
 **Where a wrong change fails**

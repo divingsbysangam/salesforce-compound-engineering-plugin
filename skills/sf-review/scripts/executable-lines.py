@@ -4,9 +4,10 @@
 Apex, LWC script, Visualforce, Aura script, `.mjs`, and `.cjs` count as
 executable. Apex `*Test.cls` / `*Tests.cls` and `*.test.*` / `*.spec.*`
 files count in `exec_lines` but not in `exec_nontest_lines`. Companion
-`*-meta.xml` beside those sources is ignored. Flow, object, permission,
-profile, and sharing metadata set `hard_block`. A diff that is only CI
-or workflow files sets `ci_only`.
+`*-meta.xml` beside those sources is ignored for the line count. Flow,
+object, permission, profile, and sharing metadata set `hard_block`.
+`ci_only` is set only when every changed path is a CI or workflow file.
+Metadata the line count ignores still counts for that decision.
 
 `size_band` is `large` when non-test executable lines reach 200 or total
 changed lines reach 400. `full_floor` is that band or `hard_block`.
@@ -113,7 +114,6 @@ def summarize(numstat: str) -> dict:
     uncounted = 0
     behavior = 0
     files: list[str] = []
-    substantive: list[str] = []
     for raw in numstat.splitlines():
         if not raw.strip():
             continue
@@ -125,7 +125,6 @@ def summarize(numstat: str) -> dict:
         files.append(path)
         if is_companion_meta(path):
             continue
-        substantive.append(path)
         try:
             added = int(parts[0])
             removed = int(parts[1])
@@ -147,7 +146,7 @@ def summarize(numstat: str) -> dict:
         if not is_test_path(path):
             exec_nontest += changed
     band = size_band_for(exec_nontest, total_lines)
-    ci_only = bool(substantive) and all(is_ci(path) for path in substantive)
+    ci_only = bool(files) and all(is_ci(path) for path in files)
     hard_block = behavior > 0 or (uncounted > 0 and not ci_only)
     # A CI-only diff is not an org-metadata floor. Unclassified files and
     # behavior metadata are. Large line counts are a floor on their own.

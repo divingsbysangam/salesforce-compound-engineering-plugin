@@ -77,6 +77,17 @@ class ExecutableLinesTest(unittest.TestCase):
         self.assertFalse(result["hard_block"])
         self.assertFalse(result["full_floor"])
 
+    def test_credential_metadata_beside_a_workflow_is_not_ci_only(self):
+        text = "\n".join(
+            [
+                "12\t0\t.github/workflows/ci.yml",
+                "4\t0\tforce-app/main/default/namedCredentials/Foo.namedCredential-meta.xml",
+            ]
+        )
+        result = self.mod.summarize(text)
+        self.assertFalse(result["ci_only"])
+        self.assertEqual(result["exec_lines"], 0)
+
     def test_rename_uses_the_destination_path(self):
         text = "3\t1\tforce-app/main/default/{old => classes}/Foo.cls"
         result = self.mod.summarize(text)
