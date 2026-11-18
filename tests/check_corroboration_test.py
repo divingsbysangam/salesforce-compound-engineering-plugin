@@ -11,6 +11,9 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "skills/sf-ship/references/babysit/scripts/pr-snapshot"
 HEAD = "a" * 40
+JOB_ID = 9
+CHECK_RUN_ID = 77
+CHECK_RUN_URL = "https://api.github.com/repos/acme/org/check-runs/77"
 
 
 def load_snapshot():
@@ -34,104 +37,69 @@ class CheckCorroborationTest(unittest.TestCase):
             "status": "IN_PROGRESS",
             "conclusion": "SUCCESS",
             "completedAt": "2026-11-18T00:00:00Z",
-            "databaseId": 9,
+            "databaseId": CHECK_RUN_ID,
             "detailsUrl": "https://github.com/acme/org/actions/runs/4/job/9",
         }
 
-    def test_matching_records_mark_the_check_completed(self):
-        payloads = {
-            "repos/acme/org/check-runs/9": {
-                "head_sha": HEAD,
-                "status": "completed",
+    def _records(self, job_status="completed", check_status="completed", head=HEAD):
+        return {
+            "repos/acme/org/actions/jobs/9": {
+                "id": JOB_ID,
+                "head_sha": head,
+                "status": job_status,
+                "conclusion": "success",
+                "completed_at": "2026-11-18T00:00:00Z",
+                "check_run_url": CHECK_RUN_URL,
+            },
+            "repos/acme/org/check-runs/77": {
+                "head_sha": head,
+                "status": check_status,
                 "conclusion": "success",
                 "completed_at": "2026-11-18T00:00:00Z",
                 "check_suite": {"id": 3},
             },
-            "repos/acme/org/actions/jobs/9": {
-                "id": 9,
-                "head_sha": HEAD,
-                "status": "completed",
-                "conclusion": "success",
-                "completed_at": "2026-11-18T00:00:00Z",
-            },
             "repos/acme/org/check-suites/3": {
-                "head_sha": HEAD,
+                "head_sha": head,
                 "status": "completed",
                 "conclusion": "success",
             },
             "repos/acme/org/actions/runs/4": {
-                "head_sha": HEAD,
+                "head_sha": head,
                 "status": "completed",
                 "conclusion": "success",
             },
         }
 
+    def _status(self, payloads, check=None):
         def fake_run(cmd):
             path = cmd[-1]
-            return completed(json.dumps(payloads[path]))
+            body = payloads.get(path)
+            if body is None:
+                return subprocess.CompletedProcess(args=cmd, returncode=1, stdout="", stderr="missing")
+            return completed(json.dumps(body))
 
         with mock.patch.object(self.mod, "_run", side_effect=fake_run):
-            status = self.mod._corroborated_terminal_check_status(
-                self.check, "acme", "org", HEAD, None
+            return self.mod._corroborated_terminal_check_status(
+                check or self.check, "acme", "org", HEAD, None
             )
-        self.assertEqual(status, "COMPLETED")
+
+    def test_matching_records_mark_the_check_completed(self):
+        self.assertNotEqual(JOB_ID, CHECK_RUN_ID)
+        self.assertEqual(self._status(self._records()), "COMPLETED")
 
     def test_a_different_head_stays_pending(self):
-        def fake_run(cmd):
-            return completed(json.dumps({
-                "head_sha": "b" * 40,
-                "conclusion": "success",
-                "completed_at": "2026-11-18T00:00:00Z",
-                "check_suite": {"id": 3},
-            }))
-
-        with mock.patch.object(self.mod, "_run", side_effect=fake_run):
-            status = self.mod._corroborated_terminal_check_status(
-                self.check, "acme", "org", HEAD, None
-            )
-        self.assertIsNone(status)
+        self.assertIsNone(self._status(self._records(head="b" * 40)))
 
     def test_a_leaf_that_is_still_running_stays_pending(self):
-        payloads = {
-            "repos/acme/org/check-runs/9": {
-                "head_sha": HEAD,
-                "status": "in_progress",
-                "conclusion": "success",
-                "completed_at": "2026-11-18T00:00:00Z",
-                "check_suite": {"id": 3},
-            },
-            "repos/acme/org/actions/jobs/9": {
-                "id": 9,
-                "head_sha": HEAD,
-                "status": "in_progress",
-                "conclusion": "success",
-                "completed_at": "2026-11-18T00:00:00Z",
-            },
-            "repos/acme/org/check-suites/3": {
-                "head_sha": HEAD,
-                "status": "completed",
-                "conclusion": "success",
-            },
-            "repos/acme/org/actions/runs/4": {
-                "head_sha": HEAD,
-                "status": "completed",
-                "conclusion": "success",
-            },
-        }
+        self.assertIsNone(self._status(self._records(check_status="in_progress")))
+        self.assertIsNone(self._status(self._records(job_status="in_progress")))
 
-        def fake_run(cmd):
-            return completed(json.dumps(payloads[cmd[-1]]))
-
-        with mock.patch.object(self.mod, "_run", side_effect=fake_run):
-            check_run_running = self.mod._corroborated_terminal_check_status(
-                self.check, "acme", "org", HEAD, None
-            )
-            payloads["repos/acme/org/check-runs/9"]["status"] = "completed"
-            job_running = self.mod._corroborated_terminal_check_status(
-                self.check, "acme", "org", HEAD, None
-            )
-        self.assertIsNone(check_run_running)
-        self.assertIsNone(job_running)
+    def test_the_job_id_is_not_used_as_the_check_run_id(self):
+        payloads = self._records()
+        payloads["repos/acme/org/actions/jobs/9"]["check_run_url"] = (
+            "https://api.github.com/repos/acme/org/check-runs/9"
+        )
+        self.assertIsNone(self._status(payloads))
 
     def test_a_still_running_check_does_not_call_the_api(self):
         running = dict(self.check)

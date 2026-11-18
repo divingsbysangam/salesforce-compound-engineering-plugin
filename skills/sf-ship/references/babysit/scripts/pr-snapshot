@@ -365,6 +365,31 @@ def _actions_run_and_check_id(details_url, owner, name, host):
     return int(match.group(1)), int(match.group(2))
 
 
+def _check_run_id_from_job(job, owner, name, host):
+    """CheckRun id from this job's check_run_url, and only for this repository.
+
+    The id in an Actions job URL is the job id. It is not the CheckRun id.
+    """
+    if not isinstance(job, dict):
+        return None
+    url = job.get("check_run_url")
+    if not isinstance(url, str):
+        return None
+    parsed = urlsplit(url)
+    expected = (host or "github.com").lower()
+    api_host = "api.github.com" if expected == "github.com" else expected
+    if parsed.scheme != "https" or parsed.netloc.lower() != api_host:
+        return None
+    prefix = "" if expected == "github.com" else "/api/v3"
+    match = re.fullmatch(
+        rf"{prefix}/repos/{re.escape(owner)}/{re.escape(name)}/check-runs/(\d+)/?",
+        parsed.path,
+    )
+    if not match:
+        return None
+    return int(match.group(1))
+
+
 def _same_head(value, head):
     return isinstance(value, str) and isinstance(head, str) and value.lower() == head.lower()
 
@@ -372,11 +397,11 @@ def _same_head(value, head):
 def _corroborated_terminal_check_status(check, owner, name, head, host):
     """Normalize only GitHub's impossible running-but-concluded CheckRun tuple.
 
-    A CheckRun remains pending unless its own REST record, the Actions job, the
-    linked check suite, and the parent workflow all report completed status and
-    the same terminal conclusion on this exact PR head. A leaf that repeats the
-    running-but-concluded tuple is not confirmation. This adds no best-effort
-    success inference.
+    A CheckRun remains pending unless the Actions job, the CheckRun named by
+    that job's check_run_url, the linked check suite, and the parent workflow
+    all report completed status and the same terminal conclusion on this exact
+    PR head. The job id is not the CheckRun id. A leaf that is still running
+    is not confirmation. This adds no best-effort success inference.
     """
     if check.get("__typename") != "CheckRun":
         return None
@@ -389,11 +414,19 @@ def _corroborated_terminal_check_status(check, owner, name, head, host):
     if identifiers is None:
         return None
     workflow_run_id, job_id = identifiers
-    database_id = check.get("databaseId")
-    if database_id is not None and database_id != job_id:
+    job = _api_json(f"repos/{owner}/{name}/actions/jobs/{job_id}", host)
+    if (not job
+            or job.get("id") != job_id
+            or not _same_head(job.get("head_sha"), head)
+            or str(job.get("status") or "").upper() != "COMPLETED"
+            or str(job.get("conclusion") or "").upper() != conclusion
+            or not job.get("completed_at")):
         return None
-    check_id = database_id or job_id
-    if not isinstance(check_id, int):
+    check_id = _check_run_id_from_job(job, owner, name, host)
+    if check_id is None:
+        return None
+    database_id = check.get("databaseId")
+    if database_id is not None and database_id != check_id:
         return None
 
     check_run = _api_json(f"repos/{owner}/{name}/check-runs/{check_id}", host)
@@ -405,15 +438,6 @@ def _corroborated_terminal_check_status(check, owner, name, head, host):
         return None
     suite_id = (check_run.get("check_suite") or {}).get("id")
     if not isinstance(suite_id, int):
-        return None
-
-    job = _api_json(f"repos/{owner}/{name}/actions/jobs/{job_id}", host)
-    if (not job
-            or job.get("id") != job_id
-            or not _same_head(job.get("head_sha"), head)
-            or str(job.get("status") or "").upper() != "COMPLETED"
-            or str(job.get("conclusion") or "").upper() != conclusion
-            or not job.get("completed_at")):
         return None
 
     suite = _api_json(f"repos/{owner}/{name}/check-suites/{suite_id}", host)
