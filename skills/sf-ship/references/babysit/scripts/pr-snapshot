@@ -372,9 +372,11 @@ def _same_head(value, head):
 def _corroborated_terminal_check_status(check, owner, name, head, host):
     """Normalize only GitHub's impossible running-but-concluded CheckRun tuple.
 
-    A CheckRun remains pending unless its own REST record, linked check suite, and
-    parent Actions workflow all report the same terminal conclusion on this exact
-    PR head. This intentionally adds no best-effort success inference.
+    A CheckRun remains pending unless its own REST record, the Actions job, the
+    linked check suite, and the parent workflow all report completed status and
+    the same terminal conclusion on this exact PR head. A leaf that repeats the
+    running-but-concluded tuple is not confirmation. This adds no best-effort
+    success inference.
     """
     if check.get("__typename") != "CheckRun":
         return None
@@ -395,9 +397,10 @@ def _corroborated_terminal_check_status(check, owner, name, head, host):
         return None
 
     check_run = _api_json(f"repos/{owner}/{name}/check-runs/{check_id}", host)
-    if not check_run or not _same_head(check_run.get("head_sha"), head):
-        return None
-    if (str(check_run.get("conclusion") or "").upper() != conclusion
+    if (not check_run
+            or not _same_head(check_run.get("head_sha"), head)
+            or str(check_run.get("status") or "").upper() != "COMPLETED"
+            or str(check_run.get("conclusion") or "").upper() != conclusion
             or not check_run.get("completed_at")):
         return None
     suite_id = (check_run.get("check_suite") or {}).get("id")
@@ -408,6 +411,7 @@ def _corroborated_terminal_check_status(check, owner, name, head, host):
     if (not job
             or job.get("id") != job_id
             or not _same_head(job.get("head_sha"), head)
+            or str(job.get("status") or "").upper() != "COMPLETED"
             or str(job.get("conclusion") or "").upper() != conclusion
             or not job.get("completed_at")):
         return None

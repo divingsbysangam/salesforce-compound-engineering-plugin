@@ -42,6 +42,7 @@ class CheckCorroborationTest(unittest.TestCase):
         payloads = {
             "repos/acme/org/check-runs/9": {
                 "head_sha": HEAD,
+                "status": "completed",
                 "conclusion": "success",
                 "completed_at": "2026-11-18T00:00:00Z",
                 "check_suite": {"id": 3},
@@ -49,6 +50,7 @@ class CheckCorroborationTest(unittest.TestCase):
             "repos/acme/org/actions/jobs/9": {
                 "id": 9,
                 "head_sha": HEAD,
+                "status": "completed",
                 "conclusion": "success",
                 "completed_at": "2026-11-18T00:00:00Z",
             },
@@ -88,6 +90,48 @@ class CheckCorroborationTest(unittest.TestCase):
                 self.check, "acme", "org", HEAD, None
             )
         self.assertIsNone(status)
+
+    def test_a_leaf_that_is_still_running_stays_pending(self):
+        payloads = {
+            "repos/acme/org/check-runs/9": {
+                "head_sha": HEAD,
+                "status": "in_progress",
+                "conclusion": "success",
+                "completed_at": "2026-11-18T00:00:00Z",
+                "check_suite": {"id": 3},
+            },
+            "repos/acme/org/actions/jobs/9": {
+                "id": 9,
+                "head_sha": HEAD,
+                "status": "in_progress",
+                "conclusion": "success",
+                "completed_at": "2026-11-18T00:00:00Z",
+            },
+            "repos/acme/org/check-suites/3": {
+                "head_sha": HEAD,
+                "status": "completed",
+                "conclusion": "success",
+            },
+            "repos/acme/org/actions/runs/4": {
+                "head_sha": HEAD,
+                "status": "completed",
+                "conclusion": "success",
+            },
+        }
+
+        def fake_run(cmd):
+            return completed(json.dumps(payloads[cmd[-1]]))
+
+        with mock.patch.object(self.mod, "_run", side_effect=fake_run):
+            check_run_running = self.mod._corroborated_terminal_check_status(
+                self.check, "acme", "org", HEAD, None
+            )
+            payloads["repos/acme/org/check-runs/9"]["status"] = "completed"
+            job_running = self.mod._corroborated_terminal_check_status(
+                self.check, "acme", "org", HEAD, None
+            )
+        self.assertIsNone(check_run_running)
+        self.assertIsNone(job_running)
 
     def test_a_still_running_check_does_not_call_the_api(self):
         running = dict(self.check)
