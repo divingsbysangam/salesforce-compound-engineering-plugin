@@ -54,6 +54,7 @@ Grep: pattern="{keyword}" path="docs/solutions/"
 - **Key Insight:** {1-2 sentence summary}
 - **Prevention:** {prevention advice}
 - **Reference:** docs/solutions/{path}
+- **Status:** add `stale: <stale_reason>` when the doc's frontmatter has `status: stale`; surface it anyway and treat it as unconfirmed
 
 ### 2. ...
 

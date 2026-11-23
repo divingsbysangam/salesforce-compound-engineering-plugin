@@ -31,13 +31,17 @@ If the arguments contain `mode:non-interactive` (or a deprecated `mode:headless`
 
 | Outcome | Meaning | Action |
 |---------|---------|--------|
-| **Keep** | Still accurate | No edit |
+| **Keep** | Still accurate | No edit, except clearing an earlier stale mark (see **Earlier stale mark**) |
 | **Update** | Solution correct; references drifted | Fix in place |
 | **Consolidate** | Heavy overlap, both correct | Merge unique content into the canonical doc; deprecate the subsumed one (`status: deprecated`) — never delete |
 | **Replace** | Guidance misleading; successor writable | Write successor, then deprecate the old doc |
 | **Deprecate** | No longer useful | Set `status: deprecated` (+ reason/date) — never delete |
 
 **Auto-deprecate gate** (all three must hold; otherwise recommend only): (1) implementation referenced by the doc is gone from the codebase, (2) the problem domain is also gone or clearly superseded by newer in-repo content, (3) inbound markdown citations are absent or purely decorative. Missing files alone prove the *implementation* is gone, not the problem — if the org still deals with the domain, that is Replace, not Deprecate.
+
+**Earlier stale mark.** A doc with `status: stale` was left unsettled by an earlier refresh, and learnings researchers keep surfacing it labeled stale until a refresh settles it. Start from its `stale_reason`. Once this run settles the doc with any action other than another stale mark, no doc that action leaves behind carries `status: stale`, `stale_reason`, or `stale_date`: delete them from a doc that Keep or Update leaves in place (for Keep, this is the one edit it makes), and do not copy them into a successor or a consolidated doc. When the run still cannot settle the doc, keep the mark and rewrite `stale_reason` and `stale_date`. When any doc was marked stale, say in the report that learnings researchers keep surfacing those docs, labeled stale, until a refresh or a person settles them.
+
+**Citation basis.** Judge a learning's code citations against the repository's default branch, where the learning lives, not against a working tree that may hold unmerged work. A citation that matches the default branch has not drifted. When a cited line number no longer points at what the learning describes, cite the class, method, or metadata element that defines it instead of a new line number. A cited line past the end of its file is flagged by `scripts/validate-doc-claims.py`. A successor doc follows the same rule.
 
 **Named guidance.** When a learning links a skill, a runbook, or a root instruction file, read that file. If it states a different order or a contradictory rule for the same situation, classify that contradiction. Do not treat the link as decoration. Frontmatter uses this repo's `schema.yaml` categories; do not rename them to match an older generic list.
 

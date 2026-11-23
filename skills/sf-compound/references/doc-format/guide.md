@@ -74,6 +74,6 @@ tags: ["{tag1}", "{tag2}"]
 
 1. **<span data-proof="authored" data-by="ai:claude">Be specific</span>**<span data-proof="authored" data-by="ai:claude">: Include exact error messages, not paraphrases</span>
 2. **<span data-proof="authored" data-by="ai:claude">Include context</span>**<span data-proof="authored" data-by="ai:claude">: API version, org type, user profile</span>
-3. **<span data-proof="authored" data-by="ai:claude">Link to code</span>**<span data-proof="authored" data-by="ai:claude">: Reference file paths and line numbers</span>
+3. **<span data-proof="authored" data-by="ai:claude">Link to code</span>**<span data-proof="authored" data-by="ai:claude">: Cite code by file and the class, method, or metadata element that defines the behavior; add a line number only when no name identifies the spot, because line numbers go stale when code above them moves</span>
 4. **<span data-proof="authored" data-by="ai:claude">Make it searchable</span>**<span data-proof="authored" data-by="ai:claude">: Use tags that others would search for</span>
 5. **<span data-proof="authored" data-by="ai:claude">Focus on prevention</span>**<span data-proof="authored" data-by="ai:claude">: The most valuable part is how to avoid the issue</span>
