@@ -61,6 +61,27 @@ class DocClaimsTest(unittest.TestCase):
         doc.write_text(body)
         return tmp, doc
 
+    def test_line_number_past_end_of_cited_file_is_flagged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            git(root, "init", "-q")
+            cls = root / "force-app" / "Foo.cls"
+            cls.parent.mkdir(parents=True)
+            cls.write_text("public class Foo {\n}\n")
+            doc = root / "docs" / "solutions" / "note.md"
+            doc.parent.mkdir(parents=True)
+            doc.write_text(
+                "In range: `force-app/Foo.cls:2`.\n"
+                "Past the end: `force-app/Foo.cls:40` and `force-app/Foo.cls:1-90`.\n"
+            )
+            result = subprocess.run(
+                ["python3", str(SCRIPT), str(doc)], capture_output=True, text=True
+            )
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("Foo.cls:40", result.stdout)
+        self.assertIn("Foo.cls:1-90", result.stdout)
+        self.assertNotIn("Foo.cls:2`", result.stdout)
+
     def test_session_id_is_a_note_not_a_fabricated_commit(self):
         tmp, doc = self._repo_with(
             "The debug session 7e6861b4 reproduced the limit.\n"

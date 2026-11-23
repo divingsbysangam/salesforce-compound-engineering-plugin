@@ -6,6 +6,13 @@
 
 ## [Unreleased]
 
+## [4.1.2] - 2026-11-23
+
+### Changed
+
+- **Citations survive refactors.** `/sf-compound` writes and refreshes citations by file and the class, method, or metadata element that defines the behavior, and judges them against the default branch. `validate-doc-claims.py` flags a cited line past the end of its file.
+- **Stale learnings stay visible.** `status: stale` (with `stale_reason` and `stale_date`) is part of `schema.yaml`. Learnings researchers label such docs, and a refresh that settles one clears the mark.
+
 ## [4.1.1] - 2026-11-18
 
 ### Changed

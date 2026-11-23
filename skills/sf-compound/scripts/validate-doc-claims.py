@@ -196,9 +196,31 @@ def cites_a_commit(prefix: str) -> bool:
     )
 
 
+LINE_REF_RE = re.compile(r":(\d+)(?:-(\d+))?$")
+
+
+def trim_token(token: str) -> str:
+    return token.strip().rstrip(".,;")
+
+
+def cited_line_end(token: str) -> int | None:
+    m = LINE_REF_RE.search(trim_token(token))
+    if not m:
+        return None
+    return int(m.group(2) or m.group(1))
+
+
+def count_lines(path: str) -> int | None:
+    try:
+        with open(path, "rb") as f:
+            data = f.read()
+    except OSError:
+        return None
+    return data.count(b"\n") + (1 if data and not data.endswith(b"\n") else 0)
+
+
 def normalize_path(token: str) -> str:
-    token = token.strip().rstrip(".,;")
-    token = re.sub(r":\d+(-\d+)?$", "", token)  # strip `:line` / `:a-b` refs
+    token = LINE_REF_RE.sub("", trim_token(token))  # strip `:line` / `:a-b` refs
     if token.startswith("./"):
         token = token[2:]
     return token
@@ -301,6 +323,8 @@ def main(argv: list[str]) -> int:
     # --- 1. Cited repo paths ----------------------------------------------
     checked_paths = 0
     seen_paths: set[str] = set()
+    seen_line_refs: set[tuple[str, int]] = set()
+    line_totals: dict[str, int | None] = {}
     base = repo_root if in_git else os.getcwd()
     for raw in BACKTICK_RE.findall(body):
         token = normalize_path(raw)
@@ -321,10 +345,25 @@ def main(argv: list[str]) -> int:
             check = os.path.relpath(resolved, os.path.realpath(base))
             if check.startswith(".."):
                 continue  # escapes the repo — not checkable as a repo path
+        full = os.path.join(base, check)
+        line_end = cited_line_end(raw)
+        if line_end is not None and (check, line_end) not in seen_line_refs:
+            seen_line_refs.add((check, line_end))
+            if full not in line_totals:
+                line_totals[full] = count_lines(full)
+            total = line_totals[full]
+            if total is not None and line_end > total:
+                flags.append(
+                    f"FLAG line `{raw.strip()}`{loc_suffix(raw)} — {check} has "
+                    f"{total} line{'' if total == 1 else 's'}, so line {line_end} "
+                    "is past its end: a stale or memory-drafted line number. "
+                    "Cite the class, method, or metadata element instead, or "
+                    "annotate it as a pre-fix state."
+                )
         if check in seen_paths:
             continue
         seen_paths.add(check)
-        if os.path.exists(os.path.join(base, check)):
+        if os.path.exists(full):
             checked_paths += 1
             continue
         tracked_head = head_has_path(check)
